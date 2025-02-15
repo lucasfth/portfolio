@@ -16,7 +16,6 @@
     "start": "react-scripts start",
     "build:local": "react-scripts build",
     "build:gh": "PUBLIC_URL=https://lucasfth.github.io/portfolio react-scripts build",
-    "predeploy" : "npm run build",
     "deploy" : "gh-pages -d build",
     "build": "react-scripts build",
     "test": "react-scripts test",

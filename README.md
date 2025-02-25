@@ -2,6 +2,20 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Own notes
+
+To run locally with reload:
+
+`npm run start`
+
+To deploy first build:
+
+`npm run build`
+
+Then:
+
+`npm run deploy`
+
 ## Available Scripts
 
 In the project directory, you can run:

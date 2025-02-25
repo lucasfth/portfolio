@@ -1,0 +1,21 @@
+footer {
+  padding: 20px 0;
+  text-align: center;
+}
+
+footer .social-links {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+@media (min-width: 769px) {
+  footer .social-links {
+    flex-direction: row;
+    justify-content: center;
+  }
+
+  footer .social-links a {
+    margin: 0 10px;
+  }
+}

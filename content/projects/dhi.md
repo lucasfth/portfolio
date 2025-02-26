@@ -1,4 +1,4 @@
-![header](/images/DSCF5108.jpg)
+![header](/images/greenup.png)
 
 # ⛈️ DHI
 

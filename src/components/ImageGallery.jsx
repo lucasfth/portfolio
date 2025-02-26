@@ -10,23 +10,22 @@ function ImageGallery({ markdown, onImageClick }) {
 
   const handleImageContainerClick = (href) => {
     if (onImageClick && href) {
-      // Extract galleryId from href (e.g., "aperture/snow" -> "snow")
       const galleryId = href.split('/').pop();
       onImageClick(galleryId);
     }
   };
 
   return (
-    <div className="common-container">
+    <div className="image-gallery-container">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           p: ({ node, ...props }) => {
             const hasImage = node.children.some(child => child.tagName === 'img');
             if (hasImage) {
-              return <>{props.children}</>;
+              return <div className="image-wrapper">{props.children}</div>;
             }
-            return <p {...props} />;
+            return <div className="text-wrapper"><p {...props} /></div>; // Wrap text in text-wrapper
           },
           a: ({ node, ...props }) => (
             <div 
@@ -37,7 +36,7 @@ function ImageGallery({ markdown, onImageClick }) {
                 {...props} 
                 className="image-link" 
                 onClick={(e) => {
-                  e.preventDefault(); // Prevent default link behavior
+                  e.preventDefault();
                 }}
               >
                 {props.children}

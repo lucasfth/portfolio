@@ -9,6 +9,8 @@ import Aperture from './Aperture';
 import ProjectDetail from './components/ProjectDetail';
 import './App.css';
 import Gallery from './components/Gallery';
+import Blog from './Blog';
+import BlogPost from './components/BlogPost';
 
 function App() {
   const [markdown, setMarkdown] = useState('');
@@ -42,6 +44,8 @@ function App() {
           <Route path="/projects/:projectId" element={<ProjectDetail />} />
           <Route path="/aperture" element={<Aperture />} />
           <Route path="/aperture/:galleryId" element={<Gallery />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:postId" element={<BlogPost />} />
         </Routes>
         <Footer />
       </div>

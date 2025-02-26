@@ -37,7 +37,7 @@ function ImageSection({ markdown }) {
                       position: 'absolute',
                       top: 0,
                       left: 0,
-                      filter: 'brightness(50%)' // Darkening filter
+                      filter: 'brightness(50%) grayscale(100%)' // Darkening filter
                     }}
                   />
                 )

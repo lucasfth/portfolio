@@ -1,0 +1,14 @@
+.giscus-wrapper {
+  width: 100%;
+  max-width: 1200px; /* Use the same max-width as other text sections */
+  margin: 0 auto; /* Center the container */
+  padding: 0 20px; /* Add horizontal padding */
+  box-sizing: border-box; /* Include padding in width calculation */
+}
+
+.gist-container {
+  width: 100%;
+  max-width: 1200px; /* Use the same max-width as other text sections */
+  margin: 20px auto; /* Center the container and add vertical margin */
+  box-sizing: border-box; /* Include padding in width calculation */
+}

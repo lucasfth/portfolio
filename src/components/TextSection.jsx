@@ -1,5 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { materialLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 function TextSection({ markdown }) {
   const lines = markdown.split('\n');
@@ -9,7 +11,27 @@ function TextSection({ markdown }) {
   return (
     <div className="common-container">
       <div className="inner-container">
-        <ReactMarkdown>
+        <ReactMarkdown
+          components={{
+            code({ node, inline, className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || '');
+                return !inline && match ? (
+                <SyntaxHighlighter
+                  style={{ ...materialLight, 'pre[class*="language-"]': { ...materialLight['pre[class*="language-"]'], borderRadius: '8px' } }}
+                  language={match[1]}
+                  PreTag="div"
+                  {...props}
+                >
+                  {String(children).replace(/\n$/, '')}
+                </SyntaxHighlighter>
+                ) : (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+                );
+            }
+          }}
+        >
           {remainingText}
         </ReactMarkdown>
       </div>

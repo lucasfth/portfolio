@@ -1,14 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
-import TextSection from './TextSection';
-import ImageSection from './ImageSection';
+import TextSection from './components/TextSection';
+import ImageSection from './components/ImageSection';
 
-function ProjectDetail() {
-  const { projectId } = useParams();
+function Blog() {
   const [markdown, setMarkdown] = useState('');
 
   useEffect(() => {
-    fetch(`${process.env.PUBLIC_URL}/content/projects/${projectId}.md`)
+    fetch(process.env.PUBLIC_URL + '/content/blog.md')
       .then(response => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
@@ -19,7 +17,7 @@ function ProjectDetail() {
         setMarkdown(text);
       })
       .catch(err => console.error('Error loading markdown:', err));
-  }, [projectId]);
+  }, []);
 
   return (
     <>
@@ -29,4 +27,4 @@ function ProjectDetail() {
   );
 }
 
-export default ProjectDetail;
+export default Blog;

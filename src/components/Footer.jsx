@@ -23,6 +23,9 @@ function Footer() {
           <a href="https://github.com/lucasfth" target="_blank" rel="noreferrer">
           💻 GitHub
           </a>
+          <a href="https://linktr.ee/lucashanson" target="_blank" rel="noreferrer">
+          🌴 Linktree
+          </a>
         </div>
       </div>
     </footer>

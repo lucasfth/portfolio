@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <meta http-equiv='refresh' content='0; URL=/portfolio' />
+    <meta charset="utf-8">
+    <title>Redirecting...</title>
     <script>
-      // Redirect to the root URL and let React Router handle the routing
+      // Extract the pathname from the URL
+      const path = window.location.pathname;
+      
+      // Save the path to sessionStorage
+      sessionStorage.setItem('redirectPath', path);
+      
+      // Redirect to the main app
       window.location.href = '/portfolio';
     </script>
   </head>
   <body>
+    <p>Redirecting...</p>
   </body>
 </html>

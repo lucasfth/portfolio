@@ -1,4 +1,4 @@
-![header](/portfolio/images/nature/DSCF2082.jpg)
+![header](/images/nature/DSCF2082.jpg)
 
 # 📫 My first blog post
 

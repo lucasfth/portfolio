@@ -1,4 +1,4 @@
-![header](/portfolio/images/urban/DSCF4644.jpg)
+![header](/images/urban/DSCF4644.jpg)
 
 # 📷 Aperture
 

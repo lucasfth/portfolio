@@ -16,7 +16,7 @@ Technologies used:
 - Tensorflow
 - Google Mediapipe
 
-Read more about the project [here](/projects/bachelor).
+Read more about the projsect [here](/projects/bachelor).
 
 ---
 

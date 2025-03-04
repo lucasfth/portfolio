@@ -1,1 +1,1 @@
-lucashanson.dk
+echo "lucashanson.dk" > public/CNAME

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import TextSection from './components/TextSection';
 import ImageSection from './components/ImageSection';
+import { useNavigate } from 'react-router-dom';
 
 function Blog() {
   const [markdown, setMarkdown] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch(process.env.PUBLIC_URL + '/content/blog.md')
@@ -19,11 +21,21 @@ function Blog() {
       .catch(err => console.error('Error loading markdown:', err));
   }, []);
 
+  const handleLinkClick = (e) => {
+    const target = e.target.closest('a');
+    if (target && target.getAttribute('href').startsWith('/blog/')) {
+      e.preventDefault();
+      const path = target.getAttribute('href');
+      navigate(path);
+    }
+  };
+  
+
   return (
-    <>
+    <div onClick={handleLinkClick}>
       <ImageSection markdown={markdown} />
       <TextSection markdown={markdown} />
-    </>
+    </div>
   );
 }
 

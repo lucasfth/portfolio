@@ -16,7 +16,7 @@ Technologies used:
 - Tensorflow
 - Google Mediapipe
 
-Read more about the project [here](projects/bachelor).
+Read more about the project [here](/projects/bachelor).
 
 ---
 
@@ -31,7 +31,7 @@ Technologies used:
 - JavaScript (and a whole lot)
 - Shoelace
 
-Read more about the project [here](projects/repolicense).
+Read more about the project [here](/projects/repolicense).
 
 ---
 
@@ -46,4 +46,4 @@ Technologies used:
 - React
 - FastAPI
 
-Read more about the project [here](projects/dhi).
+Read more about the project [here](/projects/dhi).

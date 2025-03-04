@@ -24,7 +24,7 @@ function Header() {
       </div>
       
       <ul className={`nav-links ${isOpen ? 'open' : ''}`}>
-        <li><Link to="/portfolio" style={{fontWeight: "bold"}}>🌤 About me</Link></li>
+        <li><Link to="/" style={{fontWeight: "bold"}}>🌤 About me</Link></li>
         <li><Link to="/projects" style={{fontWeight: "bold"}}>👨‍💻 Projects</Link></li>
         <li><Link to="/blog" style={{fontWeight: "bold"}}>✍️ Blog</Link></li>
         <li><Link to="/aperture" style={{fontWeight: "bold"}}>📷 Aperture</Link></li>

@@ -16,25 +16,25 @@ function ImageGallery({ markdown, onImageClick }) {
   };
 
   return (
-    <div className="image-gallery-container">
+    <div className='image-gallery-container'>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           p: ({ node, ...props }) => {
             const hasImage = node.children.some(child => child.tagName === 'img');
             if (hasImage) {
-              return <div className="image-wrapper">{props.children}</div>;
+              return <div className='image-wrapper'>{props.children}</div>;
             }
-            return <div className="text-wrapper"><p {...props} /></div>; // Wrap text in text-wrapper
+            return <div className='text-wrapper'><p {...props} /></div>; // Wrap text in text-wrapper
           },
           a: ({ node, ...props }) => (
             <div 
-              className="image-container" 
+              className='image-container' 
               onClick={() => handleImageContainerClick(props.href)}
-            >
+              >
               <a 
                 {...props} 
-                className="image-link" 
+                className='image-link' 
                 onClick={(e) => {
                   e.preventDefault();
                 }}
@@ -50,7 +50,7 @@ function ImageGallery({ markdown, onImageClick }) {
                 src={process.env.PUBLIC_URL + props.src} 
                 alt={props.alt} 
               />
-              {props.title && <div className="caption">{props.title}</div>}
+              {props.title && <div className='caption'>{props.title}</div>}
             </>
           ),
         }}

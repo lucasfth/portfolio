@@ -2,6 +2,20 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <script>
+      (function() {
+        const redirectPath = sessionStorage.getItem('redirectPath');
+        if (redirectPath && redirectPath !== window.location.pathname) {
+          sessionStorage.removeItem('redirectPath');
+          window.onload = function() {
+            setTimeout(function() {
+              window.history.replaceState(null, null, redirectPath);
+              window.dispatchEvent(new PopStateEvent('popstate'));
+            }, 0);
+          };
+        }
+      })();
+    </script>
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />

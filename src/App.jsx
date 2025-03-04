@@ -30,22 +30,22 @@ function App() {
   }, []);
 
   return (
-    <Router>
-      <div className="App">
+    <Router basename='/portfolio'>
+      <div className='App'>
         <Header />
         <Routes>
-          <Route exact path="/portfolio" element={
+          <Route exact path='/' element={
             <>
               <ImageSection markdown={markdown} />
               <TextSection markdown={markdown} />
             </>
           } />
-          <Route path="/projects" element={<Projects />} />
-          <Route path="/projects/:projectId" element={<ProjectDetail />} />
-          <Route path="/aperture" element={<Aperture />} />
-          <Route path="/aperture/:galleryId" element={<Gallery />} />
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/blog/:postId" element={<BlogPost />} />
+          <Route path='/projects' element={<Projects />} />
+          <Route path='/projects/:projectId' element={<ProjectDetail />} />
+          <Route path='/aperture' element={<Aperture />} />
+          <Route path='/aperture/:galleryId' element={<Gallery />} />
+          <Route path='/blog' element={<Blog />} />
+          <Route path='/blog/:postId' element={<BlogPost />} />
         </Routes>
         <Footer />
       </div>

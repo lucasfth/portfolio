@@ -1,4 +1,4 @@
-![header](/images/urban/DSCF4644.jpg)
+![header](/images/urban/DSCF4644.JPG)
 
 # 📷 Aperture
 
@@ -6,10 +6,10 @@ Why aperture? Well in my spare time, I enjoy photography and dabble in videograp
 
 ---
 
-[![Snow related images](/images/snow/DSCF5119.jpg "Click here to see more snow related images")](aperture/snow)
-[![Urban related images](/images/urban/DSCF4550.jpg "Click here to see more urban related images")](aperture/urban)
-[![University related images](/images/uni/DSCF2918.jpg "Click here to see more images from uni")](aperture/uni)
-[![Nature related images](/images/nature/DSCF2082.jpg "Click here to see more nature related images")](aperture/nature)
+[![Snow related images](/images/snow/DSCF5119.JPG "Click here to see more snow related images")](/aperture/snow)
+[![Urban related images](/images/urban/DSCF4550.JPG "Click here to see more urban related images")](/aperture/urban)
+[![University related images](/images/uni/DSCF2918.JPG "Click here to see more images from uni")](/aperture/uni)
+[![Nature related images](/images/nature/DSCF2082.jpg "Click here to see more nature related images")](/aperture/nature)
 
 Please reach out to me if you would like to use any of the images.
 The original images are in higher resolution compared to the ones displayed here.

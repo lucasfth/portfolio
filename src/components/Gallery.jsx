@@ -13,11 +13,21 @@ function Gallery() {
 
   useEffect(() => {
     console.log(`Loading gallery for: ${galleryId}`);
+    console.log("PUBLIC_URL:", process.env.PUBLIC_URL);
+
+    const getAssetPath = (path) => {
+      // For GitHub Pages deployment
+      if (process.env.NODE_ENV === 'production') {
+        return `/portfolio${path}`;
+      }
+      // For local development
+      return path;
+    };
     
     const locations = [
-      `/aperture/${galleryId}.md`,
       `/content/aperture/${galleryId}.md`,
-      `/content/galleries/${galleryId}.md`
+      `/content/galleries/${galleryId}.md`,
+      `/aperture/${galleryId}.md`,
     ];
     
     const tryNextLocation = (index) => {
@@ -59,7 +69,7 @@ function Gallery() {
         .then(data => {
           if (data && data.images) {
             setImages(data.images.map(img => ({
-              src: `/images/${folderName}/${img}`,
+              src: getAssetPath(`/images/${galleryId}/${img}`),
               alt: img.replace(/\.\w+$/, ''),
             })));
           }
@@ -149,46 +159,45 @@ function Gallery() {
   };
 
   if (loading) {
-    return <div className="loading">Loading gallery...</div>;
+    return <div className='loading'>Loading gallery...</div>;
   }
 
   if (error) {
-    return <div className="error">Error: {error}</div>;
+    return <div className='error'>Error: {error}</div>;
   }
 
   return (
     <div>
       <ImageSection markdown={markdown} />
       
-      <div className="gallery-container">
-  {images.length > 0 ? (
-    <div className="gallery-grid">
-      {images.map((image, index) => (
-        <div key={index} className="gallery-item">
-          <img
-            src={process.env.PUBLIC_URL + image.src}
-            alt={image.alt || `Gallery image ${index + 1}`}
-            className="gallery-image"
-            onClick={() => handleImageClick(image)}
-          />
-        </div>
-      ))}
+      <div className='gallery-container'>
+      {images.length > 0 ? (
+        <div className='gallery-grid'>
+          {images.map((image, index) => (
+            <div key={index} className='gallery-item'>
+
+              { console.log('Image path (absolute):', process.env.PUBLIC_URL + image.src) }
+              { console.log('Image file name:', image.src.split('/').pop()) }
+              <img
+                src={process.env.PUBLIC_URL + image.src}
+                alt={image.alt || `Gallery image ${index + 1}`}
+                className='gallery-image'
+                onClick={() => handleImageClick(image)}
+              />
+            </div>
+          ))}
     </div>
   ) : (
     <p>No images found in this gallery.</p>
   )}
 </div>
-
-
-
-
       {enlargedImage && (
-        <div className="overlay" onClick={handleOverlayClick}>
-          <div className="overlay-content" onClick={(e) => e.stopPropagation()}>
+        <div className='overlay' onClick={handleOverlayClick}>
+          <div className='overlay-content' onClick={(e) => e.stopPropagation()}>
             <img
               src={process.env.PUBLIC_URL + enlargedImage.src}
               alt={enlargedImage.alt || 'Enlarged image'}
-              className="enlarged-image"
+              className='enlarged-image'
             />
           </div>
         </div>

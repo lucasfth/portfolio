@@ -12,16 +12,11 @@ function Gallery() {
   const [enlargedImage, setEnlargedImage] = useState(null);
 
   useEffect(() => {
-    console.log(`Loading gallery for: ${galleryId}`);
-    console.log("PUBLIC_URL:", process.env.PUBLIC_URL);
-
     const getAssetPath = (path) => {
-      // For GitHub Pages deployment
       if (process.env.NODE_ENV === 'production') {
         return `/portfolio${path}`;
       }
-      // For local development
-      return path;
+      return `${process.env.PUBLIC_URL}${path}`;
     };
     
     const locations = [
@@ -38,7 +33,6 @@ function Gallery() {
       return fetch(`${process.env.PUBLIC_URL}${locations[index]}`)
         .then(response => {
           if (!response.ok) {
-            console.log(`Not found at ${locations[index]}, trying next location`);
             return tryNextLocation(index + 1);
           }
           return response.text();
@@ -47,12 +41,10 @@ function Gallery() {
     
     tryNextLocation(0)
       .then(text => {
-        console.log(`Successfully loaded markdown for ${galleryId}`);
         setMarkdown(text);
         fetchGalleryImages(galleryId);
       })
       .catch(err => {
-        console.error('Error loading gallery:', err);
         setError(err.message);
         setLoading(false);
       });
@@ -61,8 +53,7 @@ function Gallery() {
       fetch(`${process.env.PUBLIC_URL}/images/${folderName}/manifest.json`)
         .then(response => {
           if (!response.ok) {
-            console.log('No manifest found, using fallback method');
-            return checkCommonImagePatterns(folderName);
+            throw new Error('Manifest not found');
           }
           return response.json();
         })
@@ -70,22 +61,23 @@ function Gallery() {
           if (data && data.images) {
             setImages(data.images.map(img => ({
               src: getAssetPath(`/images/${galleryId}/${img}`),
-              alt: img.replace(/\.\w+$/, ''),
+              alt: img.replace(/\.\w+$/, '')
             })));
+          } else {
+            throw new Error('No images in manifest');
           }
           setLoading(false);
         })
         .catch(err => {
-          console.log('Falling back to hardcoded image list');
           const galleryImageMap = {
             'snow': [
-              'DSCF5090.JPG',
-              'DSCF5101.JPG',
-              'DSCF5108.JPG',
-              'DSCF5119.JPG',
-              'DSCF5124.JPG',
-              'DSCF5190.JPG',
-              'DSCF5197.JPG'
+              'DSCF5090.jpg',
+              'DSCF5101.jpg',
+              'DSCF5108.jpg',
+              'DSCF5119.jpg',
+              'DSCF5124.jpg',
+              'DSCF5190.jpg',
+              'DSCF5197.jpg'
             ],
             'urban': [
               'DSCF1786.jpg',
@@ -94,26 +86,26 @@ function Gallery() {
               'DSCF2013.jpg',
               'DSCF2018.jpg',
               'DSCF2626.jpg',
-              'DSCF2650.JPG',
-              'DSCF3962.JPG',
-              'DSCF4550.JPG',
-              'DSCF4644.JPG'
+              'DSCF2650.jpg',
+              'DSCF3962.jpg',
+              'DSCF4550.jpg',
+              'DSCF4644.jpg'
             ],
             'uni': [
-              'DSCF2760.JPG',
-              'DSCF2887.JPG',
-              'DSCF2918.JPG',
-              'DSCF4623.JPG',
-              'DSCF4625.JPG',
-              'DSCF4628.JPG',
-              'DSCF4630~2.JPG',
-              'DSCF4631.JPG',
-              'DSCF4647.JPG',
-              'DSCF4693.JPG',
-              'DSCF4701.JPG',
-              'DSCF4729.JPG',
-              'DSCF4755.JPG',
-              'DSCF4774.JPG'
+              'DSCF2760.jpg',
+              'DSCF2887.jpg',
+              'DSCF2918.jpg',
+              'DSCF4623.jpg',
+              'DSCF4625.jpg',
+              'DSCF4628.jpg',
+              'DSCF4630~2.jpg',
+              'DSCF4631.jpg',
+              'DSCF4647.jpg',
+              'DSCF4693.jpg',
+              'DSCF4701.jpg',
+              'DSCF4729.jpg',
+              'DSCF4755.jpg',
+              'DSCF4774.jpg'
             ],
             'nature': [
               'DSCF2081.jpg',
@@ -122,20 +114,17 @@ function Gallery() {
               'DSCF2084.jpg'
             ]
           };
-          
+      
           const imageList = galleryImageMap[galleryId] || [];
+          
           setImages(imageList.map(img => ({
-            src: `/images/${galleryId}/${img}`,
+            src: getAssetPath(`/images/${galleryId}/${img}`),
             alt: img.replace(/\.\w+$/, '')
           })));
           
           setLoading(false);
         });
-    };
-    
-    const checkCommonImagePatterns = (folderName) => {
-      return Promise.resolve({ images: [] });
-    };
+    };      
 
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
@@ -175,11 +164,8 @@ function Gallery() {
         <div className='gallery-grid'>
           {images.map((image, index) => (
             <div key={index} className='gallery-item'>
-
-              { console.log('Image path (absolute):', process.env.PUBLIC_URL + image.src) }
-              { console.log('Image file name:', image.src.split('/').pop()) }
               <img
-                src={process.env.PUBLIC_URL + image.src}
+                src={image.src}
                 alt={image.alt || `Gallery image ${index + 1}`}
                 className='gallery-image'
                 onClick={() => handleImageClick(image)}
@@ -195,7 +181,7 @@ function Gallery() {
         <div className='overlay' onClick={handleOverlayClick}>
           <div className='overlay-content' onClick={(e) => e.stopPropagation()}>
             <img
-              src={process.env.PUBLIC_URL + enlargedImage.src}
+              src={enlargedImage.src}
               alt={enlargedImage.alt || 'Enlarged image'}
               className='enlarged-image'
             />

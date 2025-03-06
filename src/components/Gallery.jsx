@@ -13,10 +13,12 @@ function Gallery() {
 
   useEffect(() => {
     const getAssetPath = (path) => {
-      if (process.env.NODE_ENV === 'production') {
-        return `/portfolio${path}`;
+      if (process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost') {
+        return `${process.env.PUBLIC_URL}${path}`;
       }
-      return `${process.env.PUBLIC_URL}${path}`;
+      return path;
+      
+      // return `${process.env.PUBLIC_URL}${path}`;
     };
     
     const locations = [

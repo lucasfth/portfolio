@@ -37,7 +37,7 @@ done
 ## Improvements and issues
 
 Right now it quite simply just down scales the image based on its height.
-A better approach might have been to downscale based on its longest side.
+A better approach might have been to downscale based on its least widest side.
 This would generate a more consistent image size, in terms of pixels.
 
 Now for the issues.

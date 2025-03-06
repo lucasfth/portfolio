@@ -23,31 +23,60 @@ function BlogPost() {
   }, [postId]);
 
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://giscus.app/client.js';
-    script.setAttribute('data-repo', 'lucasfth/portfolio');
-    script.setAttribute('data-repo-id', 'R_kgDON6IhoQ');
-    script.setAttribute('data-category', 'General');
-    script.setAttribute('data-category-id', 'DIC_kwDON6Ihoc4CnW__');
-    script.setAttribute('data-mapping', 'url');
-    script.setAttribute('data-strict', '1');
-    script.setAttribute('data-reactions-enabled', '1');
-    script.setAttribute('data-emit-metadata', '0');
-    script.setAttribute('data-input-position', 'bottom');
-    script.setAttribute('data-theme', 'light');
-    script.setAttribute('data-lang', 'en');
-    script.setAttribute('crossorigin', 'anonymous');
-    script.async = true;
-
-    const giscusContainer = document.getElementById('giscus-container');
-    if (giscusContainer) {
-      giscusContainer.appendChild(script);
-    }
-
-    return () => {
-      if (giscusContainer) {
-        giscusContainer.innerHTML = '';
+    if (!window.cusdisScriptLoaded) {
+      const existingScript = document.getElementById('cusdis-script') || 
+                           document.querySelector('script[src="https://cusdis.com/js/cusdis.es.js"]');
+      
+      if (!existingScript) {
+        const script = document.createElement('script');
+        script.src = 'https://cusdis.com/js/cusdis.es.js';
+        script.async = true;
+        script.defer = true;
+        script.id = 'cusdis-script';
+        
+        window.cusdisScriptLoaded = true;
+        document.body.appendChild(script);
       }
+    }
+  
+    const initTimer = setTimeout(() => {
+      if (window.CUSDIS) {
+        window.CUSDIS.initial();
+      }
+    }, 1000);
+  
+    return () => {
+      clearTimeout(initTimer);
+    };
+  }, [postId]);
+
+  useEffect(() => {
+    const setIframeHeight = () => {
+      const iframe = document.querySelector('#cusdis_thread iframe');
+      if (!iframe) return;
+      
+      const postsWithComments = ['downsizing-images']; 
+      
+      if (postsWithComments.includes(postId)) {
+        iframe.style.height = '1200px';
+      } else {
+        iframe.style.height = '350px';
+      }
+    };
+    
+    const checkIframe = setInterval(() => {
+      const iframe = document.querySelector('#cusdis_thread iframe');
+      if (iframe) {
+        clearInterval(checkIframe);
+        
+        setIframeHeight();
+        
+        return () => {};
+      }
+    }, 1000);
+    
+    return () => {
+      clearInterval(checkIframe);
     };
   }, [postId]);
 
@@ -55,9 +84,23 @@ function BlogPost() {
     <>
       <ImageSection markdown={markdown} />
       <TextSection markdown={markdown} />
-      <div className="giscus-wrapper">
-        <div id="giscus-container" />
-      </div>
+      
+      {/* Comments Section */}
+      <section className="blog-comments-section">
+        <div className="container">
+          <h2>Comments</h2>
+          <div 
+            id="cusdis_thread"
+            className="comments-container"
+            data-host="https://cusdis.com"
+            data-app-id="d29ad22a-c8fb-4d05-98a4-81f79e2d7b15"
+            data-page-id={postId}
+            data-page-url={window.location.href}
+            data-page-title={document.title}
+          >
+          </div>
+        </div>
+      </section>
     </>
   );
 }

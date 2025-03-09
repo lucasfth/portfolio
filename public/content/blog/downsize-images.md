@@ -29,7 +29,7 @@ My script then creates a folder for the downsized images named `resized` and the
 ```bash
 mkdir resized
 
-for img in *.jpg *.JPG *.png *.PNG; do
+for img in *.(jpg|JPG|png|PNG); do
     magick "$img" -resize x720\> "resized/$img"
 done
 ```

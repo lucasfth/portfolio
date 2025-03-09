@@ -1,6 +1,6 @@
 {
   "short_name": "Lucas Hanson",
-  "name": "Portfolio of Lucas Hanson",
+  "name": "Lucas Hanson - Software Development Portfolio and Blog",
   "icons": [
     {
       "src": "favicon.ico",
@@ -21,5 +21,6 @@
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "background_color": "#ffffff",
+  "description": "Explore Lucas Frey Torres Hanson's portfolio and IT related blog. Discover projects, insights, and tutorials on software development and web technologies."
 }

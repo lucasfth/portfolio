@@ -113,7 +113,10 @@ function Gallery() {
               'DSCF2081.jpg',
               'DSCF2082.jpg',
               'DSCF2083.jpg',
-              'DSCF2084.jpg'
+              'DSCF2084.jpg',
+              'DSCF5236.jpg',
+              'DSCF5240.jpg',
+              'DSCF5251.jpg',
             ]
           };
       

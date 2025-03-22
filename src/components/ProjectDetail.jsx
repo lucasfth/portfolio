@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import TextSection from './TextSection';
-import ImageSection from './ImageSection';
+import ImageHeader from './ImageHeader';
 
 function ProjectDetail() {
   const { projectId } = useParams();
@@ -23,7 +23,7 @@ function ProjectDetail() {
 
   return (
     <>
-      <ImageSection markdown={markdown} />
+      <ImageHeader markdown={markdown} />
       <TextSection markdown={markdown} />
     </>
   );

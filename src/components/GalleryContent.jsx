@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import './ImageGallery.css';
+import './GalleryContent.css';
 
-function ImageGallery({ markdown, onImageClick }) {
+function GalleryContent({ markdown, onImageClick }) {
   const lines = markdown.split('\n');
   const contentStart = lines.findIndex(line => line.startsWith('---'));
   const remainingText = contentStart !== -1 ? lines.slice(contentStart + 1).join('\n') : '';
@@ -61,4 +61,4 @@ function ImageGallery({ markdown, onImageClick }) {
   );
 }
 
-export default ImageGallery;
+export default GalleryContent;

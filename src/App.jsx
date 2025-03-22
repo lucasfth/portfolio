@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Header from './components/Header';
-import ImageSection from './components/ImageSection';
+import ImageHeader from './components/ImageHeader';
 import TextSection from './components/TextSection';
 import Footer from './components/Footer';
 import Projects from './Projects';
 import Aperture from './Aperture';
 import ProjectDetail from './components/ProjectDetail';
 import './App.css';
-import Gallery from './components/Gallery';
+import GalleryPage from './components/GalleryPage';
 import Blog from './Blog';
 import BlogPost from './components/BlogPost';
 
@@ -36,14 +36,14 @@ function App() {
         <Routes>
           <Route exact path='/' element={
             <>
-              <ImageSection markdown={markdown} />
+              <ImageHeader markdown={markdown} />
               <TextSection markdown={markdown} />
             </>
           } />
           <Route path='/projects' element={<Projects />} />
           <Route path='/projects/:projectId' element={<ProjectDetail />} />
           <Route path='/aperture' element={<Aperture />} />
-          <Route path='/aperture/:galleryId' element={<Gallery />} />
+          <Route path='/aperture/:galleryId' element={<GalleryPage />} />
           <Route path='/blog' element={<Blog />} />
           <Route path='/blog/:postId' element={<BlogPost />} />
         </Routes>

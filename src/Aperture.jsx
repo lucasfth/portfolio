@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ImageSection from './components/ImageSection';
-import ImageGallery from './components/ImageGallery';
+import ImageHeader from './components/ImageHeader';
+import GalleryContent from './components/GalleryContent';
 
 function Aperture() {
   const [markdown, setMarkdown] = useState('');
@@ -27,8 +27,8 @@ function Aperture() {
 
   return (
     <>
-      <ImageSection markdown={markdown} />
-      <ImageGallery markdown={markdown} onImageClick={handleImageClick} />
+      <ImageHeader markdown={markdown} />
+      <GalleryContent markdown={markdown} onImageClick={handleImageClick} />
     </>
   );
 }

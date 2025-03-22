@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import TextSection from './components/TextSection';
-import ImageSection from './components/ImageSection';
+import ImageHeader from './components/ImageHeader';
 import { useNavigate } from 'react-router-dom';
 
 function Blog() {
@@ -33,7 +33,7 @@ function Blog() {
 
   return (
     <div onClick={handleLinkClick}>
-      <ImageSection markdown={markdown} />
+      <ImageHeader markdown={markdown} />
       <TextSection markdown={markdown} />
     </div>
   );

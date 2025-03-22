@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
-function ImageSection({ markdown }) {
+function ImageHeader({ markdown }) {
   if (!markdown) {
     return <div>No content available</div>;
   }
@@ -105,4 +105,4 @@ function ImageSection({ markdown }) {
   );
 }
 
-export default ImageSection;
+export default ImageHeader;

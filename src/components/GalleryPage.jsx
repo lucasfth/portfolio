@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import ImageSection from './ImageSection';
-import './Gallery.css';
+import ImageHeader from './ImageHeader';
+import './GalleryPage.css';
+import TextSection from './TextSection';
 
-function Gallery() {
+function GalleryPage() {
   const { galleryId } = useParams();
   const [markdown, setMarkdown] = useState('');
   const [images, setImages] = useState([]);
@@ -162,7 +163,7 @@ function Gallery() {
 
   return (
     <div>
-      <ImageSection markdown={markdown} />
+      <ImageHeader markdown={markdown} />
       
       <div className='gallery-container'>
       {images.length > 0 ? (
@@ -193,8 +194,9 @@ function Gallery() {
           </div>
         </div>
       )}
+      <TextSection markdown={markdown} />
     </div>
   );
 }
 
-export default Gallery;
+export default GalleryPage;

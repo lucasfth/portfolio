@@ -57,7 +57,8 @@ Throughout the semesters in the Café, I have changed positions between being a 
 Normal treasurer responsibilities as well as keeping our IT systems as streamlined and easily transferable (for our yearly changing board) as possible.
 
 ### Stripper
-**BadaBing** Stripper at the famous BadaBing where ass can be shaken for money, Which i excel at.
+**[BadaBing](https://badabingcph.dk/)** - *(Always)*\
+Stripper at the famous BadaBing where ass can be shaken for money, Which i excel at.
 
 ## 💬 Languages
 

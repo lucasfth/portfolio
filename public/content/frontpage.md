@@ -56,6 +56,9 @@ Throughout the semesters in the Café, I have changed positions between being a 
 **[CampusCup](https://campuscup.dk)** - *(Nov 2024 → present)*\
 Normal treasurer responsibilities as well as keeping our IT systems as streamlined and easily transferable (for our yearly changing board) as possible.
 
+### Stripper
+**BadaBing** Stripper at the famous BadaBing where ass can be shaken for money, Which i excel at.
+
 ## 💬 Languages
 
 Since I am a Software Developer there is of course two different kinds of languages.

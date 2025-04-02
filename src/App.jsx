@@ -11,6 +11,7 @@ import './App.css';
 import GalleryPage from './components/GalleryPage';
 import Blog from './Blog';
 import BlogPost from './components/BlogPost';
+import NotFound from './components/NotFound';
 
 function App() {
   const [markdown, setMarkdown] = useState('');
@@ -46,6 +47,7 @@ function App() {
           <Route path='/aperture/:galleryId' element={<GalleryPage />} />
           <Route path='/blog' element={<Blog />} />
           <Route path='/blog/:postId' element={<BlogPost />} />
+          <Route path='*' element={<NotFound />} />
         </Routes>
         <Footer />
       </div>

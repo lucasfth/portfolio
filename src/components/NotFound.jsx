@@ -49,6 +49,20 @@ function NotFound() {
           So I definely recommend trying out martial arts if you are looking for a new sport.
           Most places do not just teach you how to fight, but also how teach you implicitly how to be a better person.
         </p>
+        <h2>📷 Photography</h2>
+        <p>
+          Photography is something I have always been fascinated by.
+          But I have never really understood how people could take images that were not just a snapshot of a moment, but they could instead tell a story or a feeling.
+          <br />
+          In late 2022 I bought my first camera, a Fujifilm X-E4.
+          I have then since experimented with what I enjoy taking pictures of.
+          The first images I took were quite boring, and I it did not feel like nothing was communicated trough them.
+          But as I look back I already do see what I wanted to portray.
+          <br />
+          I have always felt like people might not understand me, and I have always been a bit of an outsider.
+          Thus most my personal images display some kind of feeling of loneliness.
+          Not that it is a bad thing, since it can also be peaceful, and you have time to reflect.
+        </p>
       </div>
     </div>
   )

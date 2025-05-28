@@ -96,7 +96,7 @@ function GalleryPage() {
               'DSCF5705.jpg',
               'DSCF5702.jpg',
               'DSCF5700.jpg',
-              'DSCF5678.jpg',
+              'DSCF6784.jpg',
               'DSCF6787.jpg',
               'DSCF6788.jpg',
             ],

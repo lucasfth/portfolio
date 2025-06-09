@@ -47,7 +47,7 @@ const generateRSS = () => {
       </channel>
     </rss>`;
 
-  const buildDir = path.join(__dirname, "..", "build");
+  const buildDir = path.join(__dirname, "..", "out");
   if (!fs.existsSync(buildDir)) {
     fs.mkdirSync(buildDir, { recursive: true });
   }

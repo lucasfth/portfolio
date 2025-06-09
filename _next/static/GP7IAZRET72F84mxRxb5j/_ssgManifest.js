@@ -1,1 +1,0 @@
-self.__SSG_MANIFEST=new Set(["\u002Faperture\u002F[galleryId]","\u002Fblog\u002F[postId]","\u002Fprojects\u002F[projectId]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()

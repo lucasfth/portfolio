@@ -19,7 +19,7 @@
     "react-scripts": "5.0.1",
     "react-syntax-highlighter": "^15.6.1",
     "remark-gfm": "^4.0.1",
-    "web-vitals": "^5.0.2"
+    "web-vitals": "^5.0.3"
   },
   "scripts": {
     "start": "craco start",

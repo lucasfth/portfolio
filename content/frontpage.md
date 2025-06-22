@@ -82,4 +82,4 @@ Completed coursework in algorithms, data structures, and software engineering pr
 Worked on various projects, including a DHI project that involved developing a full-stack web application.
 My bachelor thesis was about hand gestures in virtual meetings, and if there exists a natural gesture set that can be mapped to actions such as volume control. ⚠️Spoiler: There was not a natural gesture set.
 But we got a lot of other interesting findings from the data we gathered and analyzed.
-You can read more about the project here which was done with my partner [Mads Roager](https://www.linkedin.com/in/mads-roager-97a46a231/).
+You can read more about the project [here](/projects/bachelor) which was done with my partner [Mads Roager](https://www.linkedin.com/in/mads-roager-97a46a231/).

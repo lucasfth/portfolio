@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@heroui/navbar": "^2.2.9",
+    "@heroui/navbar": "^2.2.20",
     "@heroui/react": "^2.7.10",
     "@shadcn/ui": "^0.0.4",
     "@testing-library/dom": "^10.4.0",

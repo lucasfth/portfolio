@@ -99,6 +99,10 @@ function GalleryPage() {
               'DSCF6784.jpg',
               'DSCF6787.jpg',
               'DSCF6788.jpg',
+              'DSCF6804-EDIT.jpg',
+              'DSCF6813-EDIT.jpg',
+              'A007044-R1-14-25.jpg',
+              'DSCF6901.jpg',
             ],
             'uni': [
               'DSCF2760.jpg',
@@ -124,6 +128,7 @@ function GalleryPage() {
               'DSCF5236.jpg',
               'DSCF5240.jpg',
               'DSCF5251.jpg',
+              'A007043-R1-09-25.jpg',
             ]
           };
       

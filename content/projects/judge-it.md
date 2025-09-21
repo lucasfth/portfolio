@@ -21,7 +21,7 @@ This year was special for me because I spent a good amount of my free time over 
 
 🔥 So did it burn down on the day?
 
-Honestly, way better than I expected. The judges picked it up quickly, spectators loved seeing live updates, and the feedback was super positive (which was extremely surprising due to how little outside input I had during development). But the spectators and competitors also want to access the stats on their own devices. There are a few reasons I chose not to allow this, but I have proposed a new solution which would allow it. You can see the proposal [here](https://github.com/orgs/itu-campuscup/discussions/1).
+Fortunately not, and it went way better than I expected. The judges picked it up quickly, spectators loved seeing live updates, and the feedback was super positive (which was extremely surprising due to how little outside input I had during development). But the spectators and competitors also want to access the stats on their own devices. There are a few reasons I chose not to allow this, but I have proposed a new solution which would allow it. You can see the proposal [here](https://github.com/orgs/itu-campuscup/discussions/1).
 
 But the best of all. Judge IT did not break during the event. That felt like a massive win for me.
 

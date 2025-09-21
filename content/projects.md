@@ -6,6 +6,20 @@ Here you can see some of the larger projects I have worked on. If you have any q
 
 ---
 
+## ⚖️ Judge IT
+
+### Fun statistics for [CampusCup](https://campuscup.dk)
+
+Technologies used:
+
+- Next.js
+- Supabase
+- TypeScript
+
+Read more about the project [here](/projects/judge-it).
+
+---
+
 ## 🎓 Bachelor Project
 
 ### Hand-Gesture-Based Interaction in Hybrid Meetings

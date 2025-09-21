@@ -16,7 +16,7 @@ Check out my projects here.
 
 ### Developer Intern
 
-**[Kraftvaerk](https://kraftvaerk.com)** - *(Nov 2024 → present)*\
+**[Kraftvaerk](https://kraftvaerk.com)** - *(Nov 2024 → present)*
 
 ### Junior QA Analyst
 

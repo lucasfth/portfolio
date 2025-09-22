@@ -8,7 +8,7 @@ Judge IT is a web app I built to help with judging and displaying results for [C
 
 ## ⚓ The event
 
-On Friday, the 12th, I had the opportunity to participate in organizing CampusCup at IT-Universitetet i København—a yearly relay race that drew, very quick guess, 700 spectators throughout the day. Teams of four went to compete against each other, sailing over Emil Holms Kanal, chugging a beer, spinning around, and then sailing back.
+On Friday, the 12th of September 2025, I had the opportunity to participate in organizing CampusCup at IT-Universitetet i København—a yearly relay race that drew, very quick guess, 700 spectators throughout the day. Teams of four went to compete against each other, sailing over Emil Holms Kanal, chugging a beer, spinning around, and then sailing back.
 
 ## 🚀 Launching Judge IT
 

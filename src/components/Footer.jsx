@@ -60,13 +60,13 @@ function Footer() {
               />
             </a>
             <a
-              href="https://linktr.ee/lucashanson"
+              href="https://rdr.lucashanson.dk"
               target="_blank"
               rel="noreferrer"
             >
               <img
-                src="https://img.shields.io/badge/Linktree-00A79D?logo=linktree&logoColor=white"
-                alt="Linktree"
+                src="https://img.shields.io/badge/Links-00A79D?logo=linktree&logoColor=white"
+                alt="Links"
               />
             </a>
           </div>

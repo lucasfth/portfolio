@@ -10,7 +10,7 @@ function Footer() {
           {/* Social Links vertically spread out*/}
           <div className="social-links">
             <a
-              href="https://rdr.lucashanson.dk/ig"
+              href="https://links.lucashanson.dk/ig"
               target="_blank"
               rel="noopener noreferrer"
             >

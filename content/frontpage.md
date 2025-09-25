@@ -37,7 +37,7 @@ Below are some of them in more detail:
 
 ### Developer
 
-**[ITU Poker Bot Battle](https://pokerbot.dk)** - *(Sep 2023 → present)*\
+**[ITU Poker Bot Battle](https://pokerbot.dk)** - *(Sep 2023 → Oct 2024)*\
 Participating in the development of Pokerbots for competitions.
 Mainly responsible for documentation across various tech stacks and creating various example bots.
 Post-event post on LinkedIn.
@@ -53,7 +53,8 @@ Throughout the semesters in the Café, I have changed positions between being a 
 ### Treasurer
 
 **[CampusCup](https://campuscup.dk)** - *(Nov 2024 → present)*\
-Normal treasurer responsibilities as well as keeping our IT systems as streamlined and easily transferable (for our yearly changing board) as possible.
+Normal treasurer responsibilities as well as keeping our IT systems as streamlined and easily transferable (for our yearly changing board) as possible. \
+Also ended up doing a lot of development work on our statistics site [Judge IT](https://lucashanson.dk/projects/judge-it) which you can read more about in the projects section.
 
 ## 💬 Languages
 

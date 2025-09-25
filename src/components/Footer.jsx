@@ -20,7 +20,7 @@ function Footer() {
               />
             </a>
             <a
-              href="https://rdr.lucashanson.dk/yt"
+              href="https://links.lucashanson.dk/yt"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -30,7 +30,7 @@ function Footer() {
               />
             </a>
             <a
-              href="https://rdr.lucashanson.dk/li"
+              href="https://links.lucashanson.dk/li"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -40,7 +40,7 @@ function Footer() {
               />
             </a>
             <a
-              href="https://rdr.lucashanson.dk/gh"
+              href="https://links.lucashanson.dk/gh"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -60,7 +60,7 @@ function Footer() {
               />
             </a>
             <a
-              href="https://rdr.lucashanson.dk"
+              href="https://links.lucashanson.dk"
               target="_blank"
               rel="noreferrer"
             >

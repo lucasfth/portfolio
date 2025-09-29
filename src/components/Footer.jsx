@@ -10,7 +10,7 @@ function Footer() {
           {/* Social Links vertically spread out*/}
           <div className="social-links">
             <a
-              href="https://rdr.lucashanson.dk/ig"
+              href="https://links.lucashanson.dk/ig"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -20,7 +20,7 @@ function Footer() {
               />
             </a>
             <a
-              href="https://rdr.lucashanson.dk/yt"
+              href="https://links.lucashanson.dk/yt"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -30,7 +30,7 @@ function Footer() {
               />
             </a>
             <a
-              href="https://rdr.lucashanson.dk/li"
+              href="https://links.lucashanson.dk/li"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -40,7 +40,7 @@ function Footer() {
               />
             </a>
             <a
-              href="https://rdr.lucashanson.dk/gh"
+              href="https://links.lucashanson.dk/gh"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -60,13 +60,13 @@ function Footer() {
               />
             </a>
             <a
-              href="https://linktr.ee/lucashanson"
+              href="https://links.lucashanson.dk"
               target="_blank"
               rel="noreferrer"
             >
               <img
-                src="https://img.shields.io/badge/Linktree-00A79D?logo=linktree&logoColor=white"
-                alt="Linktree"
+                src="https://img.shields.io/badge/Links-00A79D?logo=linktree&logoColor=white"
+                alt="Links"
               />
             </a>
           </div>

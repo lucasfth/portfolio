@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@heroui/react": "^2.8.4",
     "@heroui/navbar": "^2.2.24",
-    "@heroui/react": "^2.8.2",
     "@shadcn/ui": "^0.0.4",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.8.0",

@@ -47,12 +47,12 @@ const generateRSS = () => {
       </channel>
     </rss>`;
 
-  const buildDir = path.join(__dirname, "..", "build");
-  if (!fs.existsSync(buildDir)) {
-    fs.mkdirSync(buildDir, { recursive: true });
+  const outDir = path.join(__dirname, "..", "out");
+  if (!fs.existsSync(outDir)) {
+    fs.mkdirSync(outDir, { recursive: true });
   }
 
-  fs.writeFileSync(path.join(buildDir, "rss.xml"), rssContent);
+  fs.writeFileSync(path.join(outDir, "rss.xml"), rssContent);
   console.log("RSS feed generated successfully!");
 };
 

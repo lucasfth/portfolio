@@ -12,7 +12,7 @@
     "normalize-markdown": "find out/content -type f -name '*.md' -exec sed -i 's/\\.JPG/\\.jpg/g' {} \\;",
     "predeploy": "bun run build && bun run normalize-extensions && bun run normalize-markdown",
     "deploy": "gh-pages -d out",
-    "copy-content": "cp -r public/content out/ && cp -r public/images out/ && cp public/CNAME out/ && cp public/404.html out/ && cp public/sitemap.xml out/ && cp public/robots.txt out/ && cp public/files out/ -r"
+    "copy-content": "cp -r public/content out/ && cp -r public/images out/ && cp public/CNAME out/ && cp public/404.html out/ && cp public/sitemap.xml out/ && cp public/robots.txt out/ && cp public/files out/ -r && cp public/.nojekyll out/"
   },
   "dependencies": {
     "next": "^15.1.6",

@@ -1,33 +1,25 @@
-'use client'
+import ProjectDetailClient from './ProjectDetailClient'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
-import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
-import TextSection from '@/components/TextSection'
-import ImageHeader from '@/components/ImageHeader'
+export function generateStaticParams() {
+  return [
+    { projectId: 'bachelor' },
+    { projectId: 'dhi' },
+    { projectId: 'judge-it' },
+    { projectId: 'repolicense' },
+  ]
+}
 
-export default function ProjectDetail() {
-  const params = useParams()
-  const projectId = params.projectId as string
-  const [markdown, setMarkdown] = useState('')
-
-  useEffect(() => {
-    fetch(`/content/projects/${projectId}.md`)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok')
-        }
-        return response.text()
-      })
-      .then(text => {
-        setMarkdown(text)
-      })
-      .catch(err => console.error('Error loading markdown:', err))
-  }, [projectId])
-
-  return (
-    <>
-      <ImageHeader markdown={markdown} />
-      <TextSection markdown={markdown} />
-    </>
-  )
+export default async function ProjectDetail({ params }: { params: Promise<{ projectId: string }> }) {
+  const { projectId } = await params
+  try {
+    const markdownPath = join(process.cwd(), 'public', 'content', 'projects', `${projectId}.md`)
+    const markdown = readFileSync(markdownPath, 'utf8')
+    
+    return <ProjectDetailClient markdown={markdown} />
+  } catch (err) {
+    console.error('Error loading markdown:', err)
+    return <ProjectDetailClient markdown="" />
+  }
 }

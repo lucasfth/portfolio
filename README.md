@@ -1,6 +1,6 @@
-# Getting Started with Create React App
+# Portfolio Website
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+This project is a modern portfolio website built with [Next.js](https://nextjs.org/) and powered by the [Bun](https://bun.sh/) runtime.
 
 ## Reasoning
 
@@ -13,21 +13,30 @@ Since creating my old one I have also gotten more obsessed with photography, so 
 
 You can visit the deployed version [here](https://lucashanson.dk).
 
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router with Static Export)
+- **Runtime**: Bun 1.3
+- **Language**: TypeScript
+- **Content**: Markdown files
+- **Styling**: CSS
+- **Deployment**: GitHub Pages
+
 ## Available Scripts
 
 Run locally with reload:
 
-`npm run start`
+`bun run dev`
 
 Will be available at [http://localhost:3000](http://localhost:3000)
 
 ### Build and deploy
 
-`npm run build`
+`bun run build`
 
 Then:
 
-`npm run deploy`
+`bun run deploy`
 
 ## Want to use this project?
 
@@ -39,14 +48,15 @@ To get started with using this project, you need to:
 1. Fork the repository
 2. Clone the repository
 3. `cd` into the repository
-4. Run `npm install`
-5. Run `npm run start`
+4. Install Bun (if not already installed): `curl -fsSL https://bun.sh/install | bash`
+5. Run `bun install`
+6. Run `bun run dev`
 
 When you get to building and deploying, I have unfortunately hardcoded my own domain in a few places.
 You must therefore need to change the domain in the following files:
 
 - `package.json`
 - `CNAME`
-- `index.html`
+- `scripts/generateRSS.js`
 
 There might be more places, but these are the primary ones.

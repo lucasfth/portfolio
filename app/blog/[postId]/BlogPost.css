@@ -1,0 +1,53 @@
+.blog-comments-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.blog-comments-section .container {
+  width: 100%;
+  max-width: 100%;
+}
+
+.comments-container {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  overflow: visible;
+  height: auto;
+}
+
+#cusdis_thread iframe {
+  width: 100% !;
+  height: auto; 
+  min-height: 500px;
+  position: relative;
+  overflow: visible;
+  box-sizing: content-box ;
+}
+
+#cusdis_thread {
+  width: 100%;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.blog-comments-section {
+  width: 100%;
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
+.blog-comments-section .container {
+  width: 100%;
+  max-width: 100%;
+  padding: 0;
+  padding-right: 25px;
+  box-sizing: border-box;
+}

@@ -1,0 +1,84 @@
+.gallery-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.gallery-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px; /* Use gap instead of margin for consistent spacing */
+}
+
+.gallery-item {
+  flex: 1 1 calc(25% - 20px);
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  aspect-ratio: 1; /* Modern approach for aspect ratio */
+}
+
+/* Fallback for browsers that don't support aspect-ratio */
+@supports not (aspect-ratio: 1) {
+  .gallery-item::before {
+    content: '';
+    display: block;
+    padding-top: 100%;
+  }
+}
+
+.gallery-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.gallery-item:hover {
+  transform: scale(1.02);
+}
+
+/* Styles for enlarged image overlay */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.overlay-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+}
+
+.enlarged-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive layout adjustments */
+@media screen and (max-width: 800px) {
+  .gallery-item {
+    flex: 1 1 calc(50% - 20px); /* Two columns */
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .gallery-item {
+    flex: 1 1 100%; /* Single column */
+  }
+}

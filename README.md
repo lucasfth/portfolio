@@ -15,12 +15,12 @@ You can visit the deployed version [here](https://lucashanson.dk).
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router with Static Export)
+- **Framework**: Next.js 15 (App Router)
 - **Runtime**: Bun 1.3
 - **Language**: TypeScript
 - **Content**: Markdown files
 - **Styling**: CSS
-- **Deployment**: GitHub Pages
+- **Deployment**: Vercel (recommended)
 
 ## Available Scripts
 
@@ -30,13 +30,15 @@ Run locally with reload:
 
 Will be available at [http://localhost:3000](http://localhost:3000)
 
-### Build and deploy
+### Build and deploy (Vercel)
 
-`bun run build`
+Local build:
 
-Then:
+```bash
+bun run build
+```
 
-`bun run deploy`
+To deploy, push to your GitHub repository and connect it to Vercel. Vercel will run `npm run build` automatically.
 
 ## Want to use this project?
 

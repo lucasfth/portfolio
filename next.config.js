@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
+  // Vercel-ready configuration: remove static export and trailing slash
   images: {
     unoptimized: true,
   },
-  basePath: '',
-  trailingSlash: true,
-}
+  reactStrictMode: true,
+  experimental: {
+    // keep app directory-related experimental flags if needed
+  },
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

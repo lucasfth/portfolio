@@ -1,21 +1,20 @@
 {
   "name": "portfolio",
-  "homepage": "https://lucashanson.dk",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && bun run copy-content && bun run generate-rss",
+  "build": "node scripts/normalize-image-filenames.js && node scripts/generate-image-manifests.js && next build && bun run generate-rss",
+  "prebuild": "node scripts/normalize-image-filenames.js && node scripts/generate-image-manifests.js",
     "start": "next start",
     "generate-rss": "bun scripts/generateRSS.js",
+    "gen-manifests": "node scripts/generate-image-manifests.js",
     "normalize-extensions": "find out/images -type f -name '*.JPG' -exec bash -c 'echo Converting \\\"$1\\\" to lowercase; mv \"$1\" \"${1%.JPG}.jpg\"' _ {} \\; && echo 'Done normalizing extensions'",
     "normalize-markdown": "find out/content -type f -name '*.md' -exec sed -i 's/\\.JPG/\\.jpg/g' {} \\;",
-    "predeploy": "bun run build && bun run normalize-extensions && bun run normalize-markdown",
-    "deploy": "gh-pages -d out",
-    "copy-content": "cp -r public/content out/ && cp -r public/images out/ && cp public/CNAME out/ && cp public/404.html out/ && cp public/sitemap.xml out/ && cp public/robots.txt out/ && cp public/files out/ -r && cp public/.nojekyll out/"
+    "predeploy": "bun run build && bun run normalize-extensions && bun run normalize-markdown"
   },
   "dependencies": {
-    "next": "^15.1.6",
+    "next": "^15.5.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
@@ -27,7 +26,6 @@
     "@types/react": "^19.0.6",
     "@types/react-dom": "^19.0.2",
     "@types/react-syntax-highlighter": "^15.5.13",
-    "gh-pages": "^6.3.0",
     "typescript": "^5.7.3"
   }
 }

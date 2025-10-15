@@ -75,7 +75,7 @@ export default function Footer() {
       <footer className="common-container">
         <div className="inner-container">
           <p>
-            Built using Next.js with Bun runtime and hosted through GitHub Pages
+            Built using Next.js with Bun runtime and hosted through Vercel
             <br />© Lucas Hanson {new Date().getFullYear()}
             <br />
             <a

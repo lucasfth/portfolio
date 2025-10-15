@@ -6,7 +6,7 @@ This project is a modern portfolio website built with [Next.js](https://nextjs.o
 
 My previous portfolio needed to add html for each new page I wanted (you can see the old version [here](https://github.com/lucasfth/lucas-hanson)).
 I wanted to make it easier and mimic a CMS.
-Thus I created this project, which mainly needs new markdown files to create new pages.
+Thus, I created this project, which mainly needs new markdown files to create new pages.
 Though I still need to refer to the files in the code.
 
 Since creating my old one I have also gotten more obsessed with photography, so I wanted to make a portfolio that could showcase my photos better.

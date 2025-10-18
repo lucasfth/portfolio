@@ -14,13 +14,13 @@
     "predeploy": "npm run build && npm run normalize-extensions && npm run normalize-markdown"
   },
   "dependencies": {
+    "@vercel/og": "^0.8.5",
     "next": "^15.5.5",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-markdown": "^10.1.0",
     "react-syntax-highlighter": "^15.6.6",
-    "remark-gfm": "^4.0.1",
-    "@vercel/og": "^1.0.0"
+    "remark-gfm": "^4.0.1"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",

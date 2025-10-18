@@ -11,13 +11,18 @@ export async function GET(req: Request) {
 
     // Try to load a local font if present in /public/fonts; fall back silently if not found.
     let fontData: ArrayBuffer | undefined;
+    let fonts: any[] = [];
     try {
-      const fontUrl = new URL(
-        "../../../../public/fonts/Inter-Bold.ttf",
-        import.meta.url
-      ).toString();
-      const fontResp = await fetch(fontUrl);
-      if (fontResp.ok) fontData = await fontResp.arrayBuffer();
+      const host = req.headers.get("host");
+      const proto = req.headers.get("x-forwarded-proto") || "https";
+      if (host) {
+        const fontUrl = `${proto}://${host}/fonts/Inter-Bold.ttf`;
+        const fontResp = await fetch(fontUrl);
+        if (fontResp.ok) {
+          const data = await fontResp.arrayBuffer();
+          fonts.push({ name: "Inter", data, weight: 700, style: "normal" });
+        }
+      }
     } catch (err) {
       // ignore — font optional
     }

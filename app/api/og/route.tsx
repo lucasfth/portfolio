@@ -7,14 +7,19 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const title = searchParams.get("title") || "Lucas Hanson";
     const subtitle = searchParams.get("subtitle") || "Photography & Software";
-    const image = searchParams.get("image") || "/images/urban/DSCF4550-1.jpg";
+    const imageParam = searchParams.get("image") || "/images/urban/DSCF4550-1.jpg";
+
+    // Build absolute image URL for edge runtime (fetch requires absolute URLs)
+    const host = req.headers.get("host");
+    const proto = req.headers.get("x-forwarded-proto") || "https";
+    const image =
+      imageParam.startsWith("http") || !host
+        ? imageParam
+        : `${proto}://${host}${imageParam}`;
 
     // Try to load a local font if present in /public/fonts; fall back silently if not found.
-    let fontData: ArrayBuffer | undefined;
     let fonts: any[] = [];
     try {
-      const host = req.headers.get("host");
-      const proto = req.headers.get("x-forwarded-proto") || "https";
       if (host) {
         const fontUrl = `${proto}://${host}/fonts/Inter-Bold.ttf`;
         const fontResp = await fetch(fontUrl);
@@ -25,6 +30,43 @@ export async function GET(req: Request) {
       }
     } catch (err) {
       // ignore — font optional
+    }
+
+    // Try to fetch the provided image and convert to a data URL so the renderer
+    // doesn't have to perform a separate external request. If fetch fails,
+    // fall back to the absolute URL string.
+    let imageSrc = image;
+    try {
+      const imgResp = await fetch(image);
+      if (imgResp.ok) {
+        const imgBuf = await imgResp.arrayBuffer();
+        const contentType = imgResp.headers.get("content-type") || "image/jpeg";
+        // Edge runtimes may not expose Node Buffer; use a safe fallback.
+        let base64: string = "";
+        try {
+          base64 = typeof Buffer !== "undefined"
+            ? Buffer.from(imgBuf).toString("base64")
+            : (function (arrayBuffer: ArrayBuffer) {
+                let binary = "";
+                const bytes = new Uint8Array(arrayBuffer);
+                const chunkSize = 0x8000;
+                for (let i = 0; i < bytes.length; i += chunkSize) {
+                  const chunk = bytes.subarray(i, i + chunkSize);
+                  binary += String.fromCharCode.apply(null, Array.from(chunk) as any);
+                }
+                return typeof btoa === "function" ? btoa(binary) : "";
+              })(imgBuf);
+        } catch (e) {
+          // If conversion fails, leave base64 empty and fall back to the original URL
+          base64 = "";
+        }
+
+        if (base64) {
+          imageSrc = `data:${contentType};base64,${base64}`;
+        }
+      }
+    } catch (err) {
+      // keep imageSrc as the original absolute URL
     }
 
     // Compose the image using simple inline styles supported by the runtime
@@ -73,7 +115,7 @@ export async function GET(req: Request) {
           >
             {/* Show the provided image as a contained square if available */}
             <img
-              src={image}
+              src={imageSrc}
               alt="preview"
               width={420}
               height={420}
@@ -89,16 +131,7 @@ export async function GET(req: Request) {
       {
         width: 1200,
         height: 630,
-        fonts: fontData
-          ? [
-              {
-                name: "Inter",
-                data: fontData,
-                weight: 700,
-                style: "normal",
-              },
-            ]
-          : [],
+        fonts: fonts,
       }
     );
 

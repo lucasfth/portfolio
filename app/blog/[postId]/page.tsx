@@ -2,24 +2,35 @@ import BlogPostClient from "./BlogPostClient";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-export async function generateMetadata({ params }: { params: { postId: string } }) {
+export async function generateMetadata({ params }: any) {
   try {
-    const markdownPath = join(process.cwd(), "public", "content", "blog", `${params.postId}.md`);
+    const markdownPath = join(
+      process.cwd(),
+      "public",
+      "content",
+      "blog",
+      `${params.postId}.md`
+    );
     const content = readFileSync(markdownPath, "utf8");
     // simple extraction: first heading and first non-empty paragraph
     const lines = content.split("\n");
     const titleLine = lines.find((l) => l.startsWith("#")) || "Blog post";
     const title = titleLine.replace(/^#+\s*/, "");
-    const firstPara = lines.find((l) => l.trim() && !l.startsWith("#") && !l.startsWith("![")) || "";
+    const firstPara =
+      lines.find(
+        (l) => l.trim() && !l.startsWith("#") && !l.startsWith("![")
+      ) || "";
     const description = firstPara.trim().slice(0, 160);
 
-  const siteUrl = process.env.SITE_URL || "https://lucashanson.dk";
-  const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(title)}&subtitle=${encodeURIComponent("Lucas Hanson Blog")}`;
+    const siteUrl = process.env.SITE_URL || "https://lucashanson.dk";
+    const ogImageUrl = `${siteUrl}/api/og?title=${encodeURIComponent(
+      title
+    )}&subtitle=${encodeURIComponent("Lucas Hanson Blog")}`;
 
     return {
       title,
       description,
-      alternates: { canonical: `https://lucashanson.dk/blog/${params.postId}` },
+      alternates: { canonical: `${siteUrl}/blog/${params.postId}` },
       openGraph: {
         title,
         description,
@@ -42,12 +53,8 @@ export function generateStaticParams() {
   return [{ postId: "downsize-images" }, { postId: "first-post" }];
 }
 
-export default async function BlogPost({
-  params,
-}: {
-  params: Promise<{ postId: string }>;
-}) {
-  const { postId } = await params;
+export default function BlogPost({ params }: any) {
+  const { postId } = params as { postId: string };
   try {
     const markdownPath = join(
       process.cwd(),

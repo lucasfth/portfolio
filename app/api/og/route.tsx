@@ -7,7 +7,8 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const title = searchParams.get("title") || "Lucas Hanson";
     const subtitle = searchParams.get("subtitle") || "Photography & Software";
-    const imageParam = searchParams.get("image") || "/images/urban/DSCF4550-1.jpg";
+    const imageParam =
+      searchParams.get("image") || "/images/urban/DSCF4550-1.jpg";
 
     // Build absolute image URL for edge runtime (fetch requires absolute URLs)
     const host = req.headers.get("host");
@@ -44,18 +45,22 @@ export async function GET(req: Request) {
         // Edge runtimes may not expose Node Buffer; use a safe fallback.
         let base64: string = "";
         try {
-          base64 = typeof Buffer !== "undefined"
-            ? Buffer.from(imgBuf).toString("base64")
-            : (function (arrayBuffer: ArrayBuffer) {
-                let binary = "";
-                const bytes = new Uint8Array(arrayBuffer);
-                const chunkSize = 0x8000;
-                for (let i = 0; i < bytes.length; i += chunkSize) {
-                  const chunk = bytes.subarray(i, i + chunkSize);
-                  binary += String.fromCharCode.apply(null, Array.from(chunk) as any);
-                }
-                return typeof btoa === "function" ? btoa(binary) : "";
-              })(imgBuf);
+          base64 =
+            typeof Buffer !== "undefined"
+              ? Buffer.from(imgBuf).toString("base64")
+              : (function (arrayBuffer: ArrayBuffer) {
+                  let binary = "";
+                  const bytes = new Uint8Array(arrayBuffer);
+                  const chunkSize = 0x8000;
+                  for (let i = 0; i < bytes.length; i += chunkSize) {
+                    const chunk = bytes.subarray(i, i + chunkSize);
+                    binary += String.fromCharCode.apply(
+                      null,
+                      Array.from(chunk) as any
+                    );
+                  }
+                  return typeof btoa === "function" ? btoa(binary) : "";
+                })(imgBuf);
         } catch (e) {
           // If conversion fails, leave base64 empty and fall back to the original URL
           base64 = "";

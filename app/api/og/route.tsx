@@ -10,13 +10,43 @@ export async function GET(req: Request) {
     const imageParam =
       searchParams.get("image") || "/images/urban/DSCF4550-1.jpg";
 
+    // Validate imageParam before use to prevent XSS/SSRF
+    function isValidImagePath(param: string): boolean {
+      // Allow only http/https URLs, or local images under /images/
+      try {
+        if (param.startsWith("/images/")) {
+          return true;
+        }
+        const url = new URL(param, "http://dummy/");
+        const scheme = url.protocol;
+        // Allow only http and https
+        if (scheme === "http:" || scheme === "https:") {
+          // Optionally, block .svg files remotely to avoid SVG script
+          if (url.pathname.toLowerCase().endsWith(".svg")) {
+            return false;
+          }
+          return true;
+        }
+        // Block all others (data:, javascript:, etc.)
+        return false;
+      } catch (e) {
+        // Malformed URL
+        return false;
+      }
+    }
+
+    // If imageParam fails validation, fall back to safe default
+    const resolvedImageParam = isValidImagePath(imageParam)
+      ? imageParam
+      : "/images/urban/DSCF4550-1.jpg";
+
     // Build absolute image URL for edge runtime (fetch requires absolute URLs)
     const host = req.headers.get("host");
     const proto = req.headers.get("x-forwarded-proto") || "https";
     const image =
-      imageParam.startsWith("http") || !host
-        ? imageParam
-        : `${proto}://${host}${imageParam}`;
+      resolvedImageParam.startsWith("http") || !host
+        ? resolvedImageParam
+        : `${proto}://${host}${resolvedImageParam}`;
 
     // Try to load a local font if present in /public/fonts; fall back silently if not found.
     let fonts: any[] = [];

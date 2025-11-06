@@ -7,8 +7,12 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const title = searchParams.get("title") || "Lucas Hanson";
     const subtitle = searchParams.get("subtitle") || "Photography & Software";
+    const imageParamRaw = searchParams.get("image");
+    // Only accept image paths beginning with "/images/" to prevent SSRF attacks.
     const imageParam =
-      searchParams.get("image") || "/images/urban/DSCF4550-1.jpg";
+      imageParamRaw && imageParamRaw.startsWith("/images/")
+        ? imageParamRaw
+        : "/images/urban/DSCF4550-1.jpg";
 
     // Build absolute image URL for edge runtime (fetch requires absolute URLs)
     const host = req.headers.get("host");

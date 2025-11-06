@@ -7,8 +7,32 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const title = searchParams.get("title") || "Lucas Hanson";
     const subtitle = searchParams.get("subtitle") || "Photography & Software";
-    const imageParam =
-      searchParams.get("image") || "/images/urban/DSCF4550-1.jpg";
+    // Allow only images from /images/ directory (relative path) or specified trusted domains
+    function validateImageParam(param: string): string {
+      // Allow relative paths that begin with "/images/"
+      if (param && param.startsWith("/images/")) {
+        return param;
+      }
+      // Allow absolute URLs ONLY if they point to trusted host(s)
+      try {
+        const url = new URL(param);
+        const allowedHosts = new Set([
+          "lucashanson.dk",
+          "www.lucashanson.dk",
+          // (add further allowed hosts as needed)
+        ]);
+        if (allowedHosts.has(url.hostname)) {
+          return param;
+        }
+      } catch (e) {
+        // Not a valid absolute URL, fall through to default
+      }
+      // Otherwise, fallback to default image
+      return "/images/urban/DSCF4550-1.jpg";
+    }
+
+    const rawImageParam = searchParams.get("image") || "/images/urban/DSCF4550-1.jpg";
+    const imageParam = validateImageParam(rawImageParam);
 
     // Build absolute image URL for edge runtime (fetch requires absolute URLs)
     const host = req.headers.get("host");

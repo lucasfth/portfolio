@@ -2,14 +2,19 @@ import BlogPostClient from "./BlogPostClient";
 import { readFileSync } from "fs";
 import { join } from "path";
 
-export async function generateMetadata({ params }: any) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ postId: string }>;
+}) {
+  const { postId } = await params;
   try {
     const markdownPath = join(
       process.cwd(),
       "public",
       "content",
       "blog",
-      `${params.postId}.md`
+      `${postId}.md`
     );
     const content = readFileSync(markdownPath, "utf8");
     // simple extraction: first heading and first non-empty paragraph
@@ -30,11 +35,11 @@ export async function generateMetadata({ params }: any) {
     return {
       title,
       description,
-      alternates: { canonical: `${siteUrl}/blog/${params.postId}` },
+      alternates: { canonical: `${siteUrl}/blog/${postId}` },
       openGraph: {
         title,
         description,
-        url: `https://lucashanson.dk/blog/${params.postId}`,
+        url: `https://lucashanson.dk/blog/${postId}`,
         images: [ogImageUrl],
       },
       twitter: {
@@ -53,8 +58,12 @@ export function generateStaticParams() {
   return [{ postId: "downsize-images" }, { postId: "first-post" }];
 }
 
-export default function BlogPost({ params }: any) {
-  const { postId } = params as { postId: string };
+export default async function BlogPost({
+  params,
+}: {
+  params: Promise<{ postId: string }>;
+}) {
+  const { postId } = await params;
   try {
     const markdownPath = join(
       process.cwd(),

@@ -14,9 +14,7 @@ export async function GET(req: Request) {
     // Only allow local images under /images/, or remote images from allow-listed hostnames.
     function isValidImagePath(param: string): boolean {
       const allowedRemoteHosts = [
-        "your-cdn.example.com",
-        "yourdomain.com"
-        // Add other trusted remote hostnames here
+        "lucashanson.dk"
       ];
       try {
         if (param.startsWith("/images/")) {

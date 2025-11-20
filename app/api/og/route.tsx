@@ -11,8 +11,13 @@ export async function GET(req: Request) {
       searchParams.get("image") || "/images/urban/DSCF4550-1.jpg";
 
     // Validate imageParam before use to prevent XSS/SSRF
+    // Only allow local images under /images/, or remote images from allow-listed hostnames.
     function isValidImagePath(param: string): boolean {
-      // Allow only http/https URLs, or local images under /images/
+      const allowedRemoteHosts = [
+        "your-cdn.example.com",
+        "yourdomain.com"
+        // Add other trusted remote hostnames here
+      ];
       try {
         if (param.startsWith("/images/")) {
           return true;
@@ -21,11 +26,15 @@ export async function GET(req: Request) {
         const scheme = url.protocol;
         // Allow only http and https
         if (scheme === "http:" || scheme === "https:") {
-          // Optionally, block .svg files remotely to avoid SVG script
+          // Block .svg files remotely to avoid SVG script injection
           if (url.pathname.toLowerCase().endsWith(".svg")) {
             return false;
           }
-          return true;
+          // Restrict to allow-listed hostnames only
+          if (allowedRemoteHosts.includes(url.hostname)) {
+            return true;
+          }
+          return false;
         }
         // Block all others (data:, javascript:, etc.)
         return false;

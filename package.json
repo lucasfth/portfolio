@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@vercel/og": "^0.8.5",
-    "next": "^16.0.7",
+    "next": "^16.1.0-canary.19",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",

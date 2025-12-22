@@ -14,7 +14,7 @@
     "predeploy": "npm run build && npm run normalize-extensions && npm run normalize-markdown"
   },
   "dependencies": {
-    "@vercel/og": "^0.8.5",
+    "@vercel/og": "^0.8.6",
     "next": "^16.0.10",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",

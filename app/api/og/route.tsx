@@ -17,24 +17,26 @@ export async function GET(req: Request) {
         "lucashanson.dk"
       ];
       try {
+        // Always allow local static images served from this app.
         if (param.startsWith("/images/")) {
           return true;
         }
-        const url = new URL(param, "http://dummy/");
+        // For remote images, require a fully-qualified HTTPS URL.
+        const url = new URL(param);
         const scheme = url.protocol;
-        // Allow only http and https
-        if (scheme === "http:" || scheme === "https:") {
-          // Block .svg files remotely to avoid SVG script injection
+        // Allow only HTTPS for remote images.
+        if (scheme === "https:") {
+          // Block .svg files remotely to avoid SVG script injection.
           if (url.pathname.toLowerCase().endsWith(".svg")) {
             return false;
           }
-          // Restrict to allow-listed hostnames only
+          // Restrict to allow-listed hostnames only (no IPs, localhost, etc.).
           if (allowedRemoteHosts.includes(url.hostname)) {
             return true;
           }
           return false;
         }
-        // Block all others (data:, javascript:, etc.)
+        // Block all other schemes (http, data:, javascript:, file:, etc.).
         return false;
       } catch (e) {
         // Malformed URL

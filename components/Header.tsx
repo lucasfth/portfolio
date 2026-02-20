@@ -20,32 +20,40 @@ export default function Header() {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <img src="/favicon.ico" alt="Logo" className="logo" />
-        <span className="brand-name">Lucas Hanson</span>
-        <button className="burger-menu" onClick={toggleMenu}>
+        <Link href="/" className="navbar-brand-link">
+          <img src="/favicon.ico" alt="Home" className="logo" />
+          <span className="brand-name">Lucas Hanson</span>
+        </Link>
+        <button
+          className="burger-menu"
+          onClick={toggleMenu}
+          aria-label="Toggle menu"
+          aria-expanded={isOpen}
+          aria-controls="nav-links"
+        >
           ☰
         </button>
       </div>
 
-      <ul className={`nav-links ${isOpen ? "open" : ""}`}>
+      <ul id="nav-links" className={`nav-links ${isOpen ? "open" : ""}`}>
         <li>
           <Link href="/" style={{ fontWeight: "bold" }}>
-            🌤 About me
+            <span role="img" aria-hidden="true">🌤</span> About me
           </Link>
         </li>
         <li>
           <Link href="/projects" style={{ fontWeight: "bold" }}>
-            👨‍💻 Projects
+            <span role="img" aria-hidden="true">👨‍💻</span> Projects
           </Link>
         </li>
         <li>
           <Link href="/blog" style={{ fontWeight: "bold" }}>
-            ✍️ Blog
+            <span role="img" aria-hidden="true">✍️</span> Blog
           </Link>
         </li>
         <li>
           <Link href="/aperture" style={{ fontWeight: "bold" }}>
-            📷 Aperture
+            <span role="img" aria-hidden="true">📷</span> Aperture
           </Link>
         </li>
       </ul>

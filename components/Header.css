@@ -27,6 +27,18 @@
   align-items: center;
 }
 
+.navbar-brand-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+}
+
+.navbar-brand-link:focus-visible {
+  outline: 2px solid black;
+  outline-offset: 2px;
+}
+
 .logo {
   height: 28px; /* Slightly smaller */
   width: 28px;
@@ -43,6 +55,11 @@
   background: none;
   border: none;
   cursor: pointer;
+}
+
+.burger-menu:focus-visible {
+  outline: 2px solid black;
+  outline-offset: 2px;
 }
 
 .nav-links {
@@ -67,6 +84,11 @@
 
 .nav-links a:hover {
   text-decoration: underline;
+}
+
+.nav-links a:focus-visible {
+  outline: 2px solid black;
+  outline-offset: 2px;
 }
 
 @media (max-width: 768px) {

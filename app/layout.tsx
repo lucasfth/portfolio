@@ -75,9 +75,12 @@ export default function RootLayout({
         />
       </head>
       <body>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <div className="App">
           <Header />
-          {children}
+          <main id="main-content">{children}</main>
           <Footer />
         </div>
       </body>

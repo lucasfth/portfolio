@@ -20,10 +20,15 @@ export default function Header() {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <img src="/favicon.ico" alt="Logo" className="logo" />
+        <img src="/favicon.ico" alt="" className="logo" />
         <span className="brand-name">Lucas Hanson</span>
-        <button className="burger-menu" onClick={toggleMenu}>
-          ☰
+        <button
+          className="burger-menu"
+          onClick={toggleMenu}
+          aria-label="Toggle navigation menu"
+          aria-expanded={isOpen}
+        >
+          <span aria-hidden="true">☰</span>
         </button>
       </div>
 

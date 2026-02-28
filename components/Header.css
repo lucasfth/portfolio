@@ -25,6 +25,8 @@
 .navbar-brand {
   display: flex;
   align-items: center;
+  text-decoration: none;
+  color: inherit;
 }
 
 .logo {
@@ -63,10 +65,13 @@
   font-size: 16px; /* Slightly smaller text */
   color: black;
   padding: 6px 10px; /* Reduce padding for a tighter fit */
+  font-weight: bold;
 }
 
-.nav-links a:hover {
+.nav-links a:hover,
+.nav-links a.active {
   text-decoration: underline;
+  text-underline-offset: 4px;
 }
 
 @media (max-width: 768px) {

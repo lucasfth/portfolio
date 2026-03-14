@@ -42,22 +42,38 @@ export default function Header() {
 
       <ul className={`nav-links ${isOpen ? "open" : ""}`}>
         <li>
-          <Link href="/" className={isActive("/") ? "active" : ""}>
+          <Link
+            href="/"
+            className={isActive("/") ? "active" : ""}
+            aria-current={isActive("/") ? "page" : undefined}
+          >
             🌤 About me
           </Link>
         </li>
         <li>
-          <Link href="/projects" className={isActive("/projects") ? "active" : ""}>
+          <Link
+            href="/projects"
+            className={isActive("/projects") ? "active" : ""}
+            aria-current={isActive("/projects") ? "page" : undefined}
+          >
             👨‍💻 Projects
           </Link>
         </li>
         <li>
-          <Link href="/blog" className={isActive("/blog") ? "active" : ""}>
+          <Link
+            href="/blog"
+            className={isActive("/blog") ? "active" : ""}
+            aria-current={isActive("/blog") ? "page" : undefined}
+          >
             ✍️ Blog
           </Link>
         </li>
         <li>
-          <Link href="/aperture" className={isActive("/aperture") ? "active" : ""}>
+          <Link
+            href="/aperture"
+            className={isActive("/aperture") ? "active" : ""}
+            aria-current={isActive("/aperture") ? "page" : undefined}
+          >
             📷 Aperture
           </Link>
         </li>

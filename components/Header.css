@@ -27,6 +27,17 @@
   align-items: center;
   text-decoration: none;
   color: inherit;
+  transition: opacity 0.2s ease;
+}
+
+.navbar-brand:hover {
+  opacity: 0.8;
+}
+
+.navbar-brand:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+  border-radius: 4px;
 }
 
 .logo {
@@ -45,6 +56,18 @@
   background: none;
   border: none;
   cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.burger-menu:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.burger-menu:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 .nav-links {
@@ -74,13 +97,20 @@
   text-underline-offset: 4px;
 }
 
+.nav-links a:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 4px;
+  text-decoration: underline;
+}
+
 @media (max-width: 768px) {
   .burger-menu {
     display: block;
   }
 
   .nav-links {
-    display: none;
+    display: flex;
     flex-direction: column;
     position: absolute;
     top: 50px;
@@ -92,10 +122,18 @@
     padding: 0 16px; /* Add padding to ensure links are within the viewport */
     box-sizing: border-box; /* Include padding in the element's total width and height */
     background-color: var(--background-color); /* Use the solid background color */
+
+    /* Animation properties */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
   }
 
   .nav-links.open {
-    display: flex;
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
   }
 
   .nav-links li {

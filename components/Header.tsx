@@ -34,10 +34,10 @@ export default function Header() {
       <button
         className="burger-menu"
         onClick={toggleMenu}
-        aria-label="Toggle navigation menu"
+        aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={isOpen}
       >
-        ☰
+        {isOpen ? "✕" : "☰"}
       </button>
 
       <ul className={`nav-links ${isOpen ? "open" : ""}`}>
@@ -47,7 +47,7 @@ export default function Header() {
             className={isActive("/") ? "active" : ""}
             aria-current={isActive("/") ? "page" : undefined}
           >
-            🌤 About me
+            <span aria-hidden="true">🌤</span> About me
           </Link>
         </li>
         <li>
@@ -56,7 +56,7 @@ export default function Header() {
             className={isActive("/projects") ? "active" : ""}
             aria-current={isActive("/projects") ? "page" : undefined}
           >
-            👨‍💻 Projects
+            <span aria-hidden="true">👨‍💻</span> Projects
           </Link>
         </li>
         <li>
@@ -65,7 +65,7 @@ export default function Header() {
             className={isActive("/blog") ? "active" : ""}
             aria-current={isActive("/blog") ? "page" : undefined}
           >
-            ✍️ Blog
+            <span aria-hidden="true">✍️</span> Blog
           </Link>
         </li>
         <li>
@@ -74,7 +74,7 @@ export default function Header() {
             className={isActive("/aperture") ? "active" : ""}
             aria-current={isActive("/aperture") ? "page" : undefined}
           >
-            📷 Aperture
+            <span aria-hidden="true">📷</span> Aperture
           </Link>
         </li>
       </ul>

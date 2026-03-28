@@ -9,3 +9,7 @@
 ## 2025-05-17 - [Smooth Transitions & Reduced Motion]
 **Learning:** Global UX enhancements like `scroll-behavior: smooth` should always be gated by a `prefers-reduced-motion: no-preference` media query to ensure accessibility for users with vestibular disorders. Similarly, mobile menu transitions should be handled with CSS properties like `opacity`, `transform`, and `visibility` instead of `display: none` to provide a polished feel while maintaining screen reader compatibility.
 **Action:** Wrap smooth scrolling and other motion-heavy UX touches in a media query that respects user motion preferences. Use `visibility: hidden` in conjunction with `opacity: 0` to properly manage accessibility for transitioning elements.
+
+## 2025-05-18 - [Modal Accessibility and Scroll Management]
+**Learning:** For a truly accessible modal experience, it is critical to handle keyboard interactions like the `Escape` key for closing and manage body scroll locking to prevent "scroll leak" behind the overlay. Using semantic `<button>` elements for image triggers instead of generic `<div>` tags ensures that screen readers and keyboard users can interact with gallery items.
+**Action:** Always implement an `Escape` key listener for modals and use `document.body.style.overflow = 'hidden'` (and restore it) to lock background scrolling. Use semantic buttons with descriptive `aria-label`s for all interactive gallery items.

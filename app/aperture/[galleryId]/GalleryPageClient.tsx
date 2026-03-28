@@ -24,6 +24,20 @@ export default function GalleryPageClient({
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
   useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setEnlargedImage(null);
+    };
+    if (enlargedImage) {
+      window.addEventListener("keydown", handleEsc);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+      document.body.style.overflow = "";
+    };
+  }, [enlargedImage]);
+
+  useEffect(() => {
     const getAssetPath = (path: string) => {
       if (
         process.env.NODE_ENV === "development" ||
@@ -116,10 +130,11 @@ export default function GalleryPageClient({
       <div className="gallery-container">
         <div className="gallery-grid">
           {images.map((image, index) => (
-            <div
+            <button
               key={index}
               className="gallery-item"
               onClick={() => handleImageClick(image.src)}
+              aria-label={`Enlarge image ${image.alt}`}
             >
               <img
                 src={image.src}
@@ -127,14 +142,23 @@ export default function GalleryPageClient({
                 className="gallery-image"
                 loading="lazy"
               />
-            </div>
+            </button>
           ))}
         </div>
       </div>
 
       {/* Enlarged Image Overlay */}
       {enlargedImage && (
-        <div className="overlay" onClick={closeOverlay}>
+        <div
+          className="overlay"
+          onClick={closeOverlay}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Enlarged image view"
+        >
+          <button className="close-overlay" onClick={closeOverlay} aria-label="Close enlarged image">
+            ✕
+          </button>
           <div className="overlay-content">
             <img
               src={enlargedImage}

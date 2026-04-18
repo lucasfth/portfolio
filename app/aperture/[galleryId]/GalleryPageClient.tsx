@@ -23,31 +23,29 @@ export default function GalleryPageClient({
   const [error, setError] = useState<string | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
 
+  const navigate = (dir: number) => {
+    const i = images.findIndex((img) => img.src === enlargedImage);
+    if (i !== -1) setEnlargedImage(images[(i + dir + images.length) % images.length].src);
+  };
+
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
+    const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") setEnlargedImage(null);
+      if (e.key === "ArrowRight") navigate(1);
+      if (e.key === "ArrowLeft") navigate(-1);
     };
     if (enlargedImage) {
-      window.addEventListener("keydown", handleEsc);
+      window.addEventListener("keydown", onKey);
       document.body.style.overflow = "hidden";
     }
     return () => {
-      window.removeEventListener("keydown", handleEsc);
+      window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [enlargedImage]);
+  }, [enlargedImage, images]);
 
   useEffect(() => {
-    const getAssetPath = (path: string) => {
-      if (
-        process.env.NODE_ENV === "development" ||
-        (typeof window !== "undefined" &&
-          window.location.hostname === "localhost")
-      ) {
-        return path;
-      }
-      return path;
-    };
+    const getAssetPath = (path: string) => path;
 
     const locations = [
       `/content/aperture/${galleryId}.md`,
@@ -81,22 +79,16 @@ export default function GalleryPageClient({
     const fetchGalleryImages = (folderName: string) => {
       fetch(`/images/${folderName}/manifest.json`)
         .then((response) => {
-          if (!response.ok) {
-            throw new Error("Manifest not found");
-          }
+          if (!response.ok) throw new Error("Manifest not found");
           return response.json();
         })
         .then((data) => {
-          if (data && data.images) {
-            setImages(
-              data.images.map((img: string) => ({
-                src: getAssetPath(`/images/${galleryId}/${img}`),
-                alt: img.replace(/\.\w+$/, ""),
-              }))
-            );
-          } else {
-            throw new Error("No images in manifest");
-          }
+          if (data?.images) {
+            setImages(data.images.map((img: string) => ({
+              src: getAssetPath(`/images/${galleryId}/${img}`),
+              alt: img.replace(/\.\w+$/, ""),
+            })));
+          } else throw new Error("No images in manifest");
           setLoading(false);
         })
         .catch((err) => {
@@ -106,66 +98,30 @@ export default function GalleryPageClient({
     };
   }, [galleryId]);
 
-  const handleImageClick = (imageSrc: string) => {
-    setEnlargedImage(imageSrc);
-  };
-
-  const closeOverlay = () => {
-    setEnlargedImage(null);
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-
-  if (error) {
-    return <div>Error: {error}</div>;
-  }
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
     <div>
       <ImageHeader markdown={markdown} />
-
-      {/* Image Grid */}
       <div className="gallery-container">
         <div className="gallery-grid">
           {images.map((image, index) => (
-            <button
-              key={index}
-              className="gallery-item"
-              onClick={() => handleImageClick(image.src)}
-              aria-label={`Enlarge image ${image.alt}`}
-            >
-              <img
-                src={image.src}
-                alt={image.alt}
-                className="gallery-image"
-                loading="lazy"
-              />
+            <button key={index} className="gallery-item" onClick={() => setEnlargedImage(image.src)} aria-label={`Enlarge image ${image.alt}`}>
+              <img src={image.src} alt={image.alt} className="gallery-image" loading="lazy" />
             </button>
           ))}
         </div>
       </div>
 
-      {/* Enlarged Image Overlay */}
       {enlargedImage && (
-        <div
-          className="overlay"
-          onClick={closeOverlay}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Enlarged image view"
-        >
-          <button className="close-overlay" onClick={closeOverlay} aria-label="Close enlarged image">
-            ✕
-          </button>
-          <div className="overlay-content">
-            <img
-              src={enlargedImage}
-              alt="Enlarged"
-              className="enlarged-image"
-            />
+        <div className="overlay" onClick={() => setEnlargedImage(null)} role="dialog" aria-modal="true" aria-label="Enlarged image view">
+          <button className="close-overlay" onClick={() => setEnlargedImage(null)} aria-label="Close enlarged image">✕</button>
+          <button className="nav-button prev" onClick={(e) => { e.stopPropagation(); navigate(-1); }} aria-label="Previous image">‹</button>
+          <div className="overlay-content" onClick={(e) => e.stopPropagation()}>
+            <img src={enlargedImage} alt="Enlarged" className="enlarged-image" />
           </div>
+          <button className="nav-button next" onClick={(e) => { e.stopPropagation(); navigate(1); }} aria-label="Next image">›</button>
         </div>
       )}
       <TextSection markdown={markdown} />

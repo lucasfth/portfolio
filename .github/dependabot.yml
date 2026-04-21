@@ -8,6 +8,13 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      bun-all:
+        patterns:
+          - "*"
     cooldown:
       # 14 days (matches your bunfig.toml)
       default-days: 14
+      semver-major-days: 14
+      semver-minor-days: 14
+      semver-patch-days: 14

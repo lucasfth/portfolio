@@ -13,3 +13,7 @@
 ## 2025-05-18 - [Modal Accessibility and Scroll Management]
 **Learning:** For a truly accessible modal experience, it is critical to handle keyboard interactions like the `Escape` key for closing and manage body scroll locking to prevent "scroll leak" behind the overlay. Using semantic `<button>` elements for image triggers instead of generic `<div>` tags ensures that screen readers and keyboard users can interact with gallery items.
 **Action:** Always implement an `Escape` key listener for modals and use `document.body.style.overflow = 'hidden'` (and restore it) to lock background scrolling. Use semantic buttons with descriptive `aria-label`s for all interactive gallery items.
+
+## 2025-05-19 - [Gallery Keyboard and Visual Navigation]
+**Learning:** Image galleries that open in a full-screen overlay should not only support keyboard dismissal (Escape) but also keyboard navigation (Arrow keys). Relying solely on a "Close" button forces excessive mouse/touch interaction. Providing large, accessible visual navigation buttons helps both mouse and touch users discover that there's more to see.
+**Action:** Always implement `ArrowLeft` and `ArrowRight` keyboard listeners for image overlays. Provide visual "Previous" and "Next" buttons with clear ARIA labels and focus states.

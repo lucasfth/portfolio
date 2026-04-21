@@ -14,9 +14,14 @@ Check out my projects here.
 
 ## 👨‍💻 IT Work experience
 
+### Full Stack Software Engineer & AI Researcher
+
+**[EcoRay](https://ecoray.dk)** - *(Mar 2026 → present)*
+
 ### Developer Intern
 
-**[Kraftvaerk](https://kraftvaerk.com)** - *(Nov 2024 → present)*
+**[Kraftvaerk](https://kraftvaerk.com)** - *(Nov 2024 → Mar 2026)*\
+C# backends. Mostly developed and enhanced API calls, database requests, and functions.
 
 ### Junior QA Analyst
 

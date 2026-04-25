@@ -22,10 +22,14 @@ export default function GalleryPageClient({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+  const [isImageLoading, setIsImageLoading] = useState(false);
 
   const navigate = (dir: number) => {
     const i = images.findIndex((img) => img.src === enlargedImage);
-    if (i !== -1) setEnlargedImage(images[(i + dir + images.length) % images.length].src);
+    if (i !== -1) {
+      setIsImageLoading(true);
+      setEnlargedImage(images[(i + dir + images.length) % images.length].src);
+    }
   };
 
   useEffect(() => {
@@ -107,7 +111,15 @@ export default function GalleryPageClient({
       <div className="gallery-container">
         <div className="gallery-grid">
           {images.map((image, index) => (
-            <button key={index} className="gallery-item" onClick={() => setEnlargedImage(image.src)} aria-label={`Enlarge image ${image.alt}`}>
+            <button
+              key={index}
+              className="gallery-item"
+              onClick={() => {
+                setIsImageLoading(true);
+                setEnlargedImage(image.src);
+              }}
+              aria-label={`Enlarge image ${image.alt}`}
+            >
               <img src={image.src} alt={image.alt} className="gallery-image" loading="lazy" />
             </button>
           ))}
@@ -119,7 +131,13 @@ export default function GalleryPageClient({
           <button className="close-overlay" onClick={() => setEnlargedImage(null)} aria-label="Close enlarged image">✕</button>
           <button className="nav-button prev" onClick={(e) => { e.stopPropagation(); navigate(-1); }} aria-label="Previous image">‹</button>
           <div className="overlay-content" onClick={(e) => e.stopPropagation()}>
-            <img src={enlargedImage} alt="Enlarged" className="enlarged-image" />
+            {isImageLoading && <div className="spinner" aria-hidden="true"></div>}
+            <img
+              src={enlargedImage}
+              alt="Enlarged"
+              className={`enlarged-image ${isImageLoading ? "loading" : ""}`}
+              onLoad={() => setIsImageLoading(false)}
+            />
           </div>
           <button className="nav-button next" onClick={(e) => { e.stopPropagation(); navigate(1); }} aria-label="Next image">›</button>
         </div>

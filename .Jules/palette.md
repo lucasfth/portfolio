@@ -17,3 +17,7 @@
 ## 2025-05-19 - [Gallery Keyboard and Visual Navigation]
 **Learning:** Image galleries that open in a full-screen overlay should not only support keyboard dismissal (Escape) but also keyboard navigation (Arrow keys). Relying solely on a "Close" button forces excessive mouse/touch interaction. Providing large, accessible visual navigation buttons helps both mouse and touch users discover that there's more to see.
 **Action:** Always implement `ArrowLeft` and `ArrowRight` keyboard listeners for image overlays. Provide visual "Previous" and "Next" buttons with clear ARIA labels and focus states.
+
+## 2025-05-20 - [Loading States for High-Res Images]
+**Learning:** High-resolution image galleries can feel unresponsive if there is no feedback during the transition between images or upon initial enlargement. Implementing a loading spinner and using CSS transitions to fade images in once they've loaded prevents "content flashing" and provides clear feedback that the application is working.
+**Action:** Use an `onLoad` handler on image elements to track loading state. Provide a visual indicator (like a spinner) and use a CSS `opacity` transition to smoothly reveal images once fully loaded.

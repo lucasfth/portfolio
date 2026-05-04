@@ -21,3 +21,7 @@
 ## 2025-05-20 - [Loading States for High-Res Images]
 **Learning:** High-resolution image galleries can feel unresponsive if there is no feedback during the transition between images or upon initial enlargement. Implementing a loading spinner and using CSS transitions to fade images in once they've loaded prevents "content flashing" and provides clear feedback that the application is working.
 **Action:** Use an `onLoad` handler on image elements to track loading state. Provide a visual indicator (like a spinner) and use a CSS `opacity` transition to smoothly reveal images once fully loaded.
+
+## 2026-05-02 - [Gallery Accessibility and Keyboard Navigation]
+**Learning:** Wrapping interactive gallery previews in semantic `Link` components instead of generic `div` elements with `onClick` handlers is essential for keyboard accessibility and screen reader support. Adding `:focus-visible` styles ensures a clear visual indicator for users navigating with a keyboard.
+**Action:** Always use semantic interactive elements (like `Link` or `button`) for gallery triggers and ensure they have descriptive `aria-label`s and visible focus states.

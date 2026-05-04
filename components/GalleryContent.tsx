@@ -3,6 +3,7 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import Link from "next/link";
 import "./GalleryContent.css";
 
 interface GalleryContentProps {
@@ -58,21 +59,19 @@ export default function GalleryContent({
               (child: any) => child.tagName === "img"
             );
             if (hasImage) {
+              const galleryId = props.href?.split("/").pop() || "gallery";
               return (
-                <div
+                <Link
+                  href={props.href || "#"}
                   className="image-container"
-                  onClick={() => handleImageContainerClick(props.href)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleImageContainerClick(props.href);
+                  }}
+                  aria-label={`View ${galleryId} gallery`}
                 >
-                  <a
-                    {...props}
-                    className="image-link"
-                    onClick={(e) => {
-                      e.preventDefault();
-                    }}
-                  >
-                    {props.children}
-                  </a>
-                </div>
+                  {props.children}
+                </Link>
               );
             }
 

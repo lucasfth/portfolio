@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import "./Header.css";
@@ -8,10 +8,39 @@ import "./Header.css";
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     setIsOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isOpen) {
+        setIsOpen(false);
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        navRef.current &&
+        !navRef.current.contains(e.target as Node) &&
+        isOpen
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
@@ -25,7 +54,7 @@ export default function Header() {
   };
 
   return (
-    <nav className="navbar">
+    <nav className="navbar" ref={navRef}>
       <Link href="/" className="navbar-brand">
         <img src="/favicon.ico" alt="Logo" className="logo" />
         <span className="brand-name">Lucas Hanson</span>
@@ -36,11 +65,12 @@ export default function Header() {
         onClick={toggleMenu}
         aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
         aria-expanded={isOpen}
+        aria-controls="nav-menu"
       >
-        {isOpen ? "✕" : "☰"}
+        <span aria-hidden="true">{isOpen ? "✕" : "☰"}</span>
       </button>
 
-      <ul className={`nav-links ${isOpen ? "open" : ""}`}>
+      <ul id="nav-menu" className={`nav-links ${isOpen ? "open" : ""}`}>
         <li>
           <Link
             href="/"

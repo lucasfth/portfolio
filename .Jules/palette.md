@@ -25,3 +25,7 @@
 ## 2026-05-02 - [Gallery Accessibility and Keyboard Navigation]
 **Learning:** Wrapping interactive gallery previews in semantic `Link` components instead of generic `div` elements with `onClick` handlers is essential for keyboard accessibility and screen reader support. Adding `:focus-visible` styles ensures a clear visual indicator for users navigating with a keyboard.
 **Action:** Always use semantic interactive elements (like `Link` or `button`) for gallery triggers and ensure they have descriptive `aria-label`s and visible focus states.
+
+## 2025-05-22 - [Mobile Navigation Closure Patterns]
+**Learning:** For mobile navigation menus that overlay content, users expect to be able to close the menu using the `Escape` key or by clicking anywhere outside the menu container. Implementing these listeners on the `window` or `document` only when the menu is open improves the perceived responsiveness and accessibility of the interface.
+**Action:** Use a `useRef` to track the navigation container and implement `Escape` and click-outside listeners in a `useEffect` that triggers when the menu state is `open`.

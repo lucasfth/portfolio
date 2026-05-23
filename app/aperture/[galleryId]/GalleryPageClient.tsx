@@ -21,14 +21,14 @@ export default function GalleryPageClient({
   const [images, setImages] = useState<ImageData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [enlargedImage, setEnlargedImage] = useState<string | null>(null);
+  const [enlargedImage, setEnlargedImage] = useState<ImageData | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
 
   const navigate = (dir: number) => {
-    const i = images.findIndex((img) => img.src === enlargedImage);
+    const i = images.findIndex((img) => img.src === enlargedImage?.src);
     if (i !== -1) {
       setIsImageLoading(true);
-      setEnlargedImage(images[(i + dir + images.length) % images.length].src);
+      setEnlargedImage(images[(i + dir + images.length) % images.length]);
     }
   };
 
@@ -116,7 +116,7 @@ export default function GalleryPageClient({
               className="gallery-item"
               onClick={() => {
                 setIsImageLoading(true);
-                setEnlargedImage(image.src);
+                setEnlargedImage(image);
               }}
               aria-label={`Enlarge image ${image.alt}`}
             >
@@ -128,18 +128,24 @@ export default function GalleryPageClient({
 
       {enlargedImage && (
         <div className="overlay" onClick={() => setEnlargedImage(null)} role="dialog" aria-modal="true" aria-label="Enlarged image view">
-          <button className="close-overlay" onClick={() => setEnlargedImage(null)} aria-label="Close enlarged image">✕</button>
-          <button className="nav-button prev" onClick={(e) => { e.stopPropagation(); navigate(-1); }} aria-label="Previous image">‹</button>
+          <button className="close-overlay" onClick={() => setEnlargedImage(null)} aria-label="Close enlarged image">
+            <span aria-hidden="true">✕</span>
+          </button>
+          <button className="nav-button prev" onClick={(e) => { e.stopPropagation(); navigate(-1); }} aria-label="Previous image">
+            <span aria-hidden="true">‹</span>
+          </button>
           <div className="overlay-content" onClick={(e) => e.stopPropagation()}>
             {isImageLoading && <div className="spinner" aria-hidden="true"></div>}
             <img
-              src={enlargedImage}
-              alt="Enlarged"
+              src={enlargedImage.src}
+              alt={enlargedImage.alt}
               className={`enlarged-image ${isImageLoading ? "loading" : ""}`}
               onLoad={() => setIsImageLoading(false)}
             />
           </div>
-          <button className="nav-button next" onClick={(e) => { e.stopPropagation(); navigate(1); }} aria-label="Next image">›</button>
+          <button className="nav-button next" onClick={(e) => { e.stopPropagation(); navigate(1); }} aria-label="Next image">
+            <span aria-hidden="true">›</span>
+          </button>
         </div>
       )}
       <TextSection markdown={markdown} />

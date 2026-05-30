@@ -2,6 +2,7 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { materialLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import CopyButton from "./CopyButton";
 
 interface TextSectionProps {
   markdown: string;
@@ -20,21 +21,25 @@ export default function TextSection({ markdown }: TextSectionProps) {
           components={{
             code({ node, inline, className, children, ...props }: any) {
               const match = /language-(\w+)/.exec(className || "");
+              const codeContent = String(children).replace(/\n$/, "");
               return !inline && match ? (
-                <SyntaxHighlighter
-                  style={{
-                    ...materialLight,
-                    'pre[class*="language-"]': {
-                      ...materialLight['pre[class*="language-"]'],
-                      borderRadius: "8px",
-                    },
-                  }}
-                  language={match[1]}
-                  PreTag="div"
-                  {...props}
-                >
-                  {String(children).replace(/\n$/, "")}
-                </SyntaxHighlighter>
+                <div className="code-block-wrapper">
+                  <CopyButton text={codeContent} />
+                  <SyntaxHighlighter
+                    style={{
+                      ...materialLight,
+                      'pre[class*="language-"]': {
+                        ...materialLight['pre[class*="language-"]'],
+                        borderRadius: "8px",
+                      },
+                    }}
+                    language={match[1]}
+                    PreTag="div"
+                    {...props}
+                  >
+                    {codeContent}
+                  </SyntaxHighlighter>
+                </div>
               ) : (
                 <code className={className} {...props}>
                   {children}

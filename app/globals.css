@@ -67,6 +67,16 @@ a:focus-visible {
   border-width: 0;
 }
 
+.code-block-wrapper { position: relative; margin: 1.5rem 0; }
+.copy-button {
+  position: absolute; top: 8px; right: 8px; background: rgba(255, 255, 255, 0.8);
+  border: 1px solid #ccc; border-radius: 4px; padding: 4px 8px; font-size: 0.75rem;
+  font-family: 'Space Mono', monospace; cursor: pointer; z-index: 1; transition: all 0.2s ease; line-height: 1;
+}
+.copy-button:hover { background: #fff; border-color: #999; transform: translateY(-1px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); }
+.copy-button:active { transform: translateY(0); }
+.copy-button:focus-visible { outline: 2px solid #0070f3; outline-offset: 2px; }
+
 .App {
   overflow-x: hidden;
 }

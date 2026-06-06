@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ImageHeader from "@/components/ImageHeader";
 import "./GalleryPage.css";
 import TextSection from "@/components/TextSection";
@@ -23,6 +23,8 @@ export default function GalleryPageClient({
   const [error, setError] = useState<string | null>(null);
   const [enlargedImage, setEnlargedImage] = useState<ImageData | null>(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const lastFocusedElement = useRef<HTMLElement | null>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
 
   const navigate = (dir: number) => {
     const i = images.findIndex((img) => img.src === enlargedImage?.src);
@@ -38,10 +40,28 @@ export default function GalleryPageClient({
       if (e.key === "ArrowRight") navigate(1);
       if (e.key === "ArrowLeft") navigate(-1);
     };
+
     if (enlargedImage) {
+      if (!lastFocusedElement.current) {
+        lastFocusedElement.current = document.activeElement as HTMLElement;
+      }
       window.addEventListener("keydown", onKey);
       document.body.style.overflow = "hidden";
+
+      // Focus the close button when overlay opens
+      setTimeout(() => {
+        const closeButton = overlayRef.current?.querySelector(
+          ".close-overlay"
+        ) as HTMLElement;
+        closeButton?.focus();
+      }, 0);
+    } else {
+      if (lastFocusedElement.current) {
+        lastFocusedElement.current.focus();
+        lastFocusedElement.current = null;
+      }
     }
+
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
@@ -102,8 +122,22 @@ export default function GalleryPageClient({
     };
   }, [galleryId]);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (loading)
+    return (
+      <div className="common-container">
+        <div className="inner-container">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="common-container">
+        <div className="inner-container">
+          <p>Error: {error}</p>
+        </div>
+      </div>
+    );
 
   return (
     <div>
@@ -127,8 +161,41 @@ export default function GalleryPageClient({
       </div>
 
       {enlargedImage && (
-        <div className="overlay" onClick={() => setEnlargedImage(null)} role="dialog" aria-modal="true" aria-label="Enlarged image view">
-          <button className="close-overlay" onClick={() => setEnlargedImage(null)} aria-label="Close enlarged image">
+        <div
+          ref={overlayRef}
+          className="overlay"
+          onClick={() => setEnlargedImage(null)}
+          onKeyDown={(e) => {
+            if (e.key === "Tab") {
+              const focusableEls = overlayRef.current?.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+              );
+              if (focusableEls) {
+                const first = focusableEls[0] as HTMLElement;
+                const last = focusableEls[focusableEls.length - 1] as HTMLElement;
+                if (e.shiftKey) {
+                  if (document.activeElement === first) {
+                    last.focus();
+                    e.preventDefault();
+                  }
+                } else {
+                  if (document.activeElement === last) {
+                    first.focus();
+                    e.preventDefault();
+                  }
+                }
+              }
+            }
+          }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Enlarged image view"
+        >
+          <button
+            className="close-overlay"
+            onClick={() => setEnlargedImage(null)}
+            aria-label="Close enlarged image"
+          >
             <span aria-hidden="true">✕</span>
           </button>
           <button className="nav-button prev" onClick={(e) => { e.stopPropagation(); navigate(-1); }} aria-label="Previous image">

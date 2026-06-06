@@ -29,3 +29,7 @@
 ## 2025-05-22 - [Mobile Navigation Closure Patterns]
 **Learning:** For mobile navigation menus that overlay content, users expect to be able to close the menu using the `Escape` key or by clicking anywhere outside the menu container. Implementing these listeners on the `window` or `document` only when the menu is open improves the perceived responsiveness and accessibility of the interface.
 **Action:** Use a `useRef` to track the navigation container and implement `Escape` and click-outside listeners in a `useEffect` that triggers when the menu state is `open`.
+
+## 2026-06-06 - [Modal Focus Management]
+**Learning:** Proper focus management in modals/overlays is a critical accessibility requirement often missed in image galleries. This includes trapping focus within the modal, setting initial focus to a sensible element (like the Close button), and restoring focus to the original trigger upon closure.
+**Action:** Always implement a focus trap using `onKeyDown` to capture `Tab` and `Shift+Tab`. Store the `document.activeElement` before opening the modal to restore it on close. Use a small `setTimeout` or `useEffect` to ensure focus is applied after the DOM has rendered.

@@ -1,6 +1,5 @@
-"use client";
-
 import React from "react";
+import Link from "next/link";
 
 export default function NotFound() {
   return (
@@ -12,7 +11,7 @@ export default function NotFound() {
         <h1>404 - Page Not Found</h1>
         <img
           src="/images/wet_lucas.png"
-          alt="404"
+          alt="Photo of Lucas"
           style={{
             width: "25vh",
             height: "auto",
@@ -21,8 +20,10 @@ export default function NotFound() {
           }}
         />
         <p>Sorry, the page you are looking for does not exist.</p>
-        <button
+        <Link
+          href="/"
           style={{
+            display: "inline-block",
             backgroundColor: "transparent",
             border: "2px solid blue",
             borderRadius: "5px",
@@ -31,17 +32,19 @@ export default function NotFound() {
             color: "blue",
             fontWeight: "bold",
             marginTop: "20px",
+            textDecoration: "none",
           }}
-          onClick={() => (window.location.href = "/")}
         >
-          Click here to return to the homepage
-        </button>
+          Return to homepage
+        </Link>
         <p>
           Or you can stay here to read more about my personal hobbies and
           interests. These are the ones that I have either not mentioned on the
           main pages or simply just not elaborated on in detail.
         </p>
-        <h2>🥊 Training</h2>
+        <h2>
+          <span aria-hidden="true">🥊</span> Training
+        </h2>
         <p>
           After many years of strength training I hit a plateau. This could of
           course had been solved by making a more structured program and use
@@ -66,7 +69,9 @@ export default function NotFound() {
           a new sport. Most places do not just teach you how to fight, but also
           how teach you implicitly how to be a better person.
         </p>
-        <h2>📷 Photography</h2>
+        <h2>
+          <span aria-hidden="true">📷</span> Photography
+        </h2>
         <p>
           Photography is something I have always been fascinated by. But I have
           never really understood how people could take images that were not

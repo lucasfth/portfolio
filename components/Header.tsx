@@ -55,8 +55,18 @@ export default function Header() {
 
   return (
     <nav className="navbar" ref={navRef}>
-      <Link href="/" className="navbar-brand">
-        <img src="/favicon.ico" alt="Logo" className="logo" />
+      <Link
+        href="/"
+        className="navbar-brand"
+        aria-current={isActive("/") ? "page" : undefined}
+      >
+        <img
+          src="/favicon.ico"
+          alt="Logo"
+          className="logo"
+          width={28}
+          height={28}
+        />
         <span className="brand-name">Lucas Hanson</span>
       </Link>
 

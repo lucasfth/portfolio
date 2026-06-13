@@ -33,3 +33,7 @@
 ## 2026-06-06 - [Modal Focus Management]
 **Learning:** Proper focus management in modals/overlays is a critical accessibility requirement often missed in image galleries. This includes trapping focus within the modal, setting initial focus to a sensible element (like the Close button), and restoring focus to the original trigger upon closure.
 **Action:** Always implement a focus trap using `onKeyDown` to capture `Tab` and `Shift+Tab`. Store the `document.activeElement` before opening the modal to restore it on close. Use a small `setTimeout` or `useEffect` to ensure focus is applied after the DOM has rendered.
+
+## 2026-06-07 - [404 Page Performance and Header CLS]
+**Learning:** 404 pages should ideally be Server Components to minimize client-side JavaScript and improve load times. Replacing manual navigation buttons (using `window.location.href`) with Next.js `Link` components preserves the SPA experience and improves accessibility. In global headers, explicit image dimensions on logos are critical to prevent Cumulative Layout Shift (CLS) as the page loads. Decorative emojis in prominent headings can be distracting for screen reader users and should be hidden using `aria-hidden`.
+**Action:** Use Next.js `Link` for all internal navigation, even on error pages. Always specify `width` and `height` on global header images. Audit headings for decorative characters and wrap them in `aria-hidden="true"`.

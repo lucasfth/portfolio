@@ -1,16 +1,7 @@
-import ImageHeader from "@/components/ImageHeader";
-import TextSection from "@/components/TextSection";
-import { readFileSync } from "fs";
-import { join } from "path";
+import { readMarkdown } from "@/hooks/readMarkdown";
+import PageShell from "@/components/PageShell";
 
 export default function Home() {
-  const markdownPath = join(process.cwd(), "public", "content", "frontpage.md");
-  const markdown = readFileSync(markdownPath, "utf8");
-
-  return (
-    <>
-      <ImageHeader markdown={markdown} />
-      <TextSection markdown={markdown} />
-    </>
-  );
+  const markdown = readMarkdown("content/frontpage.md");
+  return <PageShell markdown={markdown} />;
 }

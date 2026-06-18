@@ -1,7 +1,12 @@
-import React from "react";
+"use client";
+
+import React, { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
-import { materialLight } from "react-syntax-highlighter/dist/esm/styles/prism";
+import {
+  materialLight,
+  materialDark,
+} from "react-syntax-highlighter/dist/esm/styles/prism";
 import CopyButton from "./CopyButton";
 
 interface TextSectionProps {
@@ -13,6 +18,19 @@ export default function TextSection({ markdown }: TextSectionProps) {
   const contentStart = lines.findIndex((line) => line.startsWith("---"));
   const remainingText =
     contentStart !== -1 ? lines.slice(contentStart + 1).join("\n") : "";
+
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    setIsDark(mq.matches);
+
+    const handler = (e: MediaQueryListEvent) => setIsDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const theme = isDark ? materialDark : materialLight;
 
   return (
     <div className="common-container">
@@ -27,9 +45,9 @@ export default function TextSection({ markdown }: TextSectionProps) {
                   <CopyButton text={codeContent} />
                   <SyntaxHighlighter
                     style={{
-                      ...materialLight,
+                      ...theme,
                       'pre[class*="language-"]': {
-                        ...materialLight['pre[class*="language-"]'],
+                        ...theme['pre[class*="language-"]'],
                         borderRadius: "8px",
                       },
                     }}

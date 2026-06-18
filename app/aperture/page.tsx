@@ -1,36 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import ImageHeader from "@/components/ImageHeader";
+import PageShell from "@/components/PageShell";
 import GalleryContent from "@/components/GalleryContent";
+import { useMarkdown } from "@/hooks/useMarkdown";
 
 export default function Aperture() {
-  const [markdown, setMarkdown] = useState("");
+  const { content, loading, error } = useMarkdown("/content/aperture.md");
   const router = useRouter();
-
-  useEffect(() => {
-    fetch("/content/aperture.md")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.text();
-      })
-      .then((text) => {
-        setMarkdown(text);
-      })
-      .catch((err) => console.error("Error loading markdown:", err));
-  }, []);
 
   const handleImageClick = (galleryId: string) => {
     router.push(`/aperture/${galleryId}`);
   };
 
+  if (loading) return <div className="common-container"><div className="inner-container"><p>Loading...</p></div></div>;
+  if (error) return <div className="common-container"><div className="inner-container"><p>Error: {error}</p></div></div>;
+
   return (
     <>
-      <ImageHeader markdown={markdown} />
-      <GalleryContent markdown={markdown} onImageClick={handleImageClick} />
+      <PageShell markdown={content}>
+        <GalleryContent markdown={content} onImageClick={handleImageClick} />
+      </PageShell>
     </>
   );
 }

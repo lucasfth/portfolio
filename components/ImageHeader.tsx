@@ -1,5 +1,7 @@
 import React from "react";
 import ReactMarkdown from "react-markdown";
+import Image from "next/image";
+import "./ImageHeader.css";
 
 interface ImageHeaderProps {
   markdown: string;
@@ -22,32 +24,22 @@ export default function ImageHeader({ markdown }: ImageHeaderProps) {
   return (
     <div style={{ position: "relative" }}>
       {/* Header Image with Darkening Filter */}
-      <div
-        style={{
-          width: "100%",
-          height: "70vh",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
+      <div className="image-header-hero">
         {headerImage && (
           <>
             <ReactMarkdown
               components={{
-                img: ({ ...props }) => (
-                  <img
-                    {...props}
-                    src={props.src}
-                    alt={props.alt}
+                img: ({ src, alt, ...props }) => (
+                  <Image
+                    src={src || ""}
+                    alt={alt || ""}
+                    fill
                     style={{
-                      width: "100%",
-                      height: "100%",
                       objectFit: "cover",
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      filter: "brightness(50%) grayscale(100%)", // Darkening filter
+                      filter: "brightness(50%) grayscale(100%)",
                     }}
+                    sizes="100vw"
+                    priority
                   />
                 ),
               }}
@@ -76,16 +68,19 @@ export default function ImageHeader({ markdown }: ImageHeaderProps) {
               <div className="profile-image-container">
                 <ReactMarkdown
                   components={{
-                    img: ({ ...props }) => (
-                      <img
-                        {...props}
-                        src={props.src}
-                        alt={props.alt || ""}
+                    img: ({ src, alt, ...props }) => (
+                      <Image
+                        src={src || ""}
+                        alt={alt || ""}
+                        width={300}
+                        height={300}
                         style={{
                           width: "100%",
+                          height: "auto",
                           borderRadius: "8px",
                           boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
                         }}
+                        sizes="300px"
                       />
                     ),
                   }}

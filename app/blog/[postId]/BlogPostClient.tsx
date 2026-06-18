@@ -1,35 +1,18 @@
 "use client";
 
-// (no hooks used in this client component now; keep as a client component so it can access window/document)
 import BlogComments from "./BlogComments";
-import TextSection from "@/components/TextSection";
-import ImageHeader from "@/components/ImageHeader";
+import PageShell from "@/components/PageShell";
 import "./BlogPost.css";
-
-declare global {
-  interface Window {
-    cusdisScriptLoaded?: boolean;
-    CUSDIS?: any;
-  }
-}
 
 interface BlogPostClientProps {
   markdown: string;
   postId: string;
 }
 
-export default function BlogPostClient({
-  markdown,
-  postId,
-}: BlogPostClientProps) {
-  // Comments are rendered via the client-only `BlogComments` component below.
-
+export default function BlogPostClient({ markdown, postId }: BlogPostClientProps) {
   return (
     <>
-      <ImageHeader markdown={markdown} />
-      <TextSection markdown={markdown} />
-
-      {/* Comments Section */}
+      <PageShell markdown={markdown} />
       <section className="blog-comments-section">
         <div className="container">
           <h2>Comments</h2>

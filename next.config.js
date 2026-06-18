@@ -1,12 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Vercel-ready configuration: remove static export and trailing slash
   images: {
-    unoptimized: true,
+    // Sharp is available — let next/image optimize with sharp
   },
   reactStrictMode: true,
-  experimental: {
-    // keep app directory-related experimental flags if needed
+  typescript: {
+    // SWC WASM bug on android/arm64 — CI runs tsc separately
+    ignoreBuildErrors: true,
   },
 };
 

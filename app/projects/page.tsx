@@ -2,26 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import ImageHeader from "@/components/ImageHeader";
-import TextSection from "@/components/TextSection";
+import PageShell from "@/components/PageShell";
+import { useMarkdown } from "@/hooks/useMarkdown";
 
 export default function Projects() {
-  const [markdown, setMarkdown] = useState("");
+  const { content, loading, error } = useMarkdown("/content/projects.md");
   const router = useRouter();
-
-  useEffect(() => {
-    fetch("/content/projects.md")
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error("Network response was not ok");
-        }
-        return response.text();
-      })
-      .then((text) => {
-        setMarkdown(text);
-      })
-      .catch((err) => console.error("Error loading markdown:", err));
-  }, []);
 
   const handleLinkClick = (e: React.MouseEvent) => {
     const target = (e.target as HTMLElement).closest("a");
@@ -32,10 +18,12 @@ export default function Projects() {
     }
   };
 
+  if (loading) return <div className="common-container"><div className="inner-container"><p>Loading...</p></div></div>;
+  if (error) return <div className="common-container"><div className="inner-container"><p>Error: {error}</p></div></div>;
+
   return (
     <div onClick={handleLinkClick}>
-      <ImageHeader markdown={markdown} />
-      <TextSection markdown={markdown} />
+      <PageShell markdown={content} />
     </div>
   );
 }

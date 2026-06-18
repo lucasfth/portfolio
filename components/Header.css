@@ -4,7 +4,7 @@
   align-items: center;
   padding: 8px 16px;  /* Reduced padding */
   height: 50px; /* Set a fixed height */
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+  box-shadow: 0px 2px 5px var(--shadow);
   font-family: 'Patrick Hand', cursive;
   position: fixed; /* Fix the navbar at the top */
   top: 0;
@@ -12,13 +12,13 @@
   width: 100%;
   z-index: 3; /* Ensure the navbar is above other content */
   box-sizing: border-box; /* Include padding in the element's total width and height */
-  background-color: var(--background-color); /* Use the solid background color by default */
+  background-color: var(--bg-primary); /* Use the solid background color by default */
 }
 
 @media (min-width: 769px) {
   .navbar {
     backdrop-filter: blur(10px);
-    background-color: var(--overlay-color);
+    background-color: var(--bg-overlay);
   }
 }
 
@@ -62,7 +62,7 @@
 }
 
 .burger-menu:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: color-mix(in srgb, var(--text-primary) 10%, transparent);
 }
 
 .burger-menu:focus-visible {
@@ -86,7 +86,7 @@
 .nav-links a {
   text-decoration: none;
   font-size: 16px; /* Slightly smaller text */
-  color: black;
+  color: var(--text-primary);
   padding: 6px 10px; /* Reduce padding for a tighter fit */
   font-weight: bold;
 }
@@ -117,11 +117,11 @@
     left: 0;
     width: 100%;
     text-align: center;
-    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0px 2px 5px var(--shadow);
     z-index: 2; /* Ensure the menu appears above other content */
     padding: 0 16px; /* Add padding to ensure links are within the viewport */
     box-sizing: border-box; /* Include padding in the element's total width and height */
-    background-color: var(--background-color); /* Use the solid background color */
+    background-color: var(--bg-primary); /* Use the solid background color */
 
     /* Animation properties */
     opacity: 0;

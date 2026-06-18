@@ -4,6 +4,7 @@ import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
+import Image from "next/image";
 import "./GalleryContent.css";
 
 interface GalleryContentProps {
@@ -81,7 +82,7 @@ export default function GalleryContent({
 
           img: ({ node, ...props }: any) => (
             <figure className="image-figure">
-              <img {...props} src={props.src} alt={props.alt || ""} />
+              <Image src={props.src} alt={props.alt || ""} width={800} height={600} style={{ width: "100%", height: "auto", maxWidth: "100%" }} sizes="(max-width: 768px) 100vw, 800px" />
               {props.title && (
                 <figcaption className="caption">{props.title}</figcaption>
               )}

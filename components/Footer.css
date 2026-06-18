@@ -1,6 +1,7 @@
 footer {
   padding: 20px 0;
   text-align: center;
+  color: var(--text-primary);
 }
 
 footer .social-links {
@@ -17,5 +18,11 @@ footer .social-links {
 
   footer .social-links a {
     margin: 0 10px;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  footer .social-links a img {
+    filter: invert(0.9) hue-rotate(180deg);
   }
 }

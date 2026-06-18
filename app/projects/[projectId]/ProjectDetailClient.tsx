@@ -1,19 +1,11 @@
 "use client";
 
-import TextSection from "@/components/TextSection";
-import ImageHeader from "@/components/ImageHeader";
+import PageShell from "@/components/PageShell";
 
 interface ProjectDetailClientProps {
   markdown: string;
 }
 
-export default function ProjectDetailClient({
-  markdown,
-}: ProjectDetailClientProps) {
-  return (
-    <>
-      <ImageHeader markdown={markdown} />
-      <TextSection markdown={markdown} />
-    </>
-  );
+export default function ProjectDetailClient({ markdown }: ProjectDetailClientProps) {
+  return <PageShell markdown={markdown} />;
 }

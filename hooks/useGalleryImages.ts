@@ -8,10 +8,30 @@ import { readdirSync } from "fs";
 import { join } from "path";
 
 const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif"]);
+const SAFE_PATH_SEGMENT = /^[A-Za-z0-9._ -]+$/;
 
 export interface GalleryImage {
   src: string;
   alt: string;
+}
+
+function buildSafeImageSrc(galleryId: string, fileName: string): string | null {
+  if (!SAFE_PATH_SEGMENT.test(galleryId) || !SAFE_PATH_SEGMENT.test(fileName)) {
+    return null;
+  }
+
+  if (
+    galleryId.includes("..") ||
+    fileName.includes("..") ||
+    galleryId.includes("/") ||
+    galleryId.includes("\\") ||
+    fileName.includes("/") ||
+    fileName.includes("\\")
+  ) {
+    return null;
+  }
+
+  return `/images/${encodeURIComponent(galleryId)}/${encodeURIComponent(fileName)}`;
 }
 
 /**
@@ -50,10 +70,15 @@ export function getGalleryImages(galleryId: string): GalleryImage[] {
         const ext = entry.name.split(".").pop()?.toLowerCase() ?? "";
         return IMAGE_EXTENSIONS.has(ext);
       })
-      .map((entry) => ({
-        src: `/images/${galleryId}/${entry.name}`,
-        alt: filenameToAlt(entry.name),
-      }))
+      .map((entry) => {
+        const safeSrc = buildSafeImageSrc(galleryId, entry.name);
+        if (!safeSrc) return null;
+        return {
+          src: safeSrc,
+          alt: filenameToAlt(entry.name),
+        };
+      })
+      .filter((image): image is GalleryImage => image !== null)
       .sort((a, b) => a.src.localeCompare(b.src));
   } catch {
     return [];

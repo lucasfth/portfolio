@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import Link from "next/link";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import {
   materialLight,
@@ -37,6 +38,27 @@ export default function TextSection({ markdown }: TextSectionProps) {
       <div className="inner-container">
         <ReactMarkdown
           components={{
+            a({ node, href, children, ...props }: any) {
+              const isInternal = href?.startsWith("/") || href?.startsWith("#");
+              if (isInternal) {
+                return (
+                  <Link href={href} {...props}>
+                    {children}
+                  </Link>
+                );
+              }
+              return (
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  {...props}
+                >
+                  {children}
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+              );
+            },
             code({ node, inline, className, children, ...props }: any) {
               const match = /language-(\w+)/.exec(className || "");
               const codeContent = String(children).replace(/\n$/, "");

@@ -54,30 +54,48 @@ export default function GalleryContent({
               </div>
             );
           },
-          a: ({ node, ...props }: any) => {
+          a: ({ node, href, children, ...props }: any) => {
             // if this anchor wraps an image, render a block-level container
             const hasImage = node?.children?.some(
               (child: any) => child.tagName === "img"
             );
             if (hasImage) {
-              const galleryId = props.href?.split("/").pop() || "gallery";
+              const galleryId = href?.split("/").pop() || "gallery";
               return (
                 <Link
-                  href={props.href || "#"}
+                  href={href || "#"}
                   className="image-container"
                   onClick={(e) => {
                     e.preventDefault();
-                    handleImageContainerClick(props.href);
+                    handleImageContainerClick(href);
                   }}
                   aria-label={`View ${galleryId} gallery`}
                 >
-                  {props.children}
+                  {children}
                 </Link>
               );
             }
 
             // otherwise render a normal inline anchor
-            return <a {...props}>{props.children}</a>;
+            const isInternal = href?.startsWith("/") || href?.startsWith("#");
+            if (isInternal) {
+              return (
+                <Link href={href || "#"} {...props}>
+                  {children}
+                </Link>
+              );
+            }
+            return (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                {...props}
+              >
+                {children}
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            );
           },
 
           img: ({ node, ...props }: any) => (

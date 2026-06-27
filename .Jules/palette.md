@@ -33,3 +33,7 @@
 ## 2026-06-06 - [Modal Focus Management]
 **Learning:** Proper focus management in modals/overlays is a critical accessibility requirement often missed in image galleries. This includes trapping focus within the modal, setting initial focus to a sensible element (like the Close button), and restoring focus to the original trigger upon closure.
 **Action:** Always implement a focus trap using `onKeyDown` to capture `Tab` and `Shift+Tab`. Store the `document.activeElement` before opening the modal to restore it on close. Use a small `setTimeout` or `useEffect` to ensure focus is applied after the DOM has rendered.
+
+## 2026-06-25 - [Scroll to Top Micro-UX]
+**Learning:** For long-form content websites like portfolios and blogs, a "Scroll to Top" button significantly enhances navigation efficiency once the user has scrolled past the initial fold. Using smooth scrolling and subtle transitions provides a delightful feel without being intrusive.
+**Action:** Implement a floating action button that appears after a scroll threshold (e.g., 300px), ensuring it has proper ARIA labels and respects the design system's accent colors.

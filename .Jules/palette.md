@@ -33,3 +33,7 @@
 ## 2026-06-06 - [Modal Focus Management]
 **Learning:** Proper focus management in modals/overlays is a critical accessibility requirement often missed in image galleries. This includes trapping focus within the modal, setting initial focus to a sensible element (like the Close button), and restoring focus to the original trigger upon closure.
 **Action:** Always implement a focus trap using `onKeyDown` to capture `Tab` and `Shift+Tab`. Store the `document.activeElement` before opening the modal to restore it on close. Use a small `setTimeout` or `useEffect` to ensure focus is applied after the DOM has rendered.
+
+## 2025-06-15 - [404 Page Refactoring and Semantic Navigation]
+**Learning:** Using a non-semantic button with `window.location.href` for homepage redirection on a 404 page creates a jarring full-page reload and is less accessible than a standard link. Refactoring to a Next.js `Link` component provides a smoother SPA transition. Additionally, moving inline styles to a dedicated CSS file that utilizes design system variables (`--accent`, `--shadow`) ensures the 404 page remains visually consistent across light and dark modes.
+**Action:** Always prefer semantic `Link` components for internal navigation. Avoid inline styles and instead use CSS files integrated with the design system's variable-based tokens to ensure theme-aware styling and better maintainability.

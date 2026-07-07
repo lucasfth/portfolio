@@ -1,6 +1,7 @@
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ScrollToTop from "@/components/ScrollToTop";
 
 export const metadata = {
   title: "Lucas Hanson",
@@ -85,6 +86,7 @@ export default function RootLayout({
           </main>
           <Footer />
         </div>
+        <ScrollToTop />
       </body>
     </html>
   );

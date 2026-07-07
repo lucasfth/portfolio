@@ -34,6 +34,10 @@
 **Learning:** Proper focus management in modals/overlays is a critical accessibility requirement often missed in image galleries. This includes trapping focus within the modal, setting initial focus to a sensible element (like the Close button), and restoring focus to the original trigger upon closure.
 **Action:** Always implement a focus trap using `onKeyDown` to capture `Tab` and `Shift+Tab`. Store the `document.activeElement` before opening the modal to restore it on close. Use a small `setTimeout` or `useEffect` to ensure focus is applied after the DOM has rendered.
 
+## 2026-06-25 - [Scroll to Top Micro-UX]
+**Learning:** For long-form content websites like portfolios and blogs, a "Scroll to Top" button significantly enhances navigation efficiency once the user has scrolled past the initial fold. Using smooth scrolling and subtle transitions provides a delightful feel without being intrusive.
+**Action:** Implement a floating action button that appears after a scroll threshold (e.g., 300px), ensuring it has proper ARIA labels and respects the design system's accent colors.
+
 ## 2025-06-15 - [404 Page Refactoring and Semantic Navigation]
 **Learning:** Using a non-semantic button with `window.location.href` for homepage redirection on a 404 page creates a jarring full-page reload and is less accessible than a standard link. Refactoring to a Next.js `Link` component provides a smoother SPA transition. Additionally, moving inline styles to a dedicated CSS file that utilizes design system variables (`--accent`, `--shadow`) ensures the 404 page remains visually consistent across light and dark modes.
 **Action:** Always prefer semantic `Link` components for internal navigation. Avoid inline styles and instead use CSS files integrated with the design system's variable-based tokens to ensure theme-aware styling and better maintainability.

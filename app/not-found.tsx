@@ -1,41 +1,25 @@
-"use client";
-
 import React from "react";
+import Link from "next/link";
+import Image from "next/image";
+import "./not-found.css";
 
 export default function NotFound() {
   return (
-    <div
-      className="common-container"
-      style={{ marginTop: "100px", minHeight: "60vh" }}
-    >
+    <div className="common-container not-found-wrapper">
       <div className="inner-container">
         <h1>404 - Page Not Found</h1>
-        <img
+        <Image
           src="/images/wet_lucas.png"
-          alt="404"
-          style={{
-            width: "25vh",
-            height: "auto",
-            borderRadius: "8px",
-            boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-          }}
+          alt="Lucas Hanson looking wet"
+          width={300}
+          height={400}
+          className="not-found-image"
+          priority
         />
         <p>Sorry, the page you are looking for does not exist.</p>
-        <button
-          style={{
-            backgroundColor: "transparent",
-            border: "2px solid blue",
-            borderRadius: "5px",
-            padding: "10px 20px",
-            fontSize: "16px",
-            color: "blue",
-            fontWeight: "bold",
-            marginTop: "20px",
-          }}
-          onClick={() => (window.location.href = "/")}
-        >
-          Click here to return to the homepage
-        </button>
+        <Link href="/" className="not-found-home-link">
+          Return to homepage
+        </Link>
         <p>
           Or you can stay here to read more about my personal hobbies and
           interests. These are the ones that I have either not mentioned on the

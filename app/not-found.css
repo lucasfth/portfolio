@@ -1,0 +1,38 @@
+.not-found-wrapper {
+  margin-top: 100px;
+  min-height: 60vh;
+}
+
+.not-found-image {
+  border-radius: 8px;
+  box-shadow: 0 4px 6px var(--shadow);
+  margin-bottom: 1.5rem;
+  width: 25vh;
+  height: auto;
+}
+
+.not-found-home-link {
+  display: inline-block;
+  background-color: transparent;
+  border: 2px solid var(--accent);
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  color: var(--accent);
+  font-weight: bold;
+  margin-top: 20px;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.not-found-home-link:hover {
+  background-color: var(--accent);
+  color: var(--bg-primary);
+  opacity: 1;
+  text-decoration: none;
+}
+
+.not-found-home-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}

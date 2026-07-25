@@ -130,6 +130,21 @@
   }
 }
 
+/* ===== Image Counter ===== */
+.lightbox-counter {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-family: 'Space Mono', monospace;
+  font-size: 1rem;
+  z-index: 1001;
+}
+
 /* ===== Responsive: smaller nav buttons on mobile ===== */
 @media screen and (max-width: 600px) {
   .lightbox-nav {

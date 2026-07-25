@@ -151,6 +151,10 @@ export default function Lightbox({
       >
         <span aria-hidden="true">›</span>
       </button>
+
+      <div className="lightbox-counter" aria-live="polite">
+        {currentIndex + 1} / {images.length}
+      </div>
     </div>
   );
 }

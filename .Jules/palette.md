@@ -41,3 +41,7 @@
 ## 2025-06-15 - [404 Page Refactoring and Semantic Navigation]
 **Learning:** Using a non-semantic button with `window.location.href` for homepage redirection on a 404 page creates a jarring full-page reload and is less accessible than a standard link. Refactoring to a Next.js `Link` component provides a smoother SPA transition. Additionally, moving inline styles to a dedicated CSS file that utilizes design system variables (`--accent`, `--shadow`) ensures the 404 page remains visually consistent across light and dark modes.
 **Action:** Always prefer semantic `Link` components for internal navigation. Avoid inline styles and instead use CSS files integrated with the design system's variable-based tokens to ensure theme-aware styling and better maintainability.
+
+## 2025-07-25 - [Lightbox Overlay Spatial Awareness]
+**Learning:** Image lightboxes that lack index counters disorient users by providing no sense of location or gallery size. Implementing a dynamic text indicator (e.g. "1 / 4") wrapped in an `aria-live="polite"` container bridges this gap, providing visual structure for standard users and real-time announcements of spatial updates for assistive technologies.
+**Action:** Always complement modal or lightbox image navigation with dynamic positional indicators that use polite ARIA announcements to keep assistive technologies informed of real-time state changes.

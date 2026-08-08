@@ -10,8 +10,13 @@ export default function CopyButton({ text }: { text: string }) {
     });
   };
   return (
-    <button onClick={handleCopy} className="copy-button" aria-label={copied ? "Copied!" : "Copy code"}>
-      {copied ? "✓ Copied" : "Copy"}
-    </button>
+    <>
+      <button onClick={handleCopy} className="copy-button" aria-label={copied ? "Copied!" : "Copy code"}>
+        {copied ? "✓ Copied" : "Copy"}
+      </button>
+      <div className="sr-only" aria-live="polite">
+        {copied ? "Code copied to clipboard" : ""}
+      </div>
+    </>
   );
 }

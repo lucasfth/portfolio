@@ -45,3 +45,11 @@
 ## 2025-07-25 - [Lightbox Overlay Spatial Awareness]
 **Learning:** Image lightboxes that lack index counters disorient users by providing no sense of location or gallery size. Implementing a dynamic text indicator (e.g. "1 / 4") wrapped in an `aria-live="polite"` container bridges this gap, providing visual structure for standard users and real-time announcements of spatial updates for assistive technologies.
 **Action:** Always complement modal or lightbox image navigation with dynamic positional indicators that use polite ARIA announcements to keep assistive technologies informed of real-time state changes.
+
+## 2025-08-08 - [Scroll to Top Focus Management]
+**Learning:** Back-to-top scroll buttons are excellent for usability on long pages, but they often leave keyboard and screen reader focus stranded at the bottom of the document. Programmatically shifting focus to the main content landmark using `focus({ preventScroll: true })` immediately allows assistive technology users to resume content consumption from the top without conflicting with smooth scroll behavior.
+**Action:** When scroll-to-top buttons are activated, shift active keyboard focus back to the top-most main content landmark programmatically.
+
+## 2025-08-09 - [Accessible Clipboard Copy Notifications]
+**Learning:** Simply updating an interactive button's text or ARIA label from "Copy" to "Copied" does not guarantee screen reader software will announce the change. Utilizing an visually-hidden (`sr-only`) live region (`aria-live="polite"`) guarantees real-time verbal confirmation when content is successfully copied.
+**Action:** Complement interactive action indicators (like copying to clipboard) with visually hidden `aria-live` regions to ensure non-visual users are notified of state changes.

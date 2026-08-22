@@ -31,7 +31,7 @@ export default function ImageHeader({ markdown }: ImageHeaderProps) {
               components={{
                 img: ({ src, alt, ...props }) => (
                   <Image
-                    src={src || ""}
+                    src={typeof src === "string" ? src : ""}
                     alt={alt || ""}
                     fill
                     style={{
@@ -70,7 +70,7 @@ export default function ImageHeader({ markdown }: ImageHeaderProps) {
                   components={{
                     img: ({ src, alt, ...props }) => (
                       <Image
-                        src={src || ""}
+                        src={typeof src === "string" ? src : ""}
                         alt={alt || ""}
                         width={300}
                         height={300}

@@ -53,3 +53,7 @@
 ## 2025-08-09 - [Accessible Clipboard Copy Notifications]
 **Learning:** Simply updating an interactive button's text or ARIA label from "Copy" to "Copied" does not guarantee screen reader software will announce the change. Utilizing an visually-hidden (`sr-only`) live region (`aria-live="polite"`) guarantees real-time verbal confirmation when content is successfully copied.
 **Action:** Complement interactive action indicators (like copying to clipboard) with visually hidden `aria-live` regions to ensure non-visual users are notified of state changes.
+
+## 2025-08-10 - [Visual Keyboard Shortcut Hints in Overlays]
+**Learning:** Full-screen modal overlays (such as image lightboxes) that support keyboard navigation (Escape to close, Arrow keys to navigate) often leave visual keyboard users guessing which keys are functional. Providing explicit visual `<kbd>` shortcut hints marked with `aria-hidden="true"` informs keyboard users of available shortcuts without causing redundant or confusing announcements for screen reader users who already rely on semantic buttons and ARIA live regions.
+**Action:** Include styled visual `<kbd>` hints on modal overlays for keyboard controls, and always annotate them with `aria-hidden="true"` to keep screen reader feedback clean and un-cluttered.

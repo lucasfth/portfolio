@@ -152,8 +152,13 @@ export default function Lightbox({
         <span aria-hidden="true">›</span>
       </button>
 
-      <div className="lightbox-counter" aria-live="polite">
-        {currentIndex + 1} / {images.length}
+      <div className="lightbox-counter-wrapper">
+        <div className="lightbox-counter" aria-live="polite">
+          {currentIndex + 1} / {images.length}
+        </div>
+        <div className="lightbox-shortcuts" aria-hidden="true">
+          <kbd>Esc</kbd> close • <kbd>←</kbd> <kbd>→</kbd> navigate
+        </div>
       </div>
     </div>
   );

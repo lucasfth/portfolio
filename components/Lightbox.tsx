@@ -116,6 +116,7 @@ export default function Lightbox({
         aria-label="Close image viewer"
       >
         <span aria-hidden="true">✕</span>
+        <kbd className="lightbox-kbd-hint" aria-hidden="true">Esc</kbd>
       </button>
 
       <button
@@ -127,6 +128,7 @@ export default function Lightbox({
         aria-label="Previous image"
       >
         <span aria-hidden="true">‹</span>
+        <kbd className="lightbox-kbd-hint" aria-hidden="true">←</kbd>
       </button>
 
       <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
@@ -150,6 +152,7 @@ export default function Lightbox({
         aria-label="Next image"
       >
         <span aria-hidden="true">›</span>
+        <kbd className="lightbox-kbd-hint" aria-hidden="true">→</kbd>
       </button>
 
       <div className="lightbox-counter" aria-live="polite">

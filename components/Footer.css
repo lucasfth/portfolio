@@ -7,7 +7,25 @@ footer {
 footer .social-links {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: 10px;
+}
+
+footer .social-links a {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 4px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+footer .social-links a:hover {
+  transform: translateY(-2px);
+  opacity: 0.9;
+}
+
+footer .social-links a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 @media (min-width: 769px) {

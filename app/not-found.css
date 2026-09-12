@@ -30,6 +30,8 @@
   color: var(--bg-primary);
   opacity: 1;
   text-decoration: none;
+  transform: translateX(-3px);
+  box-shadow: 0 4px 8px var(--shadow);
 }
 
 .not-found-home-link:focus-visible {

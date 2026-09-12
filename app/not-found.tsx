@@ -18,14 +18,16 @@ export default function NotFound() {
         />
         <p>Sorry, the page you are looking for does not exist.</p>
         <Link href="/" className="not-found-home-link">
-          Return to homepage
+          <span aria-hidden="true">← </span>Return to homepage
         </Link>
         <p>
           Or you can stay here to read more about my personal hobbies and
           interests. These are the ones that I have either not mentioned on the
           main pages or simply just not elaborated on in detail.
         </p>
-        <h2>🥊 Training</h2>
+        <h2>
+          <span aria-hidden="true">🥊 </span>Training
+        </h2>
         <p>
           After many years of strength training I hit a plateau. This could of
           course had been solved by making a more structured program and use
@@ -50,7 +52,9 @@ export default function NotFound() {
           a new sport. Most places do not just teach you how to fight, but also
           how teach you implicitly how to be a better person.
         </p>
-        <h2>📷 Photography</h2>
+        <h2>
+          <span aria-hidden="true">📷 </span>Photography
+        </h2>
         <p>
           Photography is something I have always been fascinated by. But I have
           never really understood how people could take images that were not

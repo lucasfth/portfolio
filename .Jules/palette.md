@@ -61,3 +61,7 @@
 ## 2026-08-11 - [Accessible Social Badge Links & Inline-Flex Styling]
 **Learning:** Icon/badge links in footers often suffer from redundant screen reader announcements (e.g. "Instagram image link (opens in a new tab)") when alt text and sr-only spans are combined on nested elements. Moving the announcement directly to an `aria-label` on the parent anchor while marking the internal badge image with `alt=""` and `aria-hidden="true"` yields clean, concise announcements. Additionally, setting `display: inline-flex` on badge link anchors prevents focus outline clipping or wrapping bugs across screen sizes.
 **Action:** Use direct `aria-label` attributes on social link containers and mark inner badge graphics as decorative. Set `display: inline-flex` on badge link wrappers to ensure focus rings wrap tightly around the entire interactive element.
+
+## 2026-09-19 - [Robust Clipboard Copying and Error Feedback]
+**Learning:** Relying solely on `navigator.clipboard.writeText` can silently fail in non-secure contexts (HTTP) or when permission is denied. Providing a legacy fallback (`execCommand`), a visual error indicator ("✕ Error"), tooltips, and screen reader live region announcements ensures copy buttons remain resilient and accessible across all browser environments.
+**Action:** Always provide fallback copy execution and clear error states with `aria-live` announcements when building clipboard interaction components.

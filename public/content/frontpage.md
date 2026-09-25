@@ -14,9 +14,15 @@ Check out my projects here.
 
 ## 👨‍💻 IT Work experience
 
+### CTO
+
+**[EcoRay](https://ecoray.dk)** - *(Jul 2026 → present)*\\
+Leading the engineering team and product direction. Building the company's web apps and AI features.
+
 ### Full Stack Software Engineer & AI Researcher
 
-**[EcoRay](https://ecoray.dk)** - *(Mar 2026 → present)*
+**[EcoRay](https://ecoray.dk)** - *(Mar 2026 → Jun 2026)*\\
+Part-time role before being promoted to CTO.
 
 ### Developer Intern
 

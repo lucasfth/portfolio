@@ -40,15 +40,28 @@ export default function CopyButton({ text }: { text: string }) {
     ? "Copied to clipboard"
     : "Copy code to clipboard";
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "c" || e.key === "C" || ((e.ctrlKey || e.metaKey) && (e.key === "c" || e.key === "C"))) {
+      e.preventDefault();
+      handleCopy();
+    }
+  };
+
   return (
     <>
       <button
         onClick={handleCopy}
+        onKeyDown={handleKeyDown}
         className="copy-button"
         aria-label={label}
         title={tooltip}
       >
         {error ? "✕ Error" : copied ? "✓ Copied" : "Copy"}
+        {!error && !copied && (
+          <kbd className="copy-kbd-hint" aria-hidden="true">
+            C
+          </kbd>
+        )}
       </button>
       <div className="sr-only" aria-live="polite">
         {error

@@ -104,11 +104,15 @@ a:focus-visible {
   position: absolute; top: 8px; right: 8px; background: var(--bg-secondary);
   border: 1px solid var(--border-color); border-radius: 4px; padding: 4px 8px; font-size: 0.75rem;
   font-family: 'Space Mono', monospace; cursor: pointer; z-index: 1; transition: all 0.2s ease; line-height: 1;
-  color: var(--text-primary);
+  color: var(--text-primary); display: inline-flex; align-items: center; gap: 6px;
 }
 .copy-button:hover { background: var(--bg-primary); border-color: var(--text-secondary); transform: translateY(-1px); box-shadow: 0 2px 4px var(--shadow); }
 .copy-button:active { transform: translateY(0); }
 .copy-button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.copy-kbd-hint {
+  font-size: 0.65rem; padding: 1px 4px; border-radius: 3px; background: var(--bg-primary);
+  border: 1px solid var(--border-color); color: var(--text-secondary); line-height: 1;
+}
 
 .App {
   overflow-x: hidden;

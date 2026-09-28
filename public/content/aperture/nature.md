@@ -1,3 +1,9 @@
+---
+title: Nature
+description: The contrast between nature and human-made objects.
+cover: /images/nature/DSCF2082.jpg
+---
+
 ![header](/images/nature/DSCF2082.jpg)
 
 # Nature Gallery

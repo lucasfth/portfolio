@@ -1,3 +1,9 @@
+---
+title: University
+description: Moments from events during university, including the CaptureIT photo club.
+cover: /images/uni/DSCF2918.jpg
+---
+
 ![header](/images/uni/DSCF2918.jpg)
 
 # University Gallery

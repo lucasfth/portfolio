@@ -1,18 +1,25 @@
+---
+name: Lucas Hanson
+tagline: Software engineer and photographer in Copenhagen. CTO at EcoRay.
+profileImage: /images/profile_pic.jpg
+heroImage: /images/snow/DSCF5108.jpg
+---
+
 ![header](/images/snow/DSCF5108.jpg)
 
-# 😶‍🌫️ About me
+# About me
 
 ![profile picture](/images/profile_pic.jpg)
 
-Aspiring software developer focused on backend development and system architecture.
+Software engineer and photographer in Copenhagen. CTO at EcoRay.
 Check out my projects here.
 
 ---
 
-🎓 I have a BSc. in Software Development from IT University of Copenhagen. Currently I am pursuing my MSc. in Computer Science at IT University of Copenhagen which I expect to finish at the end of 2026.
-📍Based in Copenhagen, Denmark.
+I have a BSc. in Software Development from IT University of Copenhagen. Currently I am pursuing my MSc. in Computer Science at IT University of Copenhagen which I expect to finish at the end of 2026.
+Based in Copenhagen, Denmark.
 
-## 👨‍💻 IT Work experience
+## IT Work experience
 
 ### CTO
 
@@ -41,7 +48,7 @@ Improved communication and time management skills by providing timely and effect
 As an internal IT support at Magasin du Nord, I developed technical troubleshooting skills and system administration.
 I have also improved my communication and time management skills by providing timely and effective support to coworkers.
 
-## 🙋‍♂️ Volunteering
+## Volunteering
 
 During my studies, I have been involved in various volunteer organizations. These included being a board member, developer, barista, photographer, treasurer, and buddy (a type of tutor). These experiences have given me a wide range of skills and enhanced the joy of studying at ITU.
 Below are some of them in more detail:
@@ -67,7 +74,7 @@ Throughout the semesters in the Café, I have changed positions between being a 
 Normal treasurer responsibilities as well as keeping our IT systems as streamlined and easily transferable (for our yearly changing board) as possible. \
 Also ended up doing a lot of development work on our statistics site [Judge IT](https://lucashanson.dk/projects/judge-it) which you can read more about in the projects section.
 
-## 💬 Languages
+## Languages
 
 Since I am a Software Developer there is of course two different kinds of languages.
 The ones everyday people consider languages and the coding kinds.
@@ -75,15 +82,15 @@ These are the ones I know.
 
 ### Normal languages
 
-- 🇩🇰 Danish - Native
-- 🇬🇧 English - Professional
-- 🇪🇸 Spanish - Elementary
+- Danish - Native
+- English - Professional
+- Spanish - Elementary
 
 ### Programming languages
 
 The programming languages I know are highlighted on my GitHub (thus I only have to update the languages in one place). I've included my profile [here](https://github.com/lucasfth).
 
-## 🎓 Education
+## Education
 
 ### Bachelor in Software Development
 
@@ -91,6 +98,6 @@ The programming languages I know are highlighted on my GitHub (thus I only have 
 Gained a solid software development foundation, focusing on theoretical and practical aspects as well.
 Completed coursework in algorithms, data structures, and software engineering principles.
 Worked on various projects, including a DHI project that involved developing a full-stack web application.
-My bachelor thesis was about hand gestures in virtual meetings, and if there exists a natural gesture set that can be mapped to actions such as volume control. ⚠️Spoiler: There was not a natural gesture set.
+My bachelor thesis was about hand gestures in virtual meetings, and if there exists a natural gesture set that can be mapped to actions such as volume control. Spoiler: There was not a natural gesture set.
 But we got a lot of other interesting findings from the data we gathered and analyzed.
 You can read more about the project [here](/projects/bachelor) which was done with my partner [Mads Roager](https://www.linkedin.com/in/mads-roager-97a46a231/).

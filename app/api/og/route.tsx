@@ -2,152 +2,120 @@ import { ImageResponse } from "@vercel/og";
 
 export const runtime = "edge";
 
-export async function GET(req: Request) {
+// Fixed, static asset paths. These are the ONLY URLs this route fetches —
+// no user-provided value ever flows into a network request or an <img src>.
+const FONT_PATH = "/fonts/Inter-Bold.ttf";
+const IMAGE_PATH = "/images/urban/DSCF4550.jpg";
+
+// Keep titles short and single-line for the OG card.
+function cleanText(value: string | null, max = 120): string {
+  const raw = (value || "").replace(/\s+/g, " ").trim();
+  if (raw.length <= max) return raw;
+  return raw.slice(0, max - 1).trimEnd() + "…";
+}
+
+/** Fetch a same-origin static asset and return it as a base64 data URL.
+ *  Returns null on any failure (missing asset, network error). */
+async function staticDataUrl(
+  host: string | null,
+  proto: string,
+  path: string,
+  contentType: string
+): Promise<string | null> {
+  if (!host) return null;
   try {
-    const { searchParams } = new URL(req.url);
-    const title = searchParams.get("title") || "Lucas Hanson";
-    const subtitle = searchParams.get("subtitle") || "Photography & Software";
-    const imageParam =
-      searchParams.get("image") || "/images/urban/DSCF4550-1.jpg";
-
-    // Validate imageParam before use to prevent XSS/SSRF
-    // Only allow local images under /images/, or remote images from allow-listed hostnames.
-    function isValidImagePath(param: string): boolean {
-      const allowedRemoteHosts = [
-        "lucashanson.dk"
-      ];
-      try {
-        // Always allow local static images served from this app.
-        if (param.startsWith("/images/")) {
-          return true;
-        }
-        // For remote images, require a fully-qualified HTTPS URL.
-        const url = new URL(param);
-        const scheme = url.protocol;
-        // Allow only HTTPS for remote images.
-        if (scheme === "https:") {
-          // Block .svg files remotely to avoid SVG script injection.
-          if (url.pathname.toLowerCase().endsWith(".svg")) {
-            return false;
-          }
-          // Restrict to allow-listed hostnames only (no IPs, localhost, etc.).
-          if (allowedRemoteHosts.includes(url.hostname)) {
-            return true;
-          }
-          return false;
-        }
-        // Block all other schemes (http, data:, javascript:, file:, etc.).
-        return false;
-      } catch (e) {
-        // Malformed URL
-        return false;
-      }
+    const url = `${proto}://${host}${path}`;
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const buf = await resp.arrayBuffer();
+    // Edge runtimes may not expose Buffer; convert manually.
+    const bytes = new Uint8Array(buf);
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(
+        null,
+        Array.from(bytes.subarray(i, i + chunk))
+      );
     }
+    const b64 = typeof btoa === "function" ? btoa(binary) : "";
+    if (!b64) return null;
+    return `data:${contentType};base64,${b64}`;
+  } catch {
+    return null;
+  }
+}
 
-    // If imageParam fails validation, fall back to safe default
-    const resolvedImageParam = isValidImagePath(imageParam)
-      ? imageParam
-      : "/images/urban/DSCF4550-1.jpg";
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const title = cleanText(searchParams.get("title") || "Lucas Hanson");
+  const subtitle = cleanText(
+    searchParams.get("subtitle") || "Photography & Software",
+    80
+  );
 
-    // Build absolute image URL for edge runtime (fetch requires absolute URLs)
-    const host = req.headers.get("host");
-    const proto = req.headers.get("x-forwarded-proto") || "https";
-    const image =
-      resolvedImageParam.startsWith("http") || !host
-        ? resolvedImageParam
-        : `${proto}://${host}${resolvedImageParam}`;
+  const host = req.headers.get("host");
+  const proto = req.headers.get("x-forwarded-proto") || "https";
 
-    // Try to load a local font if present in /public/fonts; fall back silently if not found.
-    let fonts: any[] = [];
+  // Font is mandatory for @vercel/og.
+  const fontUrl = host ? `${proto}://${host}${FONT_PATH}` : null;
+  let fonts: any[] = [];
+  if (fontUrl) {
     try {
-      if (host) {
-        const fontUrl = `${proto}://${host}/fonts/Inter-Bold.ttf`;
-        const fontResp = await fetch(fontUrl);
-        if (fontResp.ok) {
-          const data = await fontResp.arrayBuffer();
-          fonts.push({ name: "Inter", data, weight: 700, style: "normal" });
-        }
+      const resp = await fetch(fontUrl);
+      if (resp.ok) {
+        fonts.push({
+          name: "Inter",
+          data: await resp.arrayBuffer(),
+          weight: 700,
+          style: "normal",
+        });
       }
-    } catch (err) {
-      // ignore — font optional
+    } catch {
+      // handled by the empty-check below
     }
+  }
+  if (fonts.length === 0) {
+    return new Response("OG font unavailable", { status: 500 });
+  }
 
-    // Try to fetch the provided image and convert to a data URL so the renderer
-    // doesn't have to perform a separate external request. If fetch fails,
-    // fall back to the absolute URL string.
-    let imageSrc = image;
-    try {
-      const imgResp = await fetch(image);
-      if (imgResp.ok) {
-        const imgBuf = await imgResp.arrayBuffer();
-        const contentType = imgResp.headers.get("content-type") || "image/jpeg";
-        // Edge runtimes may not expose Node Buffer; use a safe fallback.
-        let base64: string = "";
-        try {
-          base64 =
-            typeof Buffer !== "undefined"
-              ? Buffer.from(imgBuf).toString("base64")
-              : (function (arrayBuffer: ArrayBuffer) {
-                  let binary = "";
-                  const bytes = new Uint8Array(arrayBuffer);
-                  const chunkSize = 0x8000;
-                  for (let i = 0; i < bytes.length; i += chunkSize) {
-                    const chunk = bytes.subarray(i, i + chunkSize);
-                    binary += String.fromCharCode.apply(
-                      null,
-                      Array.from(chunk) as any
-                    );
-                  }
-                  return typeof btoa === "function" ? btoa(binary) : "";
-                })(imgBuf);
-        } catch (e) {
-          // If conversion fails, leave base64 empty and fall back to the original URL
-          base64 = "";
-        }
+  // Fixed local image (static path, not user input).
+  const imageSrc = await staticDataUrl(host, proto, IMAGE_PATH, "image/jpeg");
 
-        if (base64) {
-          imageSrc = `data:${contentType};base64,${base64}`;
-        }
-      }
-    } catch (err) {
-      // keep imageSrc as the original absolute URL
-    }
-
-    // Compose the image using simple inline styles supported by the runtime
-    const imageResponse = new ImageResponse(
-      (
+  const imageResponse = new ImageResponse(
+    (
+      <div
+        style={{
+          display: "flex",
+          width: "1200px",
+          height: "630px",
+          background: "linear-gradient(180deg,#050505 0%,#0d0d0f 100%)",
+          color: "white",
+          alignItems: "center",
+          justifyContent: "space-between",
+          padding: "56px",
+          boxSizing: "border-box",
+          fontFamily: "Inter, sans-serif",
+        }}
+      >
         <div
           style={{
             display: "flex",
-            width: "1200px",
-            height: "630px",
-            background: "linear-gradient(180deg,#111827 0%,#0f172a 100%)",
-            color: "white",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "56px",
-            boxSizing: "border-box",
-            fontFamily:
-              'Inter, Roboto, system-ui, -apple-system, "Segoe UI", sans-serif',
+            flexDirection: "column",
+            gap: 18,
+            maxWidth: 640,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 18,
-              maxWidth: 780,
-            }}
-          >
-            <div style={{ fontSize: 48, fontWeight: 700, lineHeight: 1.05 }}>
-              {title}
-            </div>
-            <div style={{ fontSize: 28, opacity: 0.85 }}>{subtitle}</div>
-            <div style={{ marginTop: 18, fontSize: 14, opacity: 0.7 }}>
-              lucashanson.dk — Photos & code
-            </div>
+          <div style={{ fontSize: 46, fontWeight: 700, lineHeight: 1.05 }}>
+            {title}
           </div>
+          <div style={{ fontSize: 26, opacity: 0.85 }}>{subtitle}</div>
+          <div style={{ marginTop: 18, fontSize: 14, opacity: 0.65 }}>
+            lucashanson.dk — Photos & code
+          </div>
+        </div>
 
+        {imageSrc && (
           <div
             style={{
               display: "flex",
@@ -157,10 +125,9 @@ export async function GET(req: Request) {
               height: 420,
             }}
           >
-            {/* Show the provided image as a contained square if available */}
             <img
               src={imageSrc}
-              alt="preview"
+              alt=""
               width={420}
               height={420}
               style={{
@@ -170,17 +137,15 @@ export async function GET(req: Request) {
               }}
             />
           </div>
-        </div>
-      ),
-      {
-        width: 1200,
-        height: 630,
-        fonts: fonts,
-      }
-    );
+        )}
+      </div>
+    ),
+    {
+      width: 1200,
+      height: 630,
+      fonts: fonts,
+    }
+  );
 
-    return imageResponse;
-  } catch (err) {
-    return new Response("Failed to generate image", { status: 500 });
-  }
+  return imageResponse;
 }

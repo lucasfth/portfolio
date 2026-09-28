@@ -1,3 +1,9 @@
+---
+title: Snow
+description: Snow-covered landscapes and winter scenes.
+cover: /images/snow/DSCF5119.jpg
+---
+
 ![header](/images/snow/DSCF5119.jpg)
 
 # Snow Gallery

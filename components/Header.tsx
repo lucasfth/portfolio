@@ -1,152 +1,156 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import "./Header.css";
+import { motion, useScroll, useMotionValueEvent } from "motion/react";
+import { Menu, X } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+const NAV_ITEMS = [
+  { name: "About", href: "/" },
+  { name: "Projects", href: "/projects" },
+  { name: "Blog", href: "/blog" },
+  { name: "Aperture", href: "/aperture" },
+];
 
 export default function Header() {
-  const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const navRef = useRef<HTMLElement>(null);
-  const burgerRef = useRef<HTMLButtonElement>(null);
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setIsOpen(false);
-  }, [pathname]);
+  const { scrollY } = useScroll();
+  useMotionValueEvent(scrollY, "change", (latest) =>
+    latest > 24 ? setScrolled(true) : setScrolled(false)
+  );
 
+  useEffect(() => setOpen(false), [pathname]);
+
+  // Lock body scroll + Escape to close the mobile menu.
   useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
+    if (open) document.body.style.overflow = "hidden";
+    else document.body.style.overflow = "";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    if (open) window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
     };
-  }, [isOpen]);
+  }, [open]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        setIsOpen(false);
-        burgerRef.current?.focus();
-      }
-
-      if (e.key === "Tab" && isOpen && navRef.current) {
-        const focusable = navRef.current.querySelectorAll(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-        );
-        const first = focusable[0] as HTMLElement;
-        const last = focusable[focusable.length - 1] as HTMLElement;
-
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault();
-          last.focus();
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault();
-          first.focus();
-        }
-      }
-    };
-
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        navRef.current &&
-        !navRef.current.contains(e.target as Node) &&
-        isOpen
-      ) {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      window.addEventListener("keydown", handleKeyDown);
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
-
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
-
-  const isActive = (path: string) => {
-    if (path === "/") {
-      return pathname === "/";
-    }
-    return pathname.startsWith(path);
-  };
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
-    <nav className="navbar" ref={navRef}>
-      <Link
-        href="/"
-        className="navbar-brand"
-        onClick={() => setIsOpen(false)}
-        aria-current={pathname === "/" ? "page" : undefined}
+    <motion.header
+      initial={{ y: -80, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed top-0 inset-x-0 z-50 flex justify-center px-4 pt-4 sm:pt-5"
+    >
+      <motion.nav
+        animate={
+          scrolled
+            ? {
+                borderRadius: 18,
+                boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
+                backgroundColor: "rgba(12,12,14,0.72)",
+              }
+            : {
+                borderRadius: 999,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
+                backgroundColor: "rgba(12,12,14,0.45)",
+              }
+        }
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className={cn(
+          "flex w-full max-w-4xl items-center justify-between px-4 sm:px-6",
+          "glass backdrop-blur-xl",
+          open ? "h-auto min-h-[64px]" : "h-16"
+        )}
+        aria-label="Primary"
       >
-        <img src="/favicon.ico" alt="" className="logo" />
-        <span className="brand-name">Lucas Hanson</span>
-      </Link>
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 pl-1"
+          aria-current={pathname === "/" ? "page" : undefined}
+        >
+          <Image
+            src="/favicon-32x32.png"
+            alt=""
+            width={32}
+            height={32}
+            className="size-8 shrink-0 object-contain"
+          />
+          <span className="font-hand text-xl tracking-wide">Lucas Hanson</span>
+        </Link>
 
-      <button
-        className="burger-menu"
-        onClick={toggleMenu}
-        ref={burgerRef}
-        aria-label={isOpen ? "Close navigation menu" : "Open navigation menu"}
-        aria-expanded={isOpen}
-        aria-controls="nav-menu"
-      >
-        <span aria-hidden="true">{isOpen ? "✕" : "☰"}</span>
-      </button>
+        {/* Desktop links */}
+        <div className="hidden md:flex items-center gap-1">
+          {NAV_ITEMS.map((item) => (
+            <Link key={item.href} href={item.href} className="relative px-4 py-2">
+              <span
+                className={cn(
+                  "text-xs font-medium uppercase tracking-[0.14em] transition-colors duration-300",
+                  isActive(item.href) ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {item.name}
+              </span>
+              {isActive(item.href) && (
+                <motion.span
+                  layoutId="nav-underline"
+                  className="absolute inset-x-4 -bottom-0.5 h-px bg-foreground"
+                  transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                />
+              )}
+            </Link>
+          ))}
+        </div>
 
-      <ul id="nav-menu" className={`nav-links ${isOpen ? "open" : ""}`}>
-        <li>
-          <Link
-            href="/"
-            className={isActive("/") ? "active" : ""}
-            aria-current={isActive("/") ? "page" : undefined}
-            onClick={() => setIsOpen(false)}
-          >
-            <span aria-hidden="true">🌤</span> About me
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/projects"
-            className={isActive("/projects") ? "active" : ""}
-            aria-current={isActive("/projects") ? "page" : undefined}
-            onClick={() => setIsOpen(false)}
-          >
-            <span aria-hidden="true">👨‍💻</span> Projects
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/blog"
-            className={isActive("/blog") ? "active" : ""}
-            aria-current={isActive("/blog") ? "page" : undefined}
-            onClick={() => setIsOpen(false)}
-          >
-            <span aria-hidden="true">✍️</span> Blog
-          </Link>
-        </li>
-        <li>
-          <Link
-            href="/aperture"
-            className={isActive("/aperture") ? "active" : ""}
-            aria-current={isActive("/aperture") ? "page" : undefined}
-            onClick={() => setIsOpen(false)}
-          >
-            <span aria-hidden="true">📷</span> Aperture
-          </Link>
-        </li>
-      </ul>
-    </nav>
+        {/* Mobile toggle */}
+        <button
+          className="md:hidden grid size-10 place-items-center text-foreground"
+          onClick={() => setOpen((v) => !v)}
+          aria-label={open ? "Close menu" : "Open menu"}
+          aria-expanded={open}
+          aria-controls="mobile-menu"
+        >
+          {open ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </motion.nav>
+
+      {/* Mobile menu */}
+      {open && (
+        <motion.div
+          id="mobile-menu"
+          ref={menuRef}
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="md:hidden fixed inset-x-4 top-[88px] z-50 glass rounded-2xl p-2"
+        >
+          {NAV_ITEMS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "block rounded-xl px-4 py-3 text-sm uppercase tracking-[0.14em] transition-colors",
+                isActive(item.href)
+                  ? "bg-foreground/10 text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {item.name}
+            </Link>
+          ))}
+        </motion.div>
+      )}
+    </motion.header>
   );
 }

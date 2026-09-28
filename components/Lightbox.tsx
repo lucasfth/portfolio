@@ -115,7 +115,7 @@ export default function Lightbox({
         }}
         aria-label="Close image viewer"
       >
-        <span aria-hidden="true">✕</span>
+        <span aria-hidden="true">×</span>
         <kbd className="lightbox-kbd-hint" aria-hidden="true">Esc</kbd>
       </button>
 

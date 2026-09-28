@@ -1,6 +1,15 @@
+---
+title: DHI
+tagline: GreenUP
+description: A collaboration with DHI on the GreenUP project, applying Scrum in a near real-world setting.
+image: /images/greenup.png
+tags: [Python, TypeScript, React, FastAPI]
+date: 2023-06
+---
+
 ![header](/images/greenup.png)
 
-# ⛈️ DHI
+# DHI
 
 Technologies used includes Python, TypeScript, React, and FastAPI. Read more about the project below.
 

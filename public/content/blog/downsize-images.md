@@ -1,6 +1,12 @@
+---
+title: Downsizing Images
+description: Downsizing images to prevent unauthorized use.
+date: 2025-03-09
+---
+
 ![header](/images/nature/DSCF2082.jpg)
 
-# 🌄 Downsizing images
+# Downsizing images
 
 Due to using original images on my website, I wanted to ensure no one uses my images without permission. Thus I found [this quora post](https://www.quora.com/Where-is-a-great-place-to-share-your-photography-without-the-risk-of-people-stealing-it) that suggests downsizing images.
 

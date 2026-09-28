@@ -1,15 +1,33 @@
-"use client";
+import PageHero from "@/components/PageHero";
+import PostRow from "@/components/PostRow";
+import Reveal from "@/components/Reveal";
+import { getBlogPosts } from "@/lib/content";
 
-import PageShell from "@/components/PageShell";
-import { useMarkdown } from "@/hooks/useMarkdown";
+export const metadata = {
+  title: "Blog",
+  description:
+    "Thoughts, experiences and insights on software development, photography and life.",
+};
 
 export default function Blog() {
-  const { content, loading, error } = useMarkdown("/content/blog.md");
-
-  if (loading) return <div className="common-container"><div className="inner-container"><p>Loading...</p></div></div>;
-  if (error) return <div className="common-container"><div className="inner-container"><p>Error: {error}</p></div></div>;
+  const posts = getBlogPosts();
 
   return (
-    <PageShell markdown={content} />
+    <>
+      <PageHero
+        eyebrow="Writing"
+        title="Blog"
+        description="Thoughts, experiences and insights on software development, photography and the odd thing in between."
+      />
+      <section className="mx-auto w-full max-w-4xl px-6 pb-24">
+        <div>
+          {posts.map((post, i) => (
+            <Reveal key={post.slug} delay={i * 60}>
+              <PostRow post={post} index={i} />
+            </Reveal>
+          ))}
+        </div>
+      </section>
+    </>
   );
 }

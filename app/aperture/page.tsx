@@ -1,26 +1,33 @@
-"use client";
+import PageHero from "@/components/PageHero";
+import GalleryTile from "@/components/GalleryTile";
+import Reveal from "@/components/Reveal";
+import { getGalleries } from "@/lib/content";
 
-import { useRouter } from "next/navigation";
-import PageShell from "@/components/PageShell";
-import GalleryContent from "@/components/GalleryContent";
-import { useMarkdown } from "@/hooks/useMarkdown";
+export const metadata = {
+  title: "Aperture",
+  description:
+    "A selection of photography — moody, minimalistic and textured.",
+};
 
 export default function Aperture() {
-  const { content, loading, error } = useMarkdown("/content/aperture.md");
-  const router = useRouter();
-
-  const handleImageClick = (galleryId: string) => {
-    router.push(`/aperture/${galleryId}`);
-  };
-
-  if (loading) return <div className="common-container"><div className="inner-container"><p>Loading...</p></div></div>;
-  if (error) return <div className="common-container"><div className="inner-container"><p>Error: {error}</p></div></div>;
+  const galleries = getGalleries();
 
   return (
     <>
-      <PageShell markdown={content}>
-        <GalleryContent markdown={content} onImageClick={handleImageClick} />
-      </PageShell>
+      <PageHero
+        eyebrow="Photography"
+        title="Aperture"
+        description="Why Aperture? 'Portfolio' was taken, so I chose Aperture. Here is a selection of moments I have captured — I'm still finding my style, but I like moody, minimalistic, or something with texture like a painting."
+      />
+      <section className="mx-auto w-full max-w-6xl px-6 pb-24">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+          {galleries.map((g, i) => (
+            <Reveal key={g.id} delay={i * 70}>
+              <GalleryTile gallery={g} />
+            </Reveal>
+          ))}
+        </div>
+      </section>
     </>
   );
 }

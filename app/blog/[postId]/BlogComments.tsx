@@ -1,106 +1,76 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 declare global {
   interface Window {
-    cusdisScriptLoaded?: boolean;
-    CUSDIS?: any;
+    CUSDIS?: { initial?: () => void };
+    __cusdisLoaded?: boolean;
   }
 }
 
-interface BlogCommentsProps {
-  postId: string;
-}
+const CUSDIS_HOST = "https://cusdis.com";
+const CUSDIS_APP_ID = "d29ad22a-c8fb-4d05-98a4-81f79e2d7b15";
 
-export default function BlogComments({ postId }: BlogCommentsProps) {
+/**
+ * Cusdis comments.
+ *
+ * The thread container is rendered server-side with static data-attributes
+ * (postId is a build-time known SSG param), and the UMD build of Cusdis is
+ * loaded as a classic script. The UMD build is required: the ES module build
+ * (`cusdis.es.js`) imports `iframe.umd.js` cross-origin, which fails without
+ * CORS headers and silently breaks the comments.
+ */
+export default function BlogComments({ postId }: { postId: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    // Load the cusdis script client-side only
-    if (!window.cusdisScriptLoaded) {
-      const existingScript =
-        document.getElementById("cusdis-script") ||
-        document.querySelector(
-          'script[src="https://cusdis.com/js/cusdis.es.js"]'
-        );
-
-      if (!existingScript) {
+    const loadScript = () => {
+      if (window.CUSDIS?.initial || window.__cusdisLoaded) return;
+      const existing = document.getElementById("cusdis-script");
+      if (!existing) {
         const script = document.createElement("script");
-        script.src = "https://cusdis.com/js/cusdis.es.js";
+        script.src = "https://cusdis.com/js/cusdis.umd.js";
         script.async = true;
-        script.defer = true;
         script.id = "cusdis-script";
-
-        window.cusdisScriptLoaded = true;
         document.body.appendChild(script);
       }
-    }
+      window.__cusdisLoaded = true;
+    };
 
-    const initTimer = setTimeout(() => {
-      if (window.CUSDIS) {
+    loadScript();
+
+    // The script loads asynchronously; poll for window.CUSDIS and init.
+    let tries = 0;
+    const timer = setInterval(() => {
+      if (window.CUSDIS?.initial) {
+        clearInterval(timer);
         window.CUSDIS.initial();
+      } else if (++tries > 30) {
+        clearInterval(timer);
       }
-    }, 1000);
+    }, 500);
 
-    return () => {
-      clearTimeout(initTimer);
-    };
+    return () => clearInterval(timer);
   }, [postId]);
 
-  // Only render the comments container after the client has mounted
-  const [isMounted, setIsMounted] = useState(false);
-  const [pageUrl, setPageUrl] = useState("");
-  const [pageTitle, setPageTitle] = useState("");
-
+  // Keep Cusdis's own page-url metadata current on client navigations.
   useEffect(() => {
-    setIsMounted(true);
-    setPageUrl(window.location.href);
-    setPageTitle(document.title);
-  }, []);
-
-  useEffect(() => {
-    const setIframeHeight = () => {
-      const iframe = document.querySelector(
-        "#cusdis_thread iframe"
-      ) as HTMLIFrameElement;
-      if (!iframe) return;
-
-      const postsWithComments = ["downsize-images"];
-
-      if (postsWithComments.includes(postId)) {
-        iframe.style.height = "1200px";
-      } else {
-        iframe.style.height = "350px";
-      }
-    };
-
-    const checkIframe = setInterval(() => {
-      const iframe = document.querySelector("#cusdis_thread iframe");
-      if (iframe) {
-        clearInterval(checkIframe);
-
-        setIframeHeight();
-
-        return () => {};
-      }
-    }, 1000);
-
-    return () => {
-      clearInterval(checkIframe);
-    };
+    const el = containerRef.current;
+    if (el) {
+      el.setAttribute("data-page-url", window.location.href);
+    }
   }, [postId]);
-
-  // Render the comments placeholder — this is client-only to avoid SSR/client mismatches
-  if (!isMounted) return null;
 
   return (
     <div
+      ref={containerRef}
       id="cusdis_thread"
-      className="comments-container"
-      data-host="https://cusdis.com"
-      data-app-id="d29ad22a-c8fb-4d05-98a4-81f79e2d7b15"
+      data-host={CUSDIS_HOST}
+      data-app-id={CUSDIS_APP_ID}
       data-page-id={postId}
-      data-page-url={pageUrl}
-      data-page-title={pageTitle}
+      // data-page-url is set in the effect below (before CUSDIS.initial) so the
+      // server and client HTML match (no hydration mismatch).
     />
   );
 }

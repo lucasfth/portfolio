@@ -1,6 +1,13 @@
+---
+title: My first blog post
+description: A brief introduction to my blog.
+date: 2025-02-26
+image: /images/nature/DSCF2082.jpg
+---
+
 ![header](/images/nature/DSCF2082.jpg)
 
-# 📫 My first blog post
+# My first blog post
 
 Welcome to my first blog post. The purpose of this blog is to share thoughts, experiences, and insights I have gathered. So a lot of the posts will also be about what I find useful and interesting in my own daily life.
 

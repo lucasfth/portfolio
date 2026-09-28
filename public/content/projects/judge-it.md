@@ -1,3 +1,12 @@
+---
+title: Judge IT
+tagline: Fun statistics for CampusCup
+description: A web app for judging and displaying live results for CampusCup.
+image: /images/judge-it.png
+tags: [Next.js, Supabase, TypeScript]
+date: 2025-09
+---
+
 ![header](/images/judge-it.png)
 
 # Judge IT
@@ -6,26 +15,26 @@ Judge IT is a web app I built to help with judging and displaying results for [C
 
 ---
 
-## ⚓ The event
+## The event
 
 On Friday, the 12th of September 2025, I had the opportunity to participate in organizing CampusCup at IT-Universitetet i København—a yearly relay race that drew, very quick guess, 700 spectators throughout the day. Teams of four went to compete against each other, sailing over Emil Holms Kanal, chugging a beer, spinning around, and then sailing back.
 
-## 🚀 Launching Judge IT
+## Launching Judge IT
 
 This year was special for me because I spent a good amount of my free time over the past year building a web app from scratch called [Judge IT](https://github.com/itu-campuscup/judge-it). This was its first real-world test. No previous events. A QA team consisting of me. And mainly a dev team consisting of me. So, yeah, I was extremely nervous about what would happen when people actually started using it on the day.
 
-💡 The idea behind Judge IT was simple:
+The idea behind Judge IT was simple:
 
 1. Make it easier for the judges to identify winners, especially when finishes get close.
 2. Make the whole thing more fun and engaging for both participants and spectators, with real-time stats and a little extra drama about who is the best at sailing.
 
-🔥 So did it burn down on the day?
+So did it burn down on the day?
 
 Fortunately not, and it went way better than I expected. The judges picked it up quickly, spectators loved seeing live updates, and the feedback was super positive (which was extremely surprising due to how little outside input I had during development). But the spectators and competitors also want to access the stats on their own devices. There are a few reasons I chose not to allow this, but I have proposed a new solution which would allow it. You can see the proposal [here](https://github.com/orgs/itu-campuscup/discussions/1).
 
 But the best of all. Judge IT did not break during the event. That felt like a massive win for me.
 
-📖 Of course, a few “learning moments” popped up:
+Of course, a few “learning moments” popped up:
 
 - Sometimes, judges would accidentally double-click a button, which led to some wild and unrealistic times showing up. I ended up fixing these directly in the Supabase tables during the event. Next year, I will probably lock the buttons for a few seconds after they’re pressed.
 - The judges’ network connection got spotty with so many people outside, and sometimes stats took a while to update. Lesson learned: next time, bring a dedicated router just for the judges.
@@ -33,7 +42,7 @@ But the best of all. Judge IT did not break during the event. That felt like a m
 
 Some things you simply do not catch until real people are using your stuff in real life. I have learned a ton, and a lot of it has nothing to do with code.
 
-## 👨‍💻 For the tech curious
+## For the tech curious
 
 If you want to geek out over the details, here’s how Judge IT works (and some of the headaches I wrestled with):
 

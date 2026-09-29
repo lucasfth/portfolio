@@ -88,9 +88,22 @@ These are the ones I know.
 
 ### Programming languages
 
-The programming languages I know are highlighted on my GitHub (thus I only have to update the languages in one place). I've included my profile [here](https://github.com/lucasfth).
+My primary programming languages are:
+
+- TypeScript
+- JavaScript
+- Python
+- C#
+- F#
+- Java
+- Go
 
 ## Education
+
+### Master of Science in Computer Science
+
+**[IT University of Copenhagen](https://itu.dk/)** - *(Aug 2024 → present)*\
+Currently pursuing a Master of Science in Computer Science.
 
 ### Bachelor in Software Development
 

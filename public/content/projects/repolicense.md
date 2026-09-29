@@ -11,6 +11,8 @@ date: 2024-03
 
 # Repolicense
 
+> **Repolicense was sunset on May 20, 2026.** The web application has been replaced by [Repolicense CLI](https://github.com/lucasfth/repolicense-cli), which provides the same license-selection flow and adds a license compatibility checker.
+
 Technologies used includes HTML5, CSS3, JavaScript (and a whole lot), Shoelace. Read more about the project below.
 
 ---
@@ -27,5 +29,4 @@ Using Repolicense is straightforward: simply visit the website, answer the quest
 
 Links:
 
-- [Repolicense](https://repolicense.com)
 - [Repository](https://github.com/lucasfth/repolicense)

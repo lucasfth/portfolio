@@ -40,7 +40,7 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.35), transparent 40%);
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent 40%);
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
@@ -106,12 +106,5 @@
   }
   .gallery-item:hover {
     border-color: rgba(0, 0, 0, 0.22);
-  }
-  .gallery-item::after {
-    background: linear-gradient(to top, rgba(255, 255, 255, 0.4), transparent 40%);
-  }
-  .gallery-meta {
-    color: rgba(0, 0, 0, 0.75);
-    text-shadow: 0 1px 4px rgba(255, 255, 255, 0.9);
   }
 }

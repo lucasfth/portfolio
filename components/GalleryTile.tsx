@@ -29,8 +29,8 @@ export default function GalleryTile({ gallery }: { gallery: Gallery }) {
       </div>
 
       <div className="absolute inset-x-0 bottom-0 p-4">
-        <h3 className="font-hand text-2xl tracking-tight">{gallery.title}</h3>
-        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+        <h3 className="font-hand text-2xl tracking-tight text-white">{gallery.title}</h3>
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-white/70">
           {gallery.imageCount} {gallery.imageCount === 1 ? "photo" : "photos"}
         </p>
       </div>

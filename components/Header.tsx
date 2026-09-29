@@ -19,7 +19,19 @@ export default function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [light, setLight] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-color-scheme: light)").matches
+  );
   const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: light)");
+    const onChange = (e: MediaQueryListEvent) => setLight(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
 
   const { scrollY } = useScroll();
   useMotionValueEvent(scrollY, "change", (latest) =>
@@ -57,13 +69,21 @@ export default function Header() {
           scrolled
             ? {
                 borderRadius: 18,
-                boxShadow: "0 12px 40px rgba(0,0,0,0.45)",
-                backgroundColor: "rgba(12,12,14,0.72)",
+                boxShadow: light
+                  ? "0 12px 40px rgba(0,0,0,0.16)"
+                  : "0 12px 40px rgba(0,0,0,0.45)",
+                backgroundColor: light
+                  ? "rgba(255,255,255,0.78)"
+                  : "rgba(12,12,14,0.72)",
               }
             : {
                 borderRadius: 999,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.25)",
-                backgroundColor: "rgba(12,12,14,0.45)",
+                boxShadow: light
+                  ? "0 4px 20px rgba(0,0,0,0.10)"
+                  : "0 4px 20px rgba(0,0,0,0.25)",
+                backgroundColor: light
+                  ? "rgba(255,255,255,0.55)"
+                  : "rgba(12,12,14,0.45)",
               }
         }
         transition={{ duration: 0.3, ease: "easeOut" }}

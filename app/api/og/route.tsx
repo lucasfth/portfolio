@@ -1,6 +1,6 @@
 import { ImageResponse } from "@vercel/og";
 
-export const runtime = "edge";
+export const runtime = "nodejs";
 
 // Fixed, static asset paths. These are the ONLY URLs this route fetches —
 // no user-provided value ever flows into a network request or an <img src>.

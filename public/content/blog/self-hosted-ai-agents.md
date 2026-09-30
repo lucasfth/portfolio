@@ -1,6 +1,7 @@
 ---
 title: I made my phone the brain of my AI agents
 description: "How I run a personal AI assistant on an old Android phone: one shared markdown vault, one self-hosted model, four agents, and the problems Android causes."
+keywords: [personal AI assistant, self-hosted LLM, Termux, Obsidian, MCP, Tailscale, llama.cpp, Qwen, Raycast, coding agent, automation]
 date: 2026-09-30
 image: /images/nature/DSCF2082.jpg
 ---

@@ -2,6 +2,7 @@
 title: Bachelor Project
 tagline: Hand-Gesture-Based Interaction in Hybrid Meetings
 description: My bachelor project explored using hand gestures to enhance hybrid meetings.
+keywords: [hand gestures, hybrid meetings, mediapipe, tensorflow, python, bachelor project]
 image: /images/DSCF4282.png
 tags: [Python, TensorFlow, Google Mediapipe]
 date: 2024-07

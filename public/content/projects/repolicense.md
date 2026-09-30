@@ -2,6 +2,7 @@
 title: Repolicense
 tagline: Choose the right license for your open-source project
 description: A question-driven web app that guides you to the right open-source license.
+keywords: [open source, license selection, license checker, web app, JavaScript]
 image: /images/repolicense.png
 tags: [HTML5, CSS3, JavaScript, Shoelace]
 date: 2024-03

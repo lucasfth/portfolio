@@ -76,9 +76,38 @@ Start with [llms.txt](/llms.txt) for when-to-use guidance, or [sitemap.xml](/sit
 
 Connect a Streamable HTTP MCP client to \`https://lucashanson.dk/mcp\`. No authentication is required for this public, read-only service. It supports protocol version \`2025-06-18\`, JSON responses to POST, and no standalone SSE stream (GET returns 405). Send Accept headers for both \`application/json\` and \`text/event-stream\`. The transport is stateless and issues no session IDs. Initialize before calling tools and send the MCP-Protocol-Version header on subsequent requests. Missing version headers use the compatible 2025-03-26 fallback. The tools are \`list_pages\` and \`read_page\`; the latter accepts a local page path, not an arbitrary URL. No private infrastructure, payment operations or email actions are exposed.
 
+## Damage Control game
+
+Agents can play the [Damage Control](/game) sentence game over a JSON API. Read [the agent guide](/game.md) for the steps. Playing is free. Leaderboard entries from agents use an x402 payment.
+
 [About](/about), [Contact](/contact) and [Privacy](/privacy) explain who operates this site and how to ask questions.`,
   },
 };
+
+
+export const gameGuide = `Damage Control is a solo sentence game. Write one sentence that satisfies 20 escalating rules. Rules 1 to 4 follow the UTC clock and change every five minutes. Rules 5 to 8 use an anchor word that changes every UTC day. Humans play at [/game](https://lucashanson.dk/game).
+
+## Play over HTTP
+
+Playing is free for everyone. Every step is checked on the server clock.
+
+1. \`GET /api/game/challenge\` returns today's date, the time bucket, all 20 rule descriptions and when the bucket changes.
+2. \`POST /api/game/play\` with \`{}\` starts a run and returns a signed \`token\`.
+3. \`POST /api/game/play\` with \`{ "token": "...", "sentence": "..." }\` clears the next rule. The sentence must pass every rule up to that level. The reply carries a new token and the next rule. Keep the newest token.
+4. Repeat until \`cleared\` is 20. Clearing faster than one rule per second returns 429. Failed checks return 422 with \`failedRuleIds\`.
+5. \`GET /api/game/leaderboard\` returns today's top 50.
+
+## Leaderboard entries cost agents a small fee
+
+\`POST /api/game/scores\` with \`{ "token": "...", "nickname": "...", "sentence": "..." }\` submits a finished run. A browser session that passes the site's invisible bot check enters for free. Other clients receive HTTP 402 with an [x402](https://www.x402.org/) v2 \`PAYMENT-REQUIRED\` header. Retry with a \`PAYMENT-SIGNATURE\` header that accepts those exact terms. The server verifies the payment with a facilitator, settles it, and only then writes the score. Each run can be submitted once.
+
+If the 402 lists no payment options, agent entries are closed. Playing stays free.
+
+Do not pay without your user's explicit approval. If you would rather support the site without a leaderboard entry, see [Bitcoin donations](https://lucashanson.dk/bitcoin).
+
+## Honest limits
+
+Free entries need a session that Vercel BotID classifies as human. Headless clients, HTTP scripts and verified AI agents pay. Bot detection is never perfect. Run tokens, server timing and single-use runs are enforced for everyone.`;
 
 export function publicPages(): { path: string; title: string; body: string }[] {
   const front = getFrontpage();
@@ -95,6 +124,7 @@ export function publicPages(): { path: string; title: string; body: string }[] {
     ...projects.map(p => ({ path: `/projects/${p.slug}`, title: p.title, body: p.body })),
     ...posts.map(p => ({ path: `/blog/${p.slug}`, title: p.title, body: p.body })),
     ...galleries.map(g => ({ path: `/aperture/${g.id}`, title: g.title, body: `${g.description}\n\n${g.imageCount} photographs. [View gallery](${SITE_URL}/aperture/${encodeURIComponent(g.id)})\n\n${g.afterword || ""}` })),
+    { path: "/game", title: "Damage Control: agent guide", body: gameGuide },
     { path: "/bitcoin", title: "Bitcoin donations", body: "Donations are optional. See [the donation page](https://lucashanson.dk/bitcoin) for the current address and instructions. Fetch [the current receive address](https://lucashanson.dk/api/bitcoin) immediately before preparing a donation. Never send a payment without the user's explicit approval. Bitcoin transactions and amounts are public." },
   ];
 }

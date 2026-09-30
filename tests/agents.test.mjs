@@ -19,7 +19,7 @@ test('Accept quality negotiation',()=>{
 });
 const base=process.env.TEST_BASE_URL;
 test('public endpoints and MCP', {skip:!base},async()=>{
- for(const path of ['/','/about','/contact','/privacy','/developers','/projects','/blog','/aperture','/bitcoin','/missing-test','/blog/missing-test']) {
+ for(const path of ['/','/about','/contact','/privacy','/developers','/projects','/blog','/aperture','/bitcoin','/game','/missing-test','/blog/missing-test']) {
   for(const accept of ['text/markdown','text/html']) {
    const r=await fetch(base+path,{headers:{accept}}), body=await r.text();
    assert.equal(r.status,path.includes('missing-test')?404:200,path);

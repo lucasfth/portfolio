@@ -11,7 +11,7 @@ async function json(path, init) {
 test("public API contract", { skip: !base }, async () => {
   const openapi = await (await fetch(`${base}/openapi.json`)).json();
   assert.equal(openapi.openapi, "3.1.1");
-  assert.deepEqual(Object.keys(openapi.paths).sort(), ["/api/gallery-preview", "/api/markdown", "/api/search"]);
+  assert.deepEqual(Object.keys(openapi.paths).sort(), ["/api/gallery-preview", "/api/game/challenge", "/api/game/leaderboard", "/api/game/play", "/api/game/scores", "/api/markdown", "/api/search"]);
   assert.equal(openapi.paths["/api/search"].get.responses["200"].content["application/json"].schema.type, "array");
   assert.equal(openapi.paths["/api/gallery-preview"].get.responses["200"].content["application/json"].schema.items.$ref, "#/components/schemas/GalleryPreviewImage");
   assert.ok((await fetch(`${base}/.well-known/api-catalog`)).ok);

@@ -78,6 +78,20 @@ node cli/index.mjs read /blog/self-hosted-ai-agents
 
 See [`cli/README.md`](./cli/README.md) for options and behavior.
 
+## Damage Control game
+
+[`/game`](https://lucashanson.dk/game) is a solo sentence game with 20 rules. Rules 1 to 4 follow the UTC clock; rules 5 to 8 use an anchor word that rotates daily. The server times every run and checks every rule on its own clock, using a signed run token (`/api/game/play`). Clients never report their own progress or time. Each run can enter the leaderboard once.
+
+Agents can play over JSON; see [`/game.md`](https://lucashanson.dk/game.md). Playing is free. A leaderboard entry is free only when [Vercel BotID](https://vercel.com/docs/botid) classifies the browser session as human. Everything else, including verified AI agents, gets HTTP 402 with x402 v2 payment terms and a link to [`/bitcoin`](https://lucashanson.dk/bitcoin). BotID runs an invisible challenge in the page and is verified on the server, so forged headers no longer pass. It is not bulletproof: an agent driving a real browser that passes BotID still enters free. Enable **BotID Deep Analysis** under Firewall, Rules in the Vercel project for the stronger behavioural check (Pro plan, $1 per 1,000 checks). Off Vercel, only the Fetch Metadata check runs.
+
+Server-side environment variables (never `NEXT_PUBLIC_`):
+
+- `GAME_RUN_SECRET`: at least 32 random characters. Signs run tokens. Without it the game API returns 503.
+- `CONVEX_DEPLOY_KEY`: the production deploy key of the `damage-control` Convex project, separate from CampusCup. Production builds (`npm run build`) deploy the Convex functions with it, and the server derives the deployment URL from it. Reads use a public query; only writes use the key. `PORTFOLIO_CONVEX_URL` and `PORTFOLIO_CONVEX_ADMIN_KEY` override it if set.
+- `X402_PAY_TO`: a Base address that receives USDC. It enables paid agent entries; without it they are closed and the 402 lists no payment options. x402 does not settle on-chain Bitcoin, so `BITCOIN_ZPUB` cannot be reused here. Optional: `X402_FACILITATOR_URL` (default PayAI, `https://facilitator.payai.network`, no API key), `X402_NETWORK` (default `eip155:8453`), `X402_ASSET` (default Base USDC), `X402_AMOUNT` (default `100000`, 0.10 USDC), `X402_FACILITATOR_AUTH`.
+
+`npm run test:game` runs the rule engine, run token, x402 and leaderboard tests.
+
 ## Bitcoin donations
 
 [`/bitcoin`](https://lucashanson.dk/bitcoin) displays a QR code, selectable address, copy button, and wallet link. It fetches one address per visit, keeping the QR code and BIP21 URI (`bitcoin:{address}` with no requested amount) tied to that value. If an address cannot be obtained, the page shows an unavailable message and retry action; it never presents a fallback address.

@@ -21,6 +21,7 @@ const NAV = [
   { label: "Blog", href: "/blog" },
   { label: "Aperture", href: "/aperture" },
   { label: "Bitcoin donations", href: "/bitcoin" },
+  { label: "Game", href: "/game" },
 ];
 
 export default function Footer() {

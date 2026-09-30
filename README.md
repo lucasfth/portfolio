@@ -40,6 +40,15 @@ bun run build
 
 To deploy, push to your GitHub repository and connect it to Vercel. Vercel will run `npm run build` automatically.
 
+
+## Damage Control game
+
+The `/game` leaderboard uses a dedicated portfolio Convex deployment, separate from CampusCup. Configure `PORTFOLIO_CONVEX_URL` and `PORTFOLIO_CONVEX_ADMIN_KEY` for that deployment in `.env.local` when developing and as server-side Vercel environment variables when hosted. The admin key must never use a `NEXT_PUBLIC_` prefix.
+
+The leaderboard is cached for 30 seconds. Run `npm test` to verify the rule engine, daily challenge witnesses, score ranking, and submission validation.
+
+After all 20 rules pass, Harper.js automatically checks spelling and grammar in a browser worker. Text stays in the browser; suggestions are advisory and do not affect scores. Obvious repeated-letter gibberish is rejected by both the game and its score-submission endpoint.
+
 ## Want to use this project?
 
 This project is open source and uses the Apache 2.0 license.

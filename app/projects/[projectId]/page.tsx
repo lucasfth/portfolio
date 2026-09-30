@@ -90,7 +90,7 @@ export default async function ProjectDetail({
                 priority
                 sizes="(max-width: 768px) 100vw, 896px"
                 className="object-cover"
-                style={{ filter: "grayscale(30%) brightness(0.85)" }}
+                style={project.slug === "msc-thesis" ? undefined : { filter: "grayscale(30%) brightness(0.85)" }}
               />
             </div>
           </div>

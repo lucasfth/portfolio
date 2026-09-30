@@ -2,75 +2,51 @@
 
 import { useEffect, useRef } from "react";
 
-declare global {
-  interface Window {
-    CUSDIS?: { initial?: () => void };
-    __cusdisLoaded?: boolean;
-  }
-}
+const GISCUS_SCRIPT_ID = "giscus-script";
+const GISCUS_ORIGIN = "https://giscus.app";
+const GISCUS_REPO = "lucasfth/portfolio";
+const GISCUS_REPO_ID = "R_kgDON6IhoQ";
+const GISCUS_CATEGORY = "General";
+const GISCUS_CATEGORY_ID = "DIC_kwDON6Ihoc4CnW__";
 
-const CUSDIS_HOST = "https://cusdis.com";
-const CUSDIS_APP_ID = "d29ad22a-c8fb-4d05-98a4-81f79e2d7b15";
-
-/**
- * Cusdis comments.
- *
- * The thread container is rendered server-side with static data-attributes
- * (postId is a build-time known SSG param), and the UMD build of Cusdis is
- * loaded as a classic script. The UMD build is required: the ES module build
- * (`cusdis.es.js`) imports `iframe.umd.js` cross-origin, which fails without
- * CORS headers and silently breaks the comments.
- */
 export default function BlogComments({ postId }: { postId: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const loadScript = () => {
-      if (window.CUSDIS?.initial || window.__cusdisLoaded) return;
-      const existing = document.getElementById("cusdis-script");
-      if (!existing) {
-        const script = document.createElement("script");
-        script.src = "https://cusdis.com/js/cusdis.umd.js";
-        script.async = true;
-        script.id = "cusdis-script";
-        document.body.appendChild(script);
-      }
-      window.__cusdisLoaded = true;
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Giscus reads the current URL when its script executes. Recreate the
+    // script for each post so client-side navigation gets a fresh discussion.
+    document.getElementById(GISCUS_SCRIPT_ID)?.remove();
+    container.replaceChildren();
+
+    const discussionTerm = `Comments: /blog/${postId}`;
+    const script = document.createElement("script");
+    script.id = GISCUS_SCRIPT_ID;
+    script.src = `${GISCUS_ORIGIN}/client.js`;
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.setAttribute("data-repo", GISCUS_REPO);
+    script.setAttribute("data-repo-id", GISCUS_REPO_ID);
+    script.setAttribute("data-category", GISCUS_CATEGORY);
+    script.setAttribute("data-category-id", GISCUS_CATEGORY_ID);
+    script.setAttribute("data-mapping", "specific");
+    script.setAttribute("data-term", discussionTerm);
+    script.setAttribute("data-strict", "1");
+    script.setAttribute("data-reactions-enabled", "1");
+    script.setAttribute("data-emit-metadata", "0");
+    script.setAttribute("data-input-position", "bottom");
+    script.setAttribute("data-theme", "preferred_color_scheme");
+    script.setAttribute("data-lang", "en");
+
+    document.body.appendChild(script);
+
+    return () => {
+      script.remove();
+      container.replaceChildren();
     };
-
-    loadScript();
-
-    // The script loads asynchronously; poll for window.CUSDIS and init.
-    let tries = 0;
-    const timer = setInterval(() => {
-      if (window.CUSDIS?.initial) {
-        clearInterval(timer);
-        window.CUSDIS.initial();
-      } else if (++tries > 30) {
-        clearInterval(timer);
-      }
-    }, 500);
-
-    return () => clearInterval(timer);
   }, [postId]);
 
-  // Keep Cusdis's own page-url metadata current on client navigations.
-  useEffect(() => {
-    const el = containerRef.current;
-    if (el) {
-      el.setAttribute("data-page-url", window.location.href);
-    }
-  }, [postId]);
-
-  return (
-    <div
-      ref={containerRef}
-      id="cusdis_thread"
-      data-host={CUSDIS_HOST}
-      data-app-id={CUSDIS_APP_ID}
-      data-page-id={postId}
-      // data-page-url is set in the effect below (before CUSDIS.initial) so the
-      // server and client HTML match (no hydration mismatch).
-    />
-  );
+  return <div ref={containerRef} className="giscus" />;
 }

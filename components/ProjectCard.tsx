@@ -26,7 +26,7 @@ export default function ProjectCard({ project }: { project: Project }) {
             fill
             sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
-            style={{ filter: "grayscale(30%) brightness(0.85)" }}
+            style={project.slug === "msc-thesis" ? undefined : { filter: "grayscale(30%) brightness(0.85)" }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
         </div>

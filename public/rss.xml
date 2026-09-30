@@ -6,12 +6,19 @@
         <link>https://lucashanson.dk/blog</link>
         <atom:link href="https://lucashanson.dk/rss.xml" rel="self" type="application/rss+xml"/>
         <language>en-us</language>
-        <lastBuildDate>Wed, 30 Sep 2026 18:57:44 GMT</lastBuildDate>
-        <pubDate>Wed, 30 Sep 2026 18:57:44 GMT</pubDate>
+        <lastBuildDate>Wed, 30 Sep 2026 19:49:27 GMT</lastBuildDate>
+        <pubDate>Wed, 30 Sep 2026 19:49:27 GMT</pubDate>
         <managingEditor>contact@lucashanson.dk (Lucas Hanson)</managingEditor>
         <webMaster>contact@lucashanson.dk (Lucas Hanson)</webMaster>
 
         
+        <item>
+          <title>My first paper: describing hand gestures in structured natural language</title>
+          <description>I published my first paper at the ECCV 2026 HuMoWM workshop. It is about RB-GDA, a structured natural-language schema for describing hand gestures, and how it improves semantic quality and command-inference accuracy.</description>
+          <link>https://lucashanson.dk/blog/first-paper</link>
+          <guid isPermaLink="true">https://lucashanson.dk/blog/first-paper</guid>
+          <pubDate>Wed, 30 Sep 2026 00:00:00 GMT</pubDate>
+        </item>
         <item>
           <title>I made my phone the brain of my AI agents</title>
           <description>How I run a personal AI assistant on an old Android phone: one shared markdown vault, one self-hosted model, four agents, and the problems Android causes.</description>

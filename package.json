@@ -7,15 +7,18 @@
     "build": "next build && node scripts/generateRSS.js",
     "prebuild": "node scripts/generateRSS.js",
     "start": "next start",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test lib/game/*.test.mjs convex/*.test.mjs",
     "generate-rss": "node scripts/generateRSS.js",
     "predeploy": "npm run build"
   },
   "dependencies": {
     "@vercel/og": "1.0.2",
     "clsx": "^2.1.1",
+    "convex": "^1.46.0",
     "exifr": "^7.1.3",
     "gray-matter": "^4.0.3",
     "gsap": "^3.12.5",
+    "harper.js": "^2.10.0",
     "lenis": "^1.1.14",
     "lucide-react": "^0.454.0",
     "motion": "^12.0.0",

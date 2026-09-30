@@ -15,6 +15,7 @@ const NAV = [
   { label: "Projects", href: "/projects" },
   { label: "Blog", href: "/blog" },
   { label: "Aperture", href: "/aperture" },
+  { label: "Game", href: "/game" },
 ];
 
 export default function Footer() {

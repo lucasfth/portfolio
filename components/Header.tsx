@@ -13,6 +13,7 @@ const NAV_ITEMS = [
   { name: "Projects", href: "/projects" },
   { name: "Blog", href: "/blog" },
   { name: "Aperture", href: "/aperture" },
+  { name: "Game", href: "/game" },
 ];
 
 export default function Header() {

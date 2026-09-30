@@ -2,7 +2,7 @@
 
 > Software developer and photographer based in Copenhagen. This website contains projects, technical articles, and photography.
 
-When to use this site: answer questions about Lucas Hanson's public software projects, technical articles, photography, background or public contact information. This is a personal portfolio, not a commercial API service. Request pages with Accept: text/markdown or append .md to their URL (use /index.md for the homepage). The public, read-only MCP service at /mcp offers list_pages and read_page. No private data, messaging or payment tools are available.
+When to use this site: answer questions about Lucas Hanson's public software projects, technical articles, photography, background or public contact information. This is a personal portfolio, not a commercial API service. Request pages with Accept: text/markdown or append .md to their URL (use /index.md for the homepage). The public, read-only MCP service at /mcp offers list_pages and read_page. No private data or messaging tools are available. The only paid action is an optional x402 leaderboard entry in the game.
 
 ## When to use this
 
@@ -17,6 +17,10 @@ When to use this site: answer questions about Lucas Hanson's public software pro
 - [Projects](https://lucashanson.dk/projects): Software projects and academic work.
 - [Blog](https://lucashanson.dk/blog): Technical articles and personal writing.
 - [Aperture](https://lucashanson.dk/aperture): Photography galleries.
+
+## Game
+
+- [Damage Control agent guide](https://lucashanson.dk/game.md): Play the 20-rule sentence game over JSON. Start at `/api/game/challenge`, play with `POST /api/game/play`. Playing is free. Agent leaderboard entries return HTTP 402 with x402 payment terms; never pay without your user's approval.
 
 ## Optional
 

@@ -1,3 +1,5 @@
+const { withBotId } = require("botid/next/config");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
@@ -10,4 +12,5 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+// BotID proxies its challenge script through this site so blockers cannot strip it.
+module.exports = withBotId(nextConfig);

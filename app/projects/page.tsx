@@ -1,12 +1,13 @@
 import PageHero from "@/components/PageHero";
 import ProjectCard from "@/components/ProjectCard";
 import Reveal from "@/components/Reveal";
-import { getProjects } from "@/lib/content";
+import { getProjects, SITE_URL } from "@/lib/content";
 
 export const metadata = {
   title: "Projects",
   description:
     "A selection of the larger software projects I have worked on.",
+  alternates: { canonical: `${SITE_URL}/projects` },
 };
 
 export default function Projects() {

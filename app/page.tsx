@@ -18,6 +18,11 @@ import {
   type FrontpageSection,
 } from "@/lib/content";
 import { ArrowUpRight } from "lucide-react";
+import { SITE_URL } from "@/lib/content";
+
+export const metadata = {
+  alternates: { canonical: SITE_URL },
+};
 
 /** Strip the leading `#` heading + the legacy profile-picture image line. */
 function introText(markdown: string): string {

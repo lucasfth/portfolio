@@ -1,12 +1,13 @@
 import PageHero from "@/components/PageHero";
 import GalleryTile from "@/components/GalleryTile";
 import Reveal from "@/components/Reveal";
-import { getGalleries } from "@/lib/content";
+import { getGalleries, SITE_URL } from "@/lib/content";
 
 export const metadata = {
   title: "Aperture",
   description:
     "A selection of photography — moody, minimalistic and textured.",
+  alternates: { canonical: `${SITE_URL}/aperture` },
 };
 
 export default function Aperture() {

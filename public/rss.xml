@@ -6,12 +6,19 @@
         <link>https://lucashanson.dk/blog</link>
         <atom:link href="https://lucashanson.dk/rss.xml" rel="self" type="application/rss+xml"/>
         <language>en-us</language>
-        <lastBuildDate>Mon, 28 Sep 2026 19:09:59 GMT</lastBuildDate>
-        <pubDate>Mon, 28 Sep 2026 19:09:59 GMT</pubDate>
+        <lastBuildDate>Wed, 30 Sep 2026 18:25:01 GMT</lastBuildDate>
+        <pubDate>Wed, 30 Sep 2026 18:25:01 GMT</pubDate>
         <managingEditor>contact@lucashanson.dk (Lucas Hanson)</managingEditor>
         <webMaster>contact@lucashanson.dk (Lucas Hanson)</webMaster>
 
         
+        <item>
+          <title>I made my phone the brain of my AI agents</title>
+          <description>How I run a personal AI assistant on an old Android phone: one shared markdown vault, one self-hosted model, four agents, and the problems Android causes.</description>
+          <link>https://lucashanson.dk/blog/self-hosted-ai-agents</link>
+          <guid isPermaLink="true">https://lucashanson.dk/blog/self-hosted-ai-agents</guid>
+          <pubDate>Wed, 30 Sep 2026 00:00:00 GMT</pubDate>
+        </item>
         <item>
           <title>Downsizing Images</title>
           <description>Downsizing images to prevent unauthorized use.</description>

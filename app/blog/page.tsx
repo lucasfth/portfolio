@@ -1,12 +1,13 @@
 import PageHero from "@/components/PageHero";
 import PostRow from "@/components/PostRow";
 import Reveal from "@/components/Reveal";
-import { getBlogPosts } from "@/lib/content";
+import { getBlogPosts, SITE_URL } from "@/lib/content";
 
 export const metadata = {
   title: "Blog",
   description:
     "Thoughts, experiences and insights on software development, photography and life.",
+  alternates: { canonical: `${SITE_URL}/blog` },
 };
 
 export default function Blog() {

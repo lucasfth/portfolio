@@ -17,9 +17,8 @@ export const metadata = {
     "software developer, portfolio, personal website, IT University of Copenhagen, DHI, hand gesture interaction, hybrid meetings, JavaScript, React, Python, ITU, Lucas Hanson",
   authors: [{ name: "Lucas Frey Torres Hanson" }],
   alternates: {
-    canonical: SITE_URL,
-    // rss.xml is generated at build time by scripts/generateRSS.js.
-    rss: `${SITE_URL}/rss.xml`,
+  // rss.xml is generated at build time by scripts/generateRSS.js.
+  rss: `${SITE_URL}/rss.xml`,
   },
   openGraph: {
     type: "website",
@@ -80,7 +79,6 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;1,700&display=swap"
           rel="stylesheet"
         />
-        <link rel="canonical" href={SITE_URL} />
         <Script id="extension-cleanup" strategy="beforeInteractive">
           {EXTENSION_CLEANUP}
         </Script>

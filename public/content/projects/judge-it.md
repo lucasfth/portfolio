@@ -2,6 +2,7 @@
 title: Judge IT
 tagline: Fun statistics for CampusCup
 description: A web app for judging and displaying live results for CampusCup.
+keywords: [CampusCup, judging, live results, Next.js, Supabase, TypeScript]
 image: /images/judge-it.png
 tags: [Next.js, Supabase, TypeScript]
 date: 2025-09

@@ -2,6 +2,7 @@
 title: MSc Thesis
 tagline: Fine-Grained Role-Based Access Control by Encryption
 description: A thesis on enforcing fine-grained role-based access control in open data lakes through encryption.
+keywords: [RBAC, access control, encryption, data lakes, MSc thesis, IT University of Copenhagen]
 image: /images/thesis-portraits.png
 tags: [RBAC, Data Lakes, Encryption, Typst]
 date: 2026-06

@@ -1,6 +1,7 @@
 ---
 title: Downsizing Images
 description: Downsizing images to prevent unauthorized use.
+keywords: [image downscaling, imagemagick, privacy, photography, website]
 date: 2025-03-09
 ---
 

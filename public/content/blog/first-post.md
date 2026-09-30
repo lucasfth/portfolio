@@ -1,6 +1,7 @@
 ---
 title: My first blog post
 description: A brief introduction to my blog.
+keywords: [blog, Lucas Hanson, developer, photography, Copenhagen]
 date: 2025-02-26
 image: /images/nature/DSCF2082.jpg
 ---

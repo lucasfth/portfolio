@@ -27,6 +27,7 @@ export interface BlogPost {
   slug: string;
   title: string;
   description: string;
+  keywords?: string[];
   date: string; // ISO yyyy-mm-dd
   image?: string;
   /** Markdown body, frontmatter stripped. */
@@ -38,6 +39,7 @@ export interface Project {
   title: string;
   tagline: string;
   description: string;
+  keywords?: string[];
   image?: string;
   tags?: string[];
   date?: string;
@@ -146,6 +148,23 @@ function firstParagraph(markdown: string): string {
   return line ? line.trim() : "";
 }
 
+/**
+ * Parse a `keywords` frontmatter value into a clean string array.
+ * Accepts either a YAML array (`keywords: [a, b]`) or a comma-separated
+ * string. Returns undefined when absent or empty so the meta tag is omitted.
+ */
+function parseKeywords(data: any): string[] | undefined {
+  if (Array.isArray(data.keywords)) {
+    const kws = (data.keywords as unknown[]).map((t) => String(t).trim()).filter(Boolean);
+    return kws.length ? kws : undefined;
+  }
+  if (typeof data.keywords === "string" && data.keywords) {
+    const kws = data.keywords.split(",").map((t) => t.trim()).filter(Boolean);
+    return kws.length ? kws : undefined;
+  }
+  return undefined;
+}
+
 function isoDate(value: unknown, fallback = "1970-01-01"): string {
   if (typeof value === "string" && value.trim()) return value.trim();
   if (value instanceof Date && !isNaN(value.getTime())) {
@@ -172,6 +191,7 @@ export function getBlogPosts(): BlogPost[] {
       title: (data.title as string) || firstHeading(content) || slug,
       description:
         (data.description as string) || firstParagraph(content).slice(0, 160),
+      keywords: parseKeywords(data),
       date: isoDate(data.date),
       image: (data.image as string) || extractHeaderImage(content),
       body: cleanBody(content),
@@ -212,6 +232,7 @@ export function getProjects(): Project[] {
         (data.tagline as string) || firstHeading(content) || "",
       description:
         (data.description as string) || firstParagraph(content).slice(0, 160),
+      keywords: parseKeywords(data),
       image: (data.image as string) || extractHeaderImage(content),
       tags,
       date: data.date ? isoDate(data.date) : undefined,

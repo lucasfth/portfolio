@@ -57,6 +57,7 @@ Tailscale is the trust boundary. Every service binds to a private tailnet addres
 
 - A morning briefing: calendar, weather, my stock watchlist, anything that is due
 - Email triage: what actually needs me, with drafts I approve before anything is sent
+- Work: research, drafting and code work for my day job
 - Grocery price comparison across supermarkets
 - Package tracking
 - Calendar and reminders

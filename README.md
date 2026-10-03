@@ -40,12 +40,32 @@ bun run build
 
 To deploy, push to your GitHub repository and connect it to Vercel. Vercel will run `npm run build` automatically.
 
+## Automatic sitemap
+
+Next.js generates `/sitemap.xml` during the production build. Static public
+pages are discovered from `app/**/page.{ts,tsx,js,jsx}` rather than a manual URL
+list, so new pages such as `/bitcoin` are included automatically. Route groups
+do not become URL segments; API handlers, dynamic templates, private folders,
+parallel slots, and intercepted routes are excluded from static discovery.
+
+Blog posts, projects, and photography galleries are expanded from their existing
+content collections. `public/robots.txt` advertises the sitemap. Rebuild and
+deploy after adding a page or changing content.
+
+Run `npm run test:sitemap` to check page discovery and exclusion boundaries.
+
 ## Bitcoin donations
 
 `/bitcoin` is the donation page, with the site's shared navigation, typography,
 light/dark theme, and subtle decorative transfer rings. Its heading is simply
 “Bitcoin donations”. It displays a QR code, a selectable address, a copy button,
 and an “Open in wallet” link. The rings stop for reduced-motion preferences.
+
+LittleLink provides a **Bitcoin donations** button and two shortcuts:
+[`links.lucashanson.dk/btc`](https://links.lucashanson.dk/btc) and
+[`links.lucashanson.dk/bitcoin`](https://links.lucashanson.dk/bitcoin).
+Both redirect to the portfolio donation page; wallet configuration stays in
+the portfolio's server-only environment.
 
 `GET /api/bitcoin` returns one Bitcoin mainnet native-SegWit (`bc1q…`) receive
 address as plain text, followed by a newline. It is a dynamic Node.js route;

@@ -8,6 +8,7 @@
     "prebuild": "node scripts/generateRSS.js",
     "start": "next start",
     "test:bitcoin": "node --test tests/bitcoin.test.mjs",
+    "test:sitemap": "node --test tests/sitemap.test.mjs",
     "generate-rss": "node scripts/generateRSS.js",
     "predeploy": "npm run build"
   },

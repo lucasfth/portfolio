@@ -8,6 +8,18 @@ export const metadata = {
   description:
     "A selection of photography — moody, minimalistic and textured.",
   alternates: { canonical: `${SITE_URL}/aperture` },
+  openGraph: {
+    title: "Aperture",
+    description: "A selection of photography — moody, minimalistic and textured.",
+    url: `${SITE_URL}/aperture`,
+    images: [`${SITE_URL}/api/og?title=Aperture&subtitle=Lucas%20Hanson%20Photography`],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Aperture",
+    description: "A selection of photography — moody, minimalistic and textured.",
+    images: [`${SITE_URL}/api/og?title=Aperture&subtitle=Lucas%20Hanson%20Photography`],
+  },
 };
 
 export default function Aperture() {

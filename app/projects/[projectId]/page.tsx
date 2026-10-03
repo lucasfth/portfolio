@@ -17,15 +17,26 @@ export async function generateMetadata({
   const { projectId } = await params;
   const project = getProject(projectId);
   if (!project) return { title: "Project not found" };
+  const url = `${SITE_URL}/projects/${projectId}`;
+  const ogImageUrl = `${SITE_URL}/api/og?title=${encodeURIComponent(
+    project.title
+  )}&subtitle=${encodeURIComponent("Lucas Hanson Project")}`;
   return {
     title: project.title,
     description: project.description,
     keywords: project.keywords,
-    alternates: { canonical: `${SITE_URL}/projects/${projectId}` },
+    alternates: { canonical: url },
     openGraph: {
       title: project.title,
       description: project.description,
-      url: `${SITE_URL}/projects/${projectId}`,
+      url,
+      images: [ogImageUrl],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: project.title,
+      description: project.description,
+      images: [ogImageUrl],
     },
   };
 }

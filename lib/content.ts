@@ -127,6 +127,8 @@ export function cleanBody(markdown: string): string {
     .filter((l) => !/^!\s*\[header\]/i.test(l.trim()) && !/^!\s*\[profile picture\]/i.test(l.trim()))
     .join("\n")
     .replace(/^\s*---\s*\n/, "")
+    // Detail pages render the frontmatter title as their sole h1.
+    .replace(/^\s*# [^\n]+\n+/, "")
     .trimStart();
 }
 

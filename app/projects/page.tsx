@@ -8,6 +8,18 @@ export const metadata = {
   description:
     "A selection of the larger software projects I have worked on.",
   alternates: { canonical: `${SITE_URL}/projects` },
+  openGraph: {
+    title: "Projects",
+    description: "A selection of the larger software projects I have worked on.",
+    url: `${SITE_URL}/projects`,
+    images: [`${SITE_URL}/api/og?title=Projects&subtitle=Lucas%20Hanson`],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Projects",
+    description: "A selection of the larger software projects I have worked on.",
+    images: [`${SITE_URL}/api/og?title=Projects&subtitle=Lucas%20Hanson`],
+  },
 };
 
 export default function Projects() {

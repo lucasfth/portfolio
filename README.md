@@ -40,6 +40,55 @@ bun run build
 
 To deploy, push to your GitHub repository and connect it to Vercel. Vercel will run `npm run build` automatically.
 
+## Bitcoin donations
+
+`GET /bitcoin` returns one Bitcoin mainnet native-SegWit (`bc1q…`) receive address
+as plain text, followed by a newline. It is a dynamic Node.js route; neither its
+response nor its blockchain-history lookups are cached.
+
+### Configuration
+
+- Set **`BITCOIN_ZPUB`** as a server-only Vercel Secret in each environment where
+  donations should be enabled. Environment changes take effect in a new
+  deployment. For local development, use an uncommitted `.env.local`.
+- Use an **account-level BIP84 `zpub`**, normally exported at
+  `m/84'/0'/account'`. The endpoint derives the external receive chain at
+  `0/index` relative to that account. Master keys and receive-chain-only exports
+  are rejected.
+- Prefer a dedicated donation wallet or account so the website does not hold
+  your savings account's `zpub`. Verify the export against your wallet's receive
+  addresses and retain the account's recovery information.
+- Never configure a seed phrase, `zprv`, or private key. Do not use a
+  `NEXT_PUBLIC_` environment variable or commit the `zpub`.
+
+### Rotation and privacy
+
+On every request, the server scans receive addresses sequentially from index
+zero using [Blockstream's public address-history API](https://github.com/Blockstream/esplora/blob/master/API.md#addresses).
+It returns the first address with no confirmed received outputs. Once a payment
+has at least one confirmation, the next request advances past that address.
+Pending payments do not trigger rotation, and spending donations never makes a
+previously paid address eligible again. Multiple visitors can receive the same
+address; all previously issued addresses remain valid.
+
+No cron job or database is required. Lookups increase with the number of paid
+addresses; the complete scan has a ten-second deadline. Missing or invalid
+configuration, unavailable or invalid explorer responses, and timeouts return
+HTTP `503` with a generic message rather than an unchecked address.
+
+The explorer receives derived addresses, never the `zpub`. Nevertheless, it can
+associate queried addresses, and someone monitoring `/bitcoin` can collect
+successive donation addresses. Bitcoin amounts and transactions are public.
+Separate wallets limit exposure of savings; combining their funds in later
+transactions can link them. A leaked `zpub` reveals its account's addresses and
+history but cannot spend funds.
+
+### Regression checks
+
+Run `npm run test:bitcoin` with Node.js 22.18 or newer, which supports native
+TypeScript execution. Tests use public BIP84 vectors and simulated explorer
+histories; no real wallet secrets or payments are needed.
+
 ## Want to use this project?
 
 This project is open source and uses the Apache 2.0 license.

@@ -5,7 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, useScroll, useMotionValueEvent } from "motion/react";
-import { Menu, X } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
+import CommandPalette, { type SearchItem } from "@/components/CommandPalette";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -15,9 +16,10 @@ const NAV_ITEMS = [
   { name: "Aperture", href: "/aperture" },
 ];
 
-export default function Header() {
+export default function Header({ searchItems }: { searchItems: SearchItem[] }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [light, setLight] = useState(
     () =>
@@ -38,19 +40,33 @@ export default function Header() {
     latest > 24 ? setScrolled(true) : setScrolled(false)
   );
 
-  useEffect(() => setOpen(false), [pathname]);
+  useEffect(() => {
+    setOpen(false);
+    setSearchOpen(false);
+  }, [pathname]);
 
-  // Lock body scroll + Escape to close the mobile menu.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOpen(false);
+        setSearchOpen(true);
+      }
+      if (e.key === "Escape") {
+        setOpen(false);
+        setSearchOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Lock body scroll while the mobile menu is open.
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
     else document.body.style.overflow = "";
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    if (open) window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = "";
-      window.removeEventListener("keydown", onKey);
     };
   }, [open]);
 
@@ -130,6 +146,15 @@ export default function Header() {
               )}
             </Link>
           ))}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            className="ml-1 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
+            aria-label="Search the site"
+          >
+            <Search size={15} />
+            <kbd className="font-mono text-[10px]">⌘K</kbd>
+          </button>
         </div>
 
         {/* Mobile toggle */}
@@ -155,6 +180,16 @@ export default function Header() {
           transition={{ duration: 0.2 }}
           className="md:hidden fixed inset-x-4 top-[88px] z-50 glass rounded-2xl p-2"
         >
+          <button
+            type="button"
+            onClick={() => {
+              setOpen(false);
+              setSearchOpen(true);
+            }}
+            className="block w-full rounded-xl px-4 py-3 text-left text-sm uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Search
+          </button>
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
@@ -171,6 +206,11 @@ export default function Header() {
           ))}
         </motion.div>
       )}
+      <CommandPalette
+        open={searchOpen}
+        onClose={() => setSearchOpen(false)}
+        items={searchItems.filter((item) => item.href !== pathname)}
+      />
     </motion.header>
   );
 }

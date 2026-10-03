@@ -8,6 +8,20 @@ export const metadata = {
   description:
     "Thoughts, experiences and insights on software development, photography and life.",
   alternates: { canonical: `${SITE_URL}/blog` },
+  openGraph: {
+    title: "Blog",
+    description:
+      "Thoughts, experiences and insights on software development, photography and life.",
+    url: `${SITE_URL}/blog`,
+    images: [`${SITE_URL}/api/og?title=Blog&subtitle=Lucas%20Hanson`],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Blog",
+    description:
+      "Thoughts, experiences and insights on software development, photography and life.",
+    images: [`${SITE_URL}/api/og?title=Blog&subtitle=Lucas%20Hanson`],
+  },
 };
 
 export default function Blog() {

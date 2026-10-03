@@ -1,18 +1,58 @@
 import "./globals.css";
 import Script from "next/script";
-import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ScrollToTop from "@/components/ScrollToTop";
 import SmoothScroll from "@/components/SmoothScroll";
 import ClickSpark from "@/components/ClickSpark";
+import Header from "@/components/Header";
+import { type SearchItem } from "@/components/CommandPalette";
+import { getBlogPosts, getGalleries, getProjects } from "@/lib/content";
 
 const SITE_URL = "https://lucashanson.dk";
 
+const EXTERNAL_SEARCH_ITEMS: SearchItem[] = [
+  { title: "GitHub", href: "https://links.lucashanson.dk/gh", external: true },
+  { title: "Instagram", href: "https://links.lucashanson.dk/ig", external: true },
+  { title: "YouTube", href: "https://links.lucashanson.dk/yt", external: true },
+  { title: "LinkedIn", href: "https://links.lucashanson.dk/li", external: true },
+  { title: "Email Lucas", href: "mailto:contact@lucashanson.dk", external: true },
+  { title: "All links", href: "https://links.lucashanson.dk", external: true },
+];
+
+function getSearchItems(): SearchItem[] {
+  return [
+    { title: "About Lucas", href: "/", description: "Software engineer and photographer" },
+    { title: "Projects", href: "/projects", description: "Software projects" },
+    { title: "Blog", href: "/blog", description: "Writing and notes" },
+    { title: "Aperture", href: "/aperture", description: "Photography" },
+    { title: "Bitcoin donations", href: "/bitcoin", description: "Support this work" },
+    ...getProjects().map((project) => ({
+      title: project.title,
+      href: `/projects/${project.slug}`,
+      description: project.description,
+    })),
+    ...getBlogPosts().map((post) => ({
+      title: post.title,
+      href: `/blog/${post.slug}`,
+      description: post.description,
+    })),
+    ...getGalleries().map((gallery) => ({
+      title: `${gallery.title} photography`,
+      href: `/aperture/${gallery.id}`,
+      description: gallery.description,
+    })),
+    ...EXTERNAL_SEARCH_ITEMS,
+  ];
+}
+
 export const metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "Lucas Hanson",
+  title: {
+    default: "Lucas Hanson | Software Engineer & Photographer",
+    template: "%s | Lucas Hanson",
+  },
   description:
-    "Explore Lucas Frey Torres Hanson's portfolio and IT related blog. Discover projects, insights, and tutorials on software development and web technologies.",
+    "Software engineer and photographer in Copenhagen. Explore Lucas Hanson's projects, writing and photography.",
   keywords:
     "software developer, portfolio, personal website, IT University of Copenhagen, DHI, hand gesture interaction, hybrid meetings, JavaScript, React, Python, ITU, Lucas Hanson",
   authors: [{ name: "Lucas Frey Torres Hanson" }],
@@ -24,9 +64,17 @@ export const metadata = {
     type: "website",
     url: SITE_URL,
     siteName: "Lucas Hanson",
-    title: "Lucas Hanson",
+    title: "Lucas Hanson | Software Engineer & Photographer",
     description:
-      "Software developer & photographer based in Copenhagen. Portfolio, projects and blog.",
+      "Software engineer and photographer in Copenhagen. Portfolio, projects and writing.",
+    images: [`${SITE_URL}/api/og?title=Lucas%20Hanson&subtitle=Software%20Engineer%20%26%20Photographer`],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lucas Hanson | Software Engineer & Photographer",
+    description:
+      "Software engineer and photographer in Copenhagen. Portfolio, projects and writing.",
+    images: [`${SITE_URL}/api/og?title=Lucas%20Hanson&subtitle=Software%20Engineer%20%26%20Photographer`],
   },
 };
 
@@ -62,6 +110,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const searchItems = getSearchItems();
+
   return (
     <html lang="en">
       <head>
@@ -88,7 +138,7 @@ export default function RootLayout({
           Skip to content
         </a>
         <SmoothScroll>
-          <Header />
+          <Header searchItems={searchItems} />
           <main id="main-content" tabIndex={-1}>
             {children}
           </main>

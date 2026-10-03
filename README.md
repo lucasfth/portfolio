@@ -42,9 +42,19 @@ To deploy, push to your GitHub repository and connect it to Vercel. Vercel will 
 
 ## Bitcoin donations
 
-`GET /bitcoin` returns one Bitcoin mainnet native-SegWit (`bc1q…`) receive address
-as plain text, followed by a newline. It is a dynamic Node.js route; neither its
-response nor its blockchain-history lookups are cached.
+`/bitcoin` is the donation page, with the site's shared navigation, typography,
+light/dark theme, and subtle decorative transfer rings. Its heading is simply
+“Bitcoin donations”. It displays a QR code, a selectable address, a copy button,
+and an “Open in wallet” link. The rings stop for reduced-motion preferences.
+
+`GET /api/bitcoin` returns one Bitcoin mainnet native-SegWit (`bc1q…`) receive
+address as plain text, followed by a newline. It is a dynamic Node.js route;
+neither its response nor its blockchain-history lookups are cached.
+
+The page fetches an address once per visit and keeps the QR, address, and wallet
+link fixed to that value. QR codes and wallet links use the BIP21 URI
+`bitcoin:{address}`, without a requested amount. Failed lookups show an
+unavailable message and a retry button; they never display a fallback address.
 
 ### Configuration
 
@@ -77,11 +87,15 @@ configuration, unavailable or invalid explorer responses, and timeouts return
 HTTP `503` with a generic message rather than an unchecked address.
 
 The explorer receives derived addresses, never the `zpub`. Nevertheless, it can
-associate queried addresses, and someone monitoring `/bitcoin` can collect
+associate queried addresses, and someone monitoring `/api/bitcoin` can collect
 successive donation addresses. Bitcoin amounts and transactions are public.
 Separate wallets limit exposure of savings; combining their funds in later
 transactions can link them. A leaked `zpub` reveals its account's addresses and
 history but cannot spend funds.
+
+`/llms.txt` describes the site and links to optional donation instructions for
+readers who find its information useful. It links to the page and raw endpoint,
+not to a hardcoded address. Donations are entirely optional.
 
 ### Regression checks
 

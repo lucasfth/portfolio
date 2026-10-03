@@ -1,0 +1,222 @@
+.bitcoin-page {
+  overflow: hidden;
+}
+
+.bitcoin-page h1 {
+  text-align: center;
+}
+
+.bitcoin-stage {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  justify-items: center;
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 12px 24px 112px;
+}
+
+.bitcoin-rings {
+  position: absolute;
+  z-index: -1;
+  left: 50%;
+  top: calc(50% - 50px);
+  width: 860px;
+  height: 860px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.bitcoin-rings::before {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--glow-strong), transparent 68%);
+}
+
+.bitcoin-ring,
+.bitcoin-orbit {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.bitcoin-ring {
+  border: 1px solid var(--color-border);
+}
+
+.bitcoin-ring-inner { inset: 160px; }
+.bitcoin-ring-middle { inset: 80px; }
+.bitcoin-ring-outer { inset: 0; }
+
+.bitcoin-orbit {
+  inset: 80px;
+  animation: bitcoin-orbit 40s linear infinite;
+}
+
+.bitcoin-orbit::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border: 1px solid transparent;
+  border-top-color: var(--color-border-strong);
+  transform: rotate(-35deg);
+  border-radius: 50%;
+}
+
+.bitcoin-orbit span {
+  position: absolute;
+  left: calc(50% - 3px);
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d99538;
+  box-shadow: 0 0 18px rgba(217, 149, 56, 0.25);
+}
+
+@keyframes bitcoin-orbit {
+  to { transform: rotate(360deg); }
+}
+
+.bitcoin-card {
+  width: 100%;
+  max-width: 480px;
+  padding: 32px;
+  border-radius: var(--radius-xl);
+  text-align: center;
+}
+
+.bitcoin-network {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 28px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground);
+}
+
+.bitcoin-network > svg { color: #d99538; }
+.bitcoin-network-divider { padding: 0 8px; color: var(--color-muted-foreground); }
+
+.bitcoin-qr {
+  width: 256px;
+  max-width: 100%;
+  margin: 0 auto 28px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.bitcoin-qr img { display: block; width: 100%; height: auto; }
+
+.bitcoin-address-label {
+  display: block;
+  margin-bottom: 10px;
+  text-align: left;
+  color: var(--color-muted-foreground);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.bitcoin-address {
+  display: block;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 14px;
+  background: var(--color-muted);
+  color: var(--color-foreground);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  resize: none;
+  overflow-wrap: anywhere;
+}
+
+.bitcoin-address:focus-visible { outline: 2px solid var(--color-ring); outline-offset: 3px; }
+
+.bitcoin-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.bitcoin-button {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  min-height: 46px;
+  padding: 12px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--color-foreground);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  cursor: pointer;
+  transition: border-color 180ms ease, background-color 180ms ease;
+}
+
+.bitcoin-button:hover { background: var(--color-muted); border-color: var(--color-ring); }
+.bitcoin-button-primary { background: var(--color-accent); color: var(--color-accent-foreground); }
+.bitcoin-button-primary:hover { background: var(--color-accent); border-color: var(--color-accent); }
+
+.bitcoin-copy-status {
+  min-height: 32px;
+  margin-top: 12px;
+  color: var(--color-muted-foreground);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.bitcoin-raw-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  color: var(--color-muted-foreground);
+  font-size: 10px;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.bitcoin-raw-link:hover { color: var(--color-foreground); }
+
+.bitcoin-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  min-height: 360px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--color-muted-foreground);
+}
+
+.bitcoin-qr-placeholder {
+  display: grid;
+  place-items: center;
+  width: 256px;
+  max-width: 100%;
+  height: 256px;
+  border: 1px dashed var(--color-border-strong);
+  border-radius: 12px;
+}
+
+@media (max-width: 480px) {
+  .bitcoin-card { padding: 24px 20px; }
+  .bitcoin-actions { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bitcoin-orbit { animation: none; }
+  .bitcoin-button { transition: none; }
+}

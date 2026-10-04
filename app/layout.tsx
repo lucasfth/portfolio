@@ -57,8 +57,9 @@ export const metadata = {
     "software developer, portfolio, personal website, IT University of Copenhagen, DHI, hand gesture interaction, hybrid meetings, JavaScript, React, Python, ITU, Lucas Hanson",
   authors: [{ name: "Lucas Frey Torres Hanson" }],
   alternates: {
-  // rss.xml is generated at build time by scripts/generateRSS.js.
-  rss: `${SITE_URL}/rss.xml`,
+    canonical: SITE_URL,
+    // rss.xml is generated at build time by scripts/generateRSS.js.
+    types: { "application/rss+xml": `${SITE_URL}/rss.xml` },
   },
   openGraph: {
     type: "website",

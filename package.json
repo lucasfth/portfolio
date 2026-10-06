@@ -7,6 +7,7 @@
     "build": "next build && node scripts/generateRSS.js",
     "prebuild": "node scripts/generateRSS.js",
     "start": "next start",
+    "test:search": "node --test tests/search.test.mjs",
     "test:bitcoin": "node --test tests/bitcoin.test.mjs",
     "test:sitemap": "node --test tests/sitemap.test.mjs",
     "generate-rss": "node scripts/generateRSS.js",

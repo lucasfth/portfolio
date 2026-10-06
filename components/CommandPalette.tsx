@@ -2,13 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Search, X } from "lucide-react";
-
-export type SearchItem = {
-  title: string;
-  href: string;
-  description?: string;
-  external?: boolean;
-};
+import { searchItems, type SearchItem } from "@/lib/search";
+export type { SearchItem } from "@/lib/search";
 
 export default function CommandPalette({
   open,
@@ -28,12 +23,7 @@ export default function CommandPalette({
     requestAnimationFrame(() => inputRef.current?.focus());
   }, [open]);
 
-  const matches = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return items
-      .filter((item) => !needle || `${item.title} ${item.description || ""}`.toLowerCase().includes(needle))
-      .slice(0, 8);
-  }, [items, query]);
+  const matches = useMemo(() => searchItems(items, query), [items, query]);
 
   if (!open) return null;
 

@@ -5,7 +5,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import SmoothScroll from "@/components/SmoothScroll";
 import ClickSpark from "@/components/ClickSpark";
 import Header from "@/components/Header";
-import { type SearchItem } from "@/components/CommandPalette";
+import { type SearchItem } from "@/lib/search";
 import { getBlogPosts, getGalleries, getProjects } from "@/lib/content";
 
 const SITE_URL = "https://lucashanson.dk";
@@ -30,11 +30,13 @@ function getSearchItems(): SearchItem[] {
       title: project.title,
       href: `/projects/${project.slug}`,
       description: project.description,
+      searchText: [project.tagline, project.keywords?.join(" "), project.tags?.join(" "), project.body].filter(Boolean).join(" "),
     })),
     ...getBlogPosts().map((post) => ({
       title: post.title,
       href: `/blog/${post.slug}`,
       description: post.description,
+      searchText: [post.keywords?.join(" "), post.body].filter(Boolean).join(" "),
     })),
     ...getGalleries().map((gallery) => ({
       title: `${gallery.title} photography`,

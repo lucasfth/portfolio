@@ -16,10 +16,21 @@ const NAV_ITEMS = [
   { name: "Aperture", href: "/aperture" },
 ];
 
-export default function Header({ searchItems }: { searchItems: SearchItem[] }) {
+export default function Header() {
+  const [searchItems, setSearchItems] = useState<SearchItem[]>([]);
+  const [searchStatus, setSearchStatus] = useState("idle");
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  useEffect(() => {
+    if (!searchOpen || searchStatus === "ready") return;
+    let active = true;
+    setSearchStatus("loading");
+    fetch("/api/search").then(r => { if (!r.ok) throw new Error("Search unavailable"); return r.json(); })
+      .then(items => { if (active) { setSearchItems(items); setSearchStatus("ready"); } })
+      .catch(() => { if (active) setSearchStatus("error"); });
+    return () => { active = false; };
+  }, [searchOpen]);
   const [scrolled, setScrolled] = useState(false);
   const [light, setLight] = useState(
     () =>
@@ -207,6 +218,7 @@ export default function Header({ searchItems }: { searchItems: SearchItem[] }) {
         </motion.div>
       )}
       <CommandPalette
+        status={searchStatus}
         open={searchOpen}
         onClose={() => setSearchOpen(false)}
         items={searchItems.filter((item) => item.href !== pathname)}

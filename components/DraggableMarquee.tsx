@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useState,
   useMemo,
   useRef,
   type ReactNode,
@@ -25,6 +26,7 @@ export interface MarqueeItem {
 
 interface DraggableMarqueeProps {
   items: MarqueeItem[];
+  deferredItemsUrl?: string;
   speed?: number;
   repeatCount?: number;
   gapClassName?: string;
@@ -47,7 +49,8 @@ interface DraggableMarqueeProps {
  * Inert under prefers-reduced-motion (plain horizontal scroll instead).
  */
 export default function DraggableMarquee({
-  items = [],
+  items: initialItems = [],
+  deferredItemsUrl,
   speed = 1,
   repeatCount = 3,
   gapClassName = "gap-6",
@@ -64,6 +67,13 @@ export default function DraggableMarquee({
   loopEndMultiplier = -1.02,
   label = "Image marquee. Drag or use the left and right arrow keys.",
 }: DraggableMarqueeProps) {
+  const [items, setItems] = useState(initialItems);
+  useEffect(() => {
+    if (!deferredItemsUrl) return;
+    let active = true;
+    fetch(deferredItemsUrl).then(r => { if (!r.ok) throw new Error("Gallery unavailable"); return r.json(); }).then(data => { if (active) setItems(data); }).catch(() => {});
+    return () => { active = false; };
+  }, [deferredItemsUrl]);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   // The Draggable instance type is not exposed on the gsap namespace in the
@@ -71,13 +81,15 @@ export default function DraggableMarquee({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dragRef = useRef<any>(null);
 
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
   const duplicatedItems = useMemo(
-    () => Array.from({ length: repeatCount }).flatMap(() => items),
-    [items, repeatCount]
+    () => Array.from({ length: hydrated ? repeatCount : 1 }).flatMap(() => items),
+    [items, repeatCount, hydrated]
   );
 
   useEffect(() => {
-    if (!rootRef.current || !trackRef.current || !items.length) return;
+    if (!hydrated || !rootRef.current || !trackRef.current || !items.length) return;
 
     const media = gsap.matchMedia();
     media.add("(prefers-reduced-motion: no-preference)", () => {
@@ -274,6 +286,7 @@ export default function DraggableMarquee({
 
     return () => media.revert();
   }, [
+    hydrated,
     items,
     speed,
     repeatCount,

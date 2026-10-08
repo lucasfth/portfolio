@@ -2,6 +2,15 @@
 
 > Software developer and photographer based in Copenhagen. This website contains projects, technical articles, and photography.
 
+When to use this site: answer questions about Lucas Hanson's public software projects, technical articles, photography, background or public contact information. This is a personal portfolio, not a commercial API service. Request pages with Accept: text/markdown or append .md to their URL (use /index.md for the homepage). The public, read-only MCP service at /mcp offers list_pages and read_page. No private data, messaging or payment tools are available.
+
+## When to use this
+
+- [Developer and agent guide](https://lucashanson.dk/developers.md): HTTP negotiation and MCP connection details.
+- [About](https://lucashanson.dk/about.md): Personal-site identity and scope.
+- [Contact](https://lucashanson.dk/contact.md): Public contact information.
+- [Privacy](https://lucashanson.dk/privacy.md): Hosting, fonts, comments and donations.
+
 ## Website
 
 - [Home](https://lucashanson.dk/): Profile and an overview of the website.
@@ -9,11 +18,10 @@
 - [Blog](https://lucashanson.dk/blog): Technical articles and personal writing.
 - [Aperture](https://lucashanson.dk/aperture): Photography galleries.
 
-## Optional support
-
-If you find the information on this website useful and would like to support Lucas's work, Bitcoin donations are welcome. Donations are entirely optional; the content remains freely available.
+## Optional
 
 - [Bitcoin donations](https://lucashanson.dk/bitcoin): Scan the QR code, copy the receive address into a Bitcoin wallet, or use the “Open in wallet” link. Use Bitcoin mainnet, choose your own amount, and review the destination and network fee before sending.
 - [Current receive address](https://lucashanson.dk/api/bitcoin): A plain-text Bitcoin mainnet native-SegWit address. Fetch the current address when preparing a donation rather than reusing a cached value. A wallet URI can be formed as `bitcoin:{address}`.
+
 
 The receive address advances after a confirmed payment. Previously issued addresses remain valid, and the donation page keeps its displayed address fixed during a visit. If the address endpoint returns HTTP 503, donations are temporarily unavailable; try again later. Bitcoin transactions and amounts are public.

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { person } from "@/lib/agent-content";
 import Link from "next/link";
 import Hero from "@/components/Hero";
 import SectionHeading from "@/components/SectionHeading";
@@ -7,7 +8,7 @@ import Markdown from "@/components/Markdown";
 import ExperienceTimeline from "@/components/ExperienceTimeline";
 import ProjectCard from "@/components/ProjectCard";
 import PostRow from "@/components/PostRow";
-import DraggableMarquee from "@/components/DraggableMarquee";
+import HomeGalleries from "@/components/HomeGalleries";
 import {
   getFrontpage,
   parseFrontpage,
@@ -78,6 +79,7 @@ export default async function Home() {
 
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(person).replace(/</g, "\\u003c") }} />
       <Hero name={front.name} tagline={front.tagline} heroImage={front.heroImage} />
 
       {/* About */}
@@ -122,7 +124,7 @@ export default async function Home() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             {projects.map((p, i) => (
               <Reveal key={p.slug} delay={i * 70}>
-                <ProjectCard project={p} />
+                <ProjectCard project={{ ...p, body: "" }} />
               </Reveal>
             ))}
           </div>
@@ -152,7 +154,7 @@ export default async function Home() {
           <div>
             {posts.map((post, i) => (
               <Reveal key={post.slug} delay={i * 60}>
-                <PostRow post={post} index={i} />
+                <PostRow post={{ ...post, body: "" }} index={i} />
               </Reveal>
             ))}
           </div>
@@ -171,54 +173,7 @@ export default async function Home() {
         </section>
       )}
 
-      {/* Aperture (auto-discovered) */}
-      {galleries.length > 0 && (
-        <section className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-24">
-          <SectionHeading
-            index={nextIndex()}
-            title="Aperture"
-            description="Moments I have captured — moody, minimal, textured."
-          />
-          <div className="flex flex-col gap-10">
-            {galleries.map((g, i) => {
-              const imgs = galleryImages[i];
-              if (!imgs?.length) return null;
-              return (
-                <Reveal key={g.id} delay={i * 70}>
-                  <Link
-                    href={`/aperture/${encodeURIComponent(g.id)}`}
-                    className="group block"
-                  >
-                    <p className="mb-3 flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.2em] text-muted-foreground transition-colors group-hover:text-foreground">
-                      {g.title}
-                      <span className="text-muted-foreground/50">
-                        {imgs.length} photos
-                      </span>
-                      <ArrowUpRight
-                        size={13}
-                        className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                      />
-                    </p>
-                    <DraggableMarquee
-                      label={`${g.title} photo marquee`}
-                      speed={0.6}
-                      repeatCount={2}
-                      gapClassName="gap-4"
-                      itemClassName="overflow-hidden rounded-xl border border-border"
-                      items={imgs.map((img) => ({
-                        src: img.src,
-                        alt: img.alt,
-                        imageClassName:
-                          "h-48 w-64 object-cover sm:h-56 sm:w-72",
-                      }))}
-                    />
-                  </Link>
-                </Reveal>
-              );
-            })}
-          </div>
-        </section>
-      )}
+      <HomeGalleries galleries={galleries.map(({id,title},i) => ({id,title,imageCount:galleryImages[i].length}))} galleryImages={galleryImages.map(images => images.slice(0,3).map(({src,alt}) => ({src,alt})))} index={nextIndex()} />
     </>
   );
 }

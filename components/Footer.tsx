@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
 
@@ -11,7 +13,10 @@ const SOCIALS = [
 ];
 
 const NAV = [
-  { label: "About me", href: "/" },
+  { label: "About me", href: "/about" },
+  { label: "Contact", href: "/contact" },
+  { label: "Privacy", href: "/privacy" },
+  { label: "Developers & agents", href: "/developers" },
   { label: "Projects", href: "/projects" },
   { label: "Blog", href: "/blog" },
   { label: "Aperture", href: "/aperture" },

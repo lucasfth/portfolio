@@ -9,10 +9,12 @@ export default function CommandPalette({
   open,
   onClose,
   items,
+  status = "ready",
 }: {
   open: boolean;
   onClose: () => void;
   items: SearchItem[];
+  status?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
@@ -85,7 +87,7 @@ export default function CommandPalette({
               </a>
             ))
           ) : (
-            <p className="px-3 py-6 text-sm text-muted-foreground">No matches.</p>
+            <p className="px-3 py-6 text-sm text-muted-foreground">{status === "loading" || status === "idle" ? "Loading search…" : status === "error" ? "Search unavailable. Close and reopen to retry." : "No matches."}</p>
           )}
         </div>
         <p className="border-t border-border px-4 py-3 text-[11px] text-muted-foreground">

@@ -79,7 +79,10 @@
   to { transform: rotate(360deg); }
 }
 
-.bitcoin-card {
+.bitcoin-card.glass {
+  position: relative;
+  z-index: 1;
+  background: var(--color-background);
   width: 100%;
   max-width: 480px;
   padding: 32px;

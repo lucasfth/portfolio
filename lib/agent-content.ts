@@ -30,37 +30,41 @@ My full name is Lucas Frey Torres Hanson. My public profiles are collected on my
   contact: {
     title: "Contact Lucas Hanson",
     description: "Contact Lucas Hanson about his public software projects, technical writing and photography.",
-    body: `For questions about this website, a software project, a technical article or a photograph, email [contact@lucashanson.dk](mailto:contact@lucashanson.dk). This is a public contact address for Lucas Hanson's personal website. Sending an email is the way to reach me; browsing this page does not submit a message.
+    body: `You can reach me at [contact@lucashanson.dk](mailto:contact@lucashanson.dk).
 
-## Make your question specific
+Have a question about something I built, wrote or photographed? Want to work together? Send me a note. If you're writing about a particular project or article, a link helps.
 
-Include the URL of the page you are asking about and a short description of your question. If you are reporting a broken link or a technical error, include the affected URL and what you expected to happen. Please do not send passwords, verification codes, payment-card details or confidential material in an initial message.
-
-## Other public profiles
-
-My [links page](https://links.lucashanson.dk) collects my public social and developer profiles. This portfolio is not a customer-support portal for my employer or for third-party tools discussed in an article. There is no published response-time guarantee. For an introduction to the site, read [About](/about); for information about external services, read [Privacy](/privacy).`,
+You can also find me on [GitHub, LinkedIn and Instagram](https://links.lucashanson.dk).`,
   },
   privacy: {
     title: "Privacy on Lucas Hanson's website",
-    description: "How this personal website uses hosting, external fonts, optional comments and public Bitcoin donations.",
-    body: `This is a public personal portfolio. You do not need an account to read its projects, articles or photography. This notice describes the services used by the current website, not the privacy practices of every external page linked from it.
+    description: "Hosting, comments, email and donations on this website.",
+    body: `You can browse this site without an account. A few outside services are involved in running it.
 
-## Hosting and external requests
+## Hosting and fonts
 
-The website is hosted on Vercel. Requests to the hosting service necessarily include technical information such as your IP address and the requested URL. Fonts are loaded from Google Fonts, so your browser may also contact Google's font services. Those providers control their own processing and retention; this website does not promise a particular retention period on their behalf.
+[Vercel](https://vercel.com/legal/privacy-policy) hosts the site and receives technical information when you visit, including your IP address and the page you request. The site also loads fonts from [Google Fonts](https://developers.google.com/fonts/faq/privacy). Each provider has its own privacy policy and retention practices.
 
-## Comments and links
+## Comments
 
-Blog pages load Giscus, a GitHub-backed commenting service. Using comments may involve requests to Giscus and GitHub and a GitHub account. Comments and reactions are public. External links take you to services with their own privacy policies. If you email the public contact address, the message and the information you provide are received for correspondence.
+Blog comments use [Giscus](https://giscus.app), which stores comments and reactions in GitHub Discussions. They're public, and posting requires a GitHub account.
 
-## Donations and questions
+## Email and external links
 
-Bitcoin donations are optional. Bitcoin transactions, destination addresses and amounts are visible on the public blockchain; donations are not private payments. The public content and machine-readable endpoints do not require personal information. For questions about this notice, contact [contact@lucashanson.dk](mailto:contact@lucashanson.dk). Avoid sending sensitive information you do not need to share.`,
+If you email me, I'll receive your message and the details you choose to share. Links to other websites take you to services with their own privacy policies.
+
+## Bitcoin donations
+
+Donations are optional. Bitcoin addresses, transaction amounts and payments are visible on the public blockchain.
+
+Questions? Email [contact@lucashanson.dk](mailto:contact@lucashanson.dk).`,
   },
   developers: {
-    title: "Lucas Hanson: public content for developers and agents",
-    description: "Markdown content negotiation and read-only MCP access to Lucas Hanson's public portfolio.",
-    body: `This is a personal portfolio, not a commercial API platform. Its machine-readable interfaces help developers and assistants read the same public information that appears on the website. They do not provide access to personal systems, send messages, or make payments.
+    title: "Technical notes",
+    description: "Source code, Markdown downloads and public content interfaces for Lucas Hanson's website.",
+    body: `This site is built with Next.js. Its [source code](https://github.com/lucasfth/portfolio) is on GitHub, and the articles and project descriptions are written in Markdown.
+
+If you want to read the content in a script or connect an assistant, the options below are available. They provide public website content, not services from the projects featured here.
 
 ## Markdown and discovery
 

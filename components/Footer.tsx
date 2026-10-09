@@ -16,7 +16,7 @@ const NAV = [
   { label: "About me", href: "/about" },
   { label: "Contact", href: "/contact" },
   { label: "Privacy", href: "/privacy" },
-  { label: "Developers & agents", href: "/developers" },
+  { label: "Technical notes", href: "/developers" },
   { label: "Projects", href: "/projects" },
   { label: "Blog", href: "/blog" },
   { label: "Aperture", href: "/aperture" },

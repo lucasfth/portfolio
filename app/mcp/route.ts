@@ -1,36 +1,52 @@
 import { publicPages, markdownPage } from "@/lib/agent-content";
 
+function isObject(value: unknown): value is Record<string, unknown> { return !!value && typeof value === "object" && !Array.isArray(value); }
 const VERSION = "2025-06-18";
 // Stateless transport: absent version headers use the specification's legacy fallback.
 const LEGACY_VERSION = "2025-03-26";
+const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" };
+
+function error(code: number, message: string, status = 200, id: string | number | null = null, headers?: HeadersInit) {
+  return Response.json({ jsonrpc: "2.0", id, error: { code, message } }, { status, headers: { ...JSON_HEADERS, ...headers } });
+}
+
 function validate(request: Request): Response | undefined {
   const origin = request.headers.get("origin");
-  if (origin && origin !== new URL(request.url).origin) return new Response("Origin not allowed", { status: 403 });
+  if (origin && origin !== new URL(request.url).origin) return error(-32000, "Origin not allowed", 403);
   const version = request.headers.get("mcp-protocol-version");
-  if (version && version !== VERSION && version !== LEGACY_VERSION) return new Response("Unsupported protocol version", { status: 400 });
+  if (version && version !== VERSION && version !== LEGACY_VERSION) return error(-32600, "Unsupported protocol version", 400);
 }
+
 export function GET(request: Request) {
-  return validate(request) || new Response(null, { status: 405, headers: { Allow: "POST" } });
+  return validate(request) || error(-32600, "This endpoint only supports POST.", 405, null, { Allow: "POST" });
 }
+
 export async function POST(request: Request) {
   const invalid = validate(request);
   if (invalid) return invalid;
-  const accept = request.headers.get("accept") || "";
-  if (!accept.includes("application/json") || !accept.includes("text/event-stream")) return new Response("Accept must include application/json and text/event-stream", { status: 406 });
-  if (!(request.headers.get("content-type") || "").startsWith("application/json")) return new Response("Use application/json", { status: 415 });
+  const accept = (request.headers.get("accept") || "").toLowerCase();
+  const accepts = (type: string) => accept.split(",").some(range => {
+    const [media, ...params] = range.trim().split(";");
+    const quality = params.find(p => p.trim().startsWith("q="));
+    const q = quality ? Number(quality.trim().slice(2)) : 1;
+    return media.trim() === type && q > 0 && q <= 1;
+  });
+  if (!accepts("application/json") || !accepts("text/event-stream")) return error(-32600, "Accept must include application/json and text/event-stream", 406);
+  if ((request.headers.get("content-type") || "").split(";")[0].trim().toLowerCase() !== "application/json") return error(-32600, "Use application/json", 415);
+
   let message: any;
-  const error = (code: number, text: string, status = 200) => Response.json({ jsonrpc: "2.0", id: message?.id ?? null, error: { code, message: text } }, { status });
   try {
     const text = await request.text();
-    if (text.length > 16384) return new Response("Request too large", { status: 413 });
+    if (text.length > 16384) return error(-32600, "Request too large", 413);
     message = JSON.parse(text);
   } catch { return error(-32700, "Parse error", 400); }
   if (!message || Array.isArray(message) || message.jsonrpc !== "2.0" || typeof message.method !== "string" || (message.id !== undefined && typeof message.id !== "string" && typeof message.id !== "number")) return error(-32600, "Invalid request", 400);
   if (message.id === undefined) return new Response(null, { status: 202 });
+
   let result: unknown;
   switch (message.method) {
     case "initialize":
-      if (!message.params || typeof message.params.protocolVersion !== "string" || !message.params.clientInfo || !message.params.capabilities) return error(-32602, "Invalid initialization parameters");
+      if (!isObject(message.params) || typeof message.params.protocolVersion !== "string" || !isObject(message.params.clientInfo) || typeof message.params.clientInfo.name !== "string" || typeof message.params.clientInfo.version !== "string" || !isObject(message.params.capabilities)) return error(-32602, "Invalid initialization parameters", 200, message.id);
       result = { protocolVersion: VERSION, capabilities: { tools: {} }, serverInfo: { name: "lucas-hanson-public-portfolio", version: "1.0.0" } }; break;
     case "ping": result = {}; break;
     case "tools/list": result = { tools: [
@@ -39,18 +55,18 @@ export async function POST(request: Request) {
     ] }; break;
     case "tools/call": {
       const { name, arguments: args = {} } = message.params || {};
-      if (!args || typeof args !== "object" || Array.isArray(args)) return error(-32602, "Invalid tool arguments");
+      if (!args || typeof args !== "object" || Array.isArray(args)) return error(-32602, "Invalid tool arguments", 200, message.id);
       if (name === "list_pages") {
-        if (Object.keys(args).length) return error(-32602, "list_pages takes no arguments");
+        if (Object.keys(args).length) return error(-32602, "list_pages takes no arguments", 200, message.id);
         result = { content: [{ type: "text", text: JSON.stringify(publicPages().map(({ path, title }) => ({ path, title }))) }] };
       } else if (name === "read_page") {
-        if (typeof args.path !== "string" || args.path.length > 300 || !args.path.startsWith("/") || args.path.startsWith("//") || Object.keys(args).some(k => k !== "path")) return error(-32602, "Provide a local public page path");
+        if (typeof args.path !== "string" || args.path.length > 300 || !args.path.startsWith("/") || args.path.startsWith("//") || Object.keys(args).some(k => k !== "path")) return error(-32602, "Provide a local public page path", 200, message.id);
         const page = markdownPage(args.path);
         result = { content: [{ type: "text", text: page.body }], isError: page.status !== 200 };
-      } else return error(-32602, "Unknown tool");
+      } else return error(-32602, "Unknown tool", 200, message.id);
       break;
     }
-    default: return error(-32601, "Method not found");
+    default: return error(-32601, "Method not found", 200, message.id);
   }
-  return Response.json({ jsonrpc: "2.0", id: message.id, result }, { headers: { "Cache-Control": "no-store" } });
+  return Response.json({ jsonrpc: "2.0", id: message.id, result }, { headers: JSON_HEADERS });
 }

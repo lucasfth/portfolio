@@ -71,8 +71,22 @@ export default function DraggableMarquee({
   useEffect(() => {
     if (!deferredItemsUrl) return;
     let active = true;
-    fetch(deferredItemsUrl).then(r => { if (!r.ok) throw new Error("Gallery unavailable"); return r.json(); }).then(data => { if (active) setItems(data); }).catch(() => {});
-    return () => { active = false; };
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    let attempts = 0;
+    const load = async () => {
+      try {
+        const response = await fetch(deferredItemsUrl);
+        if (!response.ok) throw new Error("Gallery unavailable");
+        const data = await response.json();
+        if (!Array.isArray(data) || !data.length || data.some(item => !item || typeof item.src !== "string")) throw new Error("Invalid gallery response");
+        if (active) setItems(data);
+      } catch {
+        if (active && attempts++ < 3) retry = setTimeout(load, 1000 * 2 ** attempts);
+      }
+    };
+    void load();
+    window.addEventListener("online", load);
+    return () => { active = false; clearTimeout(retry); window.removeEventListener("online", load); };
   }, [deferredItemsUrl]);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);

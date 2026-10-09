@@ -42,6 +42,9 @@ test('public endpoints and MCP', {skip:!base},async()=>{
  const rpc=(message,extra={})=>fetch(base+'/mcp',{method:'POST',headers:{'Content-Type':'application/json',Accept:'application/json, text/event-stream','MCP-Protocol-Version':'2025-06-18',...extra},body:JSON.stringify(message)});
  assert.equal((await(await rpc({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{name:'test',version:'1'}}})).json()).result.protocolVersion,'2025-06-18');
  assert.equal((await rpc({jsonrpc:'2.0',method:'notifications/initialized'})).status,202);
+ for (const accept of ['application/json;q=0,text/event-stream;q=0','application/json,text/event-stream;q=0']) assert.equal((await rpc({jsonrpc:'2.0',id:8,method:'ping'},{Accept:accept})).status,406);
+ assert.equal((await rpc({jsonrpc:'2.0',id:9,method:'ping'},{Accept:'Application/JSON, Text/Event-Stream'})).status,200);
+ for(const params of [{protocolVersion:'2025-06-18',capabilities:[],clientInfo:[]},{protocolVersion:'2025-06-18',capabilities:{},clientInfo:{}}]) assert.equal((await(await rpc({jsonrpc:'2.0',id:10,method:'initialize',params})).json()).error.code,-32602);
  const tools=await(await rpc({jsonrpc:'2.0',id:2,method:'tools/list'})).json();assert.deepEqual(tools.result.tools.map(t=>t.name),['list_pages','read_page']);
  const list=await(await rpc({jsonrpc:'2.0',id:3,method:'tools/call',params:{name:'list_pages',arguments:{}}})).json();
  for(const page of JSON.parse(list.result.content[0].text)){

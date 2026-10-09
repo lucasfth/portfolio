@@ -1,0 +1,6 @@
+{
+  "name": "Lucas Hanson public portfolio API",
+  "description": "Read-only search, gallery preview, and Markdown page resources.",
+  "documentation": "https://lucashanson.dk/openapi.json",
+  "openapi": "https://lucashanson.dk/openapi.json"
+}

@@ -1,3 +1,4 @@
+import { apiError, methodNotAllowed } from "../api-error";
 import { markdownPage } from "@/lib/agent-content";
 
 export function GET(request: Request) {
@@ -8,3 +9,10 @@ export function GET(request: Request) {
     "X-Content-Type-Options": "nosniff",
   } });
 }
+
+export function POST() { return methodNotAllowed("GET"); }
+export const PUT = POST;
+export const PATCH = POST;
+export const DELETE = POST;
+export const OPTIONS = POST;
+export function HEAD() { return apiError(405, "method_not_allowed", "This endpoint only supports GET.", { Allow: "GET" }); }

@@ -6,15 +6,15 @@
         <link>https://lucashanson.dk/blog</link>
         <atom:link href="https://lucashanson.dk/rss.xml" rel="self" type="application/rss+xml"/>
         <language>en-us</language>
-        <lastBuildDate>Wed, 30 Sep 2026 18:57:44 GMT</lastBuildDate>
-        <pubDate>Wed, 30 Sep 2026 18:57:44 GMT</pubDate>
+        <lastBuildDate>Fri, 09 Oct 2026 14:26:17 GMT</lastBuildDate>
+        <pubDate>Fri, 09 Oct 2026 14:26:17 GMT</pubDate>
         <managingEditor>contact@lucashanson.dk (Lucas Hanson)</managingEditor>
         <webMaster>contact@lucashanson.dk (Lucas Hanson)</webMaster>
 
         
         <item>
           <title>I made my phone the brain of my AI agents</title>
-          <description>How I run a personal AI assistant on an old Android phone: one shared markdown vault, one self-hosted model, four agents, and the problems Android causes.</description>
+          <description>Why I keep my AI agents grounded in a portable markdown vault, and why a phone is a useful but unreliable place to run them.</description>
           <link>https://lucashanson.dk/blog/self-hosted-ai-agents</link>
           <guid isPermaLink="true">https://lucashanson.dk/blog/self-hosted-ai-agents</guid>
           <pubDate>Wed, 30 Sep 2026 00:00:00 GMT</pubDate>

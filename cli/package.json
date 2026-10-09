@@ -1,0 +1,14 @@
+{
+  "name": "@lucashanson/portfolio-cli",
+  "version": "0.1.0",
+  "description": "Read public content from lucashanson.dk",
+  "type": "module",
+  "bin": {
+    "lucashanson-portfolio": "./index.mjs"
+  },
+  "files": ["index.mjs", "README.md"],
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

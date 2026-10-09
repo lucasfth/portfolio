@@ -37,4 +37,3 @@ export function getSearchItems(): SearchItem[] {
     ...EXTERNAL_SEARCH_ITEMS,
   ];
 }
-

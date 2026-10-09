@@ -70,7 +70,7 @@ Start with [llms.txt](/llms.txt) for when-to-use guidance, or [sitemap.xml](/sit
 
 ## Read-only MCP
 
-Connect a Streamable HTTP MCP client to \`https://lucashanson.dk/mcp\`. No authentication is required for this public, read-only service. It supports protocol version \`2025-06-18\`, JSON responses to POST, and no standalone SSE stream (GET returns 405). Send Accept headers for both \`application/json\` and \`text/event-stream\`. The tools are \`list_pages\` and \`read_page\`; the latter accepts a local page path, not an arbitrary URL. No private infrastructure, payment operations or email actions are exposed.
+Connect a Streamable HTTP MCP client to \`https://lucashanson.dk/mcp\`. No authentication is required for this public, read-only service. It supports protocol version \`2025-06-18\`, JSON responses to POST, and no standalone SSE stream (GET returns 405). Send Accept headers for both \`application/json\` and \`text/event-stream\`. The transport is stateless and issues no session IDs. Initialize before calling tools and send the MCP-Protocol-Version header on subsequent requests. Missing version headers use the compatible 2025-03-26 fallback. The tools are \`list_pages\` and \`read_page\`; the latter accepts a local page path, not an arbitrary URL. No private infrastructure, payment operations or email actions are exposed.
 
 [About](/about), [Contact](/contact) and [Privacy](/privacy) explain who operates this site and how to ask questions.`,
   },

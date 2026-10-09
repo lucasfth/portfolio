@@ -1,11 +1,13 @@
 import { publicPages, markdownPage } from "@/lib/agent-content";
 
 const VERSION = "2025-06-18";
+// Stateless transport: absent version headers use the specification's legacy fallback.
+const LEGACY_VERSION = "2025-03-26";
 function validate(request: Request): Response | undefined {
   const origin = request.headers.get("origin");
   if (origin && origin !== new URL(request.url).origin) return new Response("Origin not allowed", { status: 403 });
   const version = request.headers.get("mcp-protocol-version");
-  if (version && version !== VERSION) return new Response("Unsupported protocol version", { status: 400 });
+  if (version && version !== VERSION && version !== LEGACY_VERSION) return new Response("Unsupported protocol version", { status: 400 });
 }
 export function GET(request: Request) {
   return validate(request) || new Response(null, { status: 405, headers: { Allow: "POST" } });

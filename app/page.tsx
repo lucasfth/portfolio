@@ -173,7 +173,7 @@ export default async function Home() {
         </section>
       )}
 
-      <HomeGalleries galleries={galleries.map(({id,title},i) => ({id,title,imageCount:galleryImages[i].length}))} galleryImages={galleryImages.map(images => images.slice(0,3).map(({src,alt}) => ({src,alt})))} index={nextIndex()} />
+      <HomeGalleries galleries={galleries.map(({id,title},i) => ({id,title,imageCount:galleryImages[i].length}))} galleryImages={galleryImages.map(images => images.slice(0,2).map(({src,alt}) => ({src,alt})))} index={nextIndex()} />
     </>
   );
 }

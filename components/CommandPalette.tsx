@@ -18,12 +18,23 @@ export default function CommandPalette({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
     if (!open) return;
     setQuery("");
+    setSelectedIndex(0);
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     requestAnimationFrame(() => inputRef.current?.focus());
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
   }, [open]);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [query]);
 
   const matches = useMemo(() => searchItems(items, query), [items, query]);
 
@@ -48,10 +59,19 @@ export default function CommandPalette({
             onChange={(event) => setQuery(event.target.value)}
             onKeyDown={(event) => {
               if (event.key === "Escape") onClose();
-              if (event.key === "Enter" && matches[0]) {
-                const [first] = matches;
-                if (first.external) window.open(first.href, "_blank", "noopener,noreferrer");
-                else window.location.assign(first.href);
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                setSelectedIndex((prev) => (matches.length ? (prev + 1) % matches.length : 0));
+              }
+              if (event.key === "ArrowUp") {
+                event.preventDefault();
+                setSelectedIndex((prev) => (matches.length ? (prev - 1 + matches.length) % matches.length : 0));
+              }
+              if (event.key === "Enter" && matches[selectedIndex]) {
+                const selected = matches[selectedIndex];
+                if (selected.external) window.open(selected.href, "_blank", "noopener,noreferrer");
+                else window.location.assign(selected.href);
+                onClose();
               }
             }}
             className="h-14 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
@@ -68,14 +88,18 @@ export default function CommandPalette({
         </div>
         <div className="max-h-[50vh] overflow-y-auto p-2">
           {matches.length ? (
-            matches.map((item) => (
+            matches.map((item, index) => (
               <a
                 key={item.href}
                 href={item.href}
                 target={item.external ? "_blank" : undefined}
                 rel={item.external ? "noopener noreferrer" : undefined}
                 onClick={onClose}
-                className="flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-sm hover:bg-foreground/10"
+                onMouseEnter={() => setSelectedIndex(index)}
+                aria-selected={index === selectedIndex}
+                className={`flex items-center justify-between gap-4 rounded-xl px-3 py-3 text-sm transition-colors ${
+                  index === selectedIndex ? "bg-foreground/10" : "hover:bg-foreground/5"
+                }`}
               >
                 <span className="min-w-0">
                   <span className="block truncate text-foreground">{item.title}</span>
@@ -91,7 +115,7 @@ export default function CommandPalette({
           )}
         </div>
         <p className="border-t border-border px-4 py-3 text-[11px] text-muted-foreground">
-          Enter to open the first result · Esc to close
+          ↑↓ to navigate · Enter to select · Esc to close
         </p>
       </div>
     </div>

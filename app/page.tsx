@@ -69,7 +69,7 @@ export default async function Home() {
   );
 
   const aboutSections = sections.filter((s) =>
-    ["IT Work experience", "Volunteering", "Languages", "Education"].includes(
+    ["IT Work experience", "Volunteering", "Writing", "Languages", "Education"].includes(
       s.title
     )
   );

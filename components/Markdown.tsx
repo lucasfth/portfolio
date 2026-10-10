@@ -14,6 +14,7 @@ import {
   oneLight,
 } from "react-syntax-highlighter/dist/esm/styles/prism";
 import CopyButton from "./CopyButton";
+import Mermaid from "./Mermaid";
 
 /**
  * Shared markdown renderer (replaces the old TextSection).
@@ -43,6 +44,9 @@ export default function Markdown({ children }: { children: string }) {
   }: any) => {
     const match = /language-(\w+)/.exec(className || "");
     const codeContent = String(children).replace(/\n$/, "");
+    if (!inline && match?.[1] === "mermaid") {
+      return <Mermaid chart={codeContent} />;
+    }
     if (!inline && match) {
       return (
         <div className="code-block-wrapper">

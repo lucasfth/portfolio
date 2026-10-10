@@ -299,6 +299,26 @@
    background) > code.language-*. The wrapper owns the background so it can
    follow prefers-color-scheme via pure CSS with zero pre-hydration flash;
    the highlighter's inline container background is forced transparent. */
+.mermaid-diagram,
+.mermaid-fallback {
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  overflow-x: auto;
+}
+.mermaid-diagram svg {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+  height: auto;
+}
+.mermaid-fallback {
+  display: block;
+  white-space: pre;
+  font-size: 0.85rem;
+}
+
 .code-block-wrapper {
   position: relative;
   margin: 1.5rem 0;

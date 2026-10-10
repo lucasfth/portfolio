@@ -6,6 +6,12 @@ const nextConfig = {
     // Sharp is available — let next/image optimize with sharp
   },
   reactStrictMode: true,
+  // The sentence check loads its ONNX model and the onnxruntime WASM from disk at runtime.
+  serverExternalPackages: ["onnxruntime-web"],
+  outputFileTracingIncludes: {
+    "/api/game/play": ["./lib/game/sentence-model/**", "./node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm"],
+    "/api/game/scores": ["./lib/game/sentence-model/**", "./node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm"],
+  },
   typescript: {
     // SWC WASM bug on android/arm64 — CI runs tsc separately
     ignoreBuildErrors: true,

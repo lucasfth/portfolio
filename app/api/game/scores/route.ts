@@ -3,6 +3,7 @@ import { claimRun, fetchLeaderboard, isSetupError, storeBestScore } from "@/lib/
 import { checkSentence, normalizeNickname } from "@/lib/game/check";
 import { getUtcDate } from "@/lib/game/challenge";
 import { checkHuman } from "@/lib/game/human";
+import { NOT_A_SENTENCE_MESSAGE, checkGrammar } from "@/lib/game/sentence";
 import { findMisspellings } from "@/lib/game/spelling";
 import { getRunSecret, readRun } from "@/lib/game/runToken";
 import {
@@ -59,6 +60,9 @@ export async function POST(request: Request) {
   const misspelled = await findMisspellings(input.sentence as string);
   if (misspelled.length > 0) {
     return fail(422, "misspelled_words", { misspelled, message: `Use real English words. Not recognised: ${misspelled.join(", ")}.` });
+  }
+  if (!(await checkGrammar(input.sentence as string)).ok) {
+    return fail(422, "not_a_sentence", { message: NOT_A_SENTENCE_MESSAGE });
   }
 
   const human = await checkHuman(request);

@@ -1,5 +1,6 @@
 import { checkSentence } from "@/lib/game/check";
 import { createChallenge } from "@/lib/game/challenge";
+import { NOT_A_SENTENCE_MESSAGE, checkGrammar } from "@/lib/game/sentence";
 import { findMisspellings } from "@/lib/game/spelling";
 import { MIN_LEVEL_MS, createRun, getRunSecret, readRun, signRun } from "@/lib/game/runToken";
 
@@ -65,6 +66,10 @@ export async function POST(request: Request) {
       token: input.token,
       message: `Use real English words. Not recognised: ${misspelled.join(", ")}.`,
     });
+  }
+  const grammar = await checkGrammar(input.sentence as string);
+  if (!grammar.ok) {
+    return fail(422, "not_a_sentence", { level, token: input.token, message: NOT_A_SENTENCE_MESSAGE });
   }
 
   const next = { ...run, cleared: level, clearedAt: now.getTime() };

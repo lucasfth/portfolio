@@ -1,5 +1,6 @@
 import { checkSentence } from "@/lib/game/check";
 import { createChallenge } from "@/lib/game/challenge";
+import { findMisspellings } from "@/lib/game/spelling";
 import { MIN_LEVEL_MS, createRun, getRunSecret, readRun, signRun } from "@/lib/game/runToken";
 
 export const runtime = "nodejs";
@@ -53,6 +54,16 @@ export async function POST(request: Request) {
       failedRuleIds: check.failedRuleIds,
       token: input.token,
       rules: challenge.rules.slice(0, level),
+    });
+  }
+
+  const misspelled = await findMisspellings(input.sentence as string);
+  if (misspelled.length > 0) {
+    return fail(422, "misspelled_words", {
+      level,
+      misspelled,
+      token: input.token,
+      message: `Use real English words. Not recognised: ${misspelled.join(", ")}.`,
     });
   }
 

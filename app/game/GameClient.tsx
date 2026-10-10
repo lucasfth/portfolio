@@ -307,7 +307,7 @@ export default function GameClient({
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 py-14 sm:py-20">
+    <div className="mx-auto w-full max-w-6xl px-6 pt-32 pb-14 sm:pt-40 sm:pb-20">
       <header className="mb-10 max-w-3xl">
         <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
           A solo sentence game · no account required

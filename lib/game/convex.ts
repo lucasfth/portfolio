@@ -33,7 +33,12 @@ function adminKey(): string | undefined {
 }
 
 function convexUrl(): string {
-  const url = process.env.PORTFOLIO_CONVEX_URL || deploymentUrlFromKey(adminKey());
+  // `convex deploy --cmd` sets NEXT_PUBLIC_CONVEX_URL during the build, so it carries the real
+  // regional host (e.g. *.eu-west-1.convex.cloud). The key-derived URL only works for us-east deployments.
+  const url =
+    process.env.PORTFOLIO_CONVEX_URL ||
+    process.env.NEXT_PUBLIC_CONVEX_URL ||
+    deploymentUrlFromKey(adminKey());
   if (!url) throw new Error(`${NOT_CONFIGURED} Set CONVEX_DEPLOY_KEY.`);
   return url;
 }

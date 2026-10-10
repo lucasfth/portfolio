@@ -3,6 +3,7 @@ import { claimRun, fetchLeaderboard, isSetupError, storeBestScore } from "@/lib/
 import { checkSentence, normalizeNickname } from "@/lib/game/check";
 import { getUtcDate } from "@/lib/game/challenge";
 import { checkHuman } from "@/lib/game/human";
+import { findMisspellings } from "@/lib/game/spelling";
 import { getRunSecret, readRun } from "@/lib/game/runToken";
 import {
   decodePayment,
@@ -55,6 +56,10 @@ export async function POST(request: Request) {
 
   const check = checkSentence(input.sentence, 20, now);
   if (check.ok === false) return fail(422, check.code, { failedRuleIds: check.failedRuleIds });
+  const misspelled = await findMisspellings(input.sentence as string);
+  if (misspelled.length > 0) {
+    return fail(422, "misspelled_words", { misspelled, message: `Use real English words. Not recognised: ${misspelled.join(", ")}.` });
+  }
 
   const human = await checkHuman(request);
   if (human === "unavailable") {

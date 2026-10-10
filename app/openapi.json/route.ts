@@ -56,7 +56,7 @@ const document = {
         requestBody: { content: { "application/json": { schema: { type: "object", properties: { token: { type: "string" }, sentence: { type: "string", maxLength: 500 } } } } } },
         responses: {
           "200": { description: "New run token and progress", content: { "application/json": { schema: { type: "object" } } } },
-          "422": { description: "Sentence failed one or more rules", content: { "application/json": { schema: { type: "object" } } } },
+          "422": { description: "Sentence failed one or more rules, or contains words that are not English (misspelled_words)", content: { "application/json": { schema: { type: "object" } } } },
           "429": { description: "Cleared rules faster than one per second", content: { "application/json": { schema: { type: "object" } } } },
         },
       },

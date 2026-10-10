@@ -87,7 +87,7 @@ Agents can play over JSON; see [`/game.md`](https://lucashanson.dk/game.md). Pla
 Server-side environment variables (never `NEXT_PUBLIC_`):
 
 - `GAME_RUN_SECRET`: at least 32 random characters. Signs run tokens. Without it the game API returns 503.
-- `CONVEX_DEPLOY_KEY`: the production deploy key of the `damage-control` Convex project, separate from CampusCup. Production builds (`npm run build`) deploy the Convex functions with it, and the server derives the deployment URL from it. Reads use a public query; only writes use the key. `PORTFOLIO_CONVEX_URL` and `PORTFOLIO_CONVEX_ADMIN_KEY` override it if set.
+- `CONVEX_DEPLOY_KEY`: the production deploy key of the `damage-control` Convex project, separate from CampusCup. Production builds (`npm run build`) deploy the Convex functions with it, and the build passes the deployment URL on to the server. Reads use a public query; only writes use the key. `PORTFOLIO_CONVEX_URL` and `PORTFOLIO_CONVEX_ADMIN_KEY` override it if set.
 - `X402_PAY_TO`: a Base address that receives USDC. It enables paid agent entries; without it they are closed and the 402 lists no payment options. x402 does not settle on-chain Bitcoin, so `BITCOIN_ZPUB` cannot be reused here. Optional: `X402_FACILITATOR_URL` (default PayAI, `https://facilitator.payai.network`, no API key), `X402_NETWORK` (default `eip155:8453`), `X402_ASSET` (default Base USDC), `X402_AMOUNT` (default `100000`, 0.10 USDC), `X402_FACILITATOR_AUTH`.
 
 `npm run test:game` runs the rule engine, run token, x402 and leaderboard tests.

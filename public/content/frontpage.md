@@ -74,6 +74,17 @@ Throughout the semesters in the Café, I have changed positions between being a 
 Normal treasurer responsibilities as well as keeping our IT systems as streamlined and easily transferable (for our yearly changing board) as possible. \
 Also ended up doing a lot of development work on our statistics site [Judge IT](https://lucashanson.dk/projects/judge-it) which you can read more about in the projects section.
 
+## Writing
+
+I write a lot, and most of it is technical. I care about clear writing because a system nobody can explain is a system nobody can maintain.
+
+- **Academic writing.** My [MSc thesis](https://lucashanson.dk/projects/msc-thesis) on fine-grained access control by encryption, written in Typst, plus my [bachelor project](https://lucashanson.dk/projects/bachelor). I structure them around the argument, not the chronology.
+- **Technical documentation.** Developer docs and example bots across several tech stacks for ITU Poker Bot Battle.
+- **Incident postmortems.** 70+ written postmortems for my own agent setup: timeline, root cause, what was ruled out, and lessons. Short and blameless.
+- **Blog posts.** Opinionated pieces on [the blog](https://lucashanson.dk/blog) about AI agents, self-hosting and software.
+
+My style is short sentences, concrete claims and no filler. I would rather say one true thing than three impressive ones.
+
 ## Languages
 
 Since I am a Software Developer there is of course two different kinds of languages.

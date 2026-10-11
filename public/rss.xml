@@ -6,15 +6,22 @@
         <link>https://lucashanson.dk/blog</link>
         <atom:link href="https://lucashanson.dk/rss.xml" rel="self" type="application/rss+xml"/>
         <language>en-us</language>
-        <lastBuildDate>Fri, 09 Oct 2026 14:26:17 GMT</lastBuildDate>
-        <pubDate>Fri, 09 Oct 2026 14:26:17 GMT</pubDate>
+        <lastBuildDate>Sun, 11 Oct 2026 06:05:00 GMT</lastBuildDate>
+        <pubDate>Sun, 11 Oct 2026 06:05:00 GMT</pubDate>
         <managingEditor>contact@lucashanson.dk (Lucas Hanson)</managingEditor>
         <webMaster>contact@lucashanson.dk (Lucas Hanson)</webMaster>
 
         
         <item>
+          <title>I configured a better shell. Then forgot how to use it.</title>
+          <description>I built a Raycast extension to surface the shell commands I keep forgetting. Installing better tools is easy. Using them is the problem.</description>
+          <link>https://lucashanson.dk/blog/shell-discovery</link>
+          <guid isPermaLink="true">https://lucashanson.dk/blog/shell-discovery</guid>
+          <pubDate>Sun, 11 Oct 2026 00:00:00 GMT</pubDate>
+        </item>
+        <item>
           <title>I made my phone the brain of my AI agents</title>
-          <description>Why I keep my AI agents grounded in a portable markdown vault, and why a phone is a useful but unreliable place to run them.</description>
+          <description>Five months of running Hermes Agent on an old Android phone: the vault is the asset, the agent is a replaceable part, and most of the work is keeping it alive.</description>
           <link>https://lucashanson.dk/blog/self-hosted-ai-agents</link>
           <guid isPermaLink="true">https://lucashanson.dk/blog/self-hosted-ai-agents</guid>
           <pubDate>Wed, 30 Sep 2026 00:00:00 GMT</pubDate>

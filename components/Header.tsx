@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { name: "Blog", href: "/blog" },
   { name: "Aperture", href: "/aperture" },
   { name: "Game", href: "/game" },
+  { name: "Radar", href: "/radar" },
 ];
 
 export default function Header() {

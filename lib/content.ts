@@ -13,7 +13,7 @@
 import { readFileSync, readdirSync, existsSync, statSync } from "fs";
 import { join } from "path";
 import matter from "gray-matter";
-import exifr from "exifr";
+import galleryManifest from "./gallery-manifest.json";
 
 export const SITE_URL = "https://lucashanson.dk";
 
@@ -70,7 +70,6 @@ export interface FrontpageMeta {
 /* Low-level helpers                                                   */
 /* ------------------------------------------------------------------ */
 
-const IMAGE_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif", "avif"]);
 
 function listMarkdownFiles(dir: string): string[] {
   try {
@@ -255,34 +254,22 @@ export function getProject(slug: string): Project | undefined {
 /* Aperture galleries                                                  */
 /* ------------------------------------------------------------------ */
 
-/** Count image files in a gallery directory (mirrors useGalleryImages rules). */
+/** Image lists per gallery, generated at build time by scripts/gallery-manifest.mjs. */
+type ManifestImage = { file: string; camera?: string; date?: string };
+const GALLERY_MANIFEST = galleryManifest as Record<string, ManifestImage[]>;
+
+/** Count image files in a gallery directory. */
 function countImages(galleryId: string): number {
-  const dir = join(process.cwd(), "public", "images", galleryId);
-  try {
-    return readdirSync(dir).filter((f) => {
-      const ext = f.split(".").pop()?.toLowerCase() ?? "";
-      return IMAGE_EXTENSIONS.has(ext);
-    }).length;
-  } catch {
-    return 0;
-  }
+  return GALLERY_MANIFEST[galleryId]?.length ?? 0;
 }
 
 export function getGalleries(): Gallery[] {
-  const imagesDir = join(process.cwd(), "public", "images");
   const metaDir = join(CONTENT_DIR, "aperture");
 
   // Discovery is the union of aperture markdown files and image directories, so
   // dropping EITHER one surfaces a gallery. Markdown-only galleries stay hidden
   // until photos are added (a zero-photo gallery is useless).
-  let dirIds: string[] = [];
-  try {
-    dirIds = readdirSync(imagesDir, { withFileTypes: true })
-      .filter((e) => e.isDirectory())
-      .map((e) => e.name);
-  } catch {
-    // no images dir yet
-  }
+  const dirIds = Object.keys(GALLERY_MANIFEST);
 
   let metaIds: string[] = [];
   try {
@@ -317,10 +304,7 @@ export function getGalleries(): Gallery[] {
     }
 
     // If no explicit cover, use the first image in the folder as the tile.
-    if (!cover) {
-      const first = firstImageInDir(join(process.cwd(), "public", "images", id));
-      if (first) cover = `/images/${id}/${first}`;
-    }
+    if (!cover) cover = `/images/${id}/${GALLERY_MANIFEST[id][0].file}`;
 
     galleries.push({
       id,
@@ -335,20 +319,6 @@ export function getGalleries(): Gallery[] {
   return galleries;
 }
 
-function firstImageInDir(dir: string): string | undefined {
-  try {
-    const files = readdirSync(dir)
-      .filter((f) => {
-        const ext = f.split(".").pop()?.toLowerCase() ?? "";
-        return IMAGE_EXTENSIONS.has(ext);
-      })
-      .sort();
-    return files[0];
-  } catch {
-    return undefined;
-  }
-}
-
 export interface GalleryImage {
   src: string;
   alt: string;
@@ -358,76 +328,20 @@ export interface GalleryImage {
   date?: string;
 }
 
-const SAFE_PATH_SEGMENT = /^[A-Za-z0-9._ -]+$/;
-
-/** Clean an EXIF date value into yyyy-mm-dd. */
-function exifDate(value: unknown): string | undefined {
-  if (value instanceof Date && !isNaN(value.getTime())) {
-    return value.toISOString().slice(0, 10);
-  }
-  if (typeof value === "string" && value) {
-    const m = value.match(/(20\d{2})[:\-.](\d{2})[:\-.](\d{2})/);
-    if (m) return `${m[1]}-${m[2]}-${m[3]}`;
-  }
-  return undefined;
-}
-
 /**
- * List all images in a gallery directory with EXIF-derived metadata
- * (camera + shot date) used by the Art Gallery captions.
- * Server-side (fs + exifr). A broken/EXIF-less file just gets no metadata.
+ * List all images in a gallery with EXIF-derived metadata (camera + shot date)
+ * used by the Art Gallery captions. Read from the build-time manifest.
  */
 export async function getGalleryImages(galleryId: string): Promise<GalleryImage[]> {
-  if (!SAFE_PATH_SEGMENT.test(galleryId) || galleryId.includes("..")) {
-    return [];
-  }
-  const dir = join(process.cwd(), "public", "images", galleryId);
-  let entries;
-  try {
-    entries = readdirSync(dir, { withFileTypes: true }).filter((e) => {
-      if (!e.isFile()) return false;
-      const ext = e.name.split(".").pop()?.toLowerCase() ?? "";
-      return IMAGE_EXTENSIONS.has(ext);
-    });
-  } catch {
-    return [];
-  }
-
-  const images = await Promise.all(
-    entries.map(async (e) => {
-      const src = `/images/${galleryId}/${e.name}`;
-      const alt = e.name.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ").trim();
-      let camera: string | undefined;
-      let date: string | undefined;
-      try {
-        const meta: any =
-          (await exifr.parse(join(dir, e.name), {
-            pick: ["Make", "Model", "DateTimeOriginal", "DateTime", "ModifyDate"],
-          })) || {};
-        if (meta?.Make || meta?.Model) {
-          camera =
-            [meta.Make, meta.Model]
-              .filter(Boolean)
-              .join(" ")
-              .replace(/_/g, " ")
-              .trim();
-        }
-        date =
-          exifDate(meta?.DateTimeOriginal) ||
-          exifDate(meta?.DateTime) ||
-          exifDate(meta?.ModifyDate);
-      } catch {
-        // no readable EXIF — fine, we just have no metadata
-      }
-      if (!date) {
-        const m = e.name.match(/(20\d{2})(\d{2})(\d{2})/);
-        if (m) date = `${m[1]}-${m[2]}-${m[3]}`;
-      }
-      return { src, alt, camera, date };
-    })
-  );
-
-  return images.sort((a, b) => a.src.localeCompare(b.src));
+  const entries = Object.hasOwn(GALLERY_MANIFEST, galleryId) ? GALLERY_MANIFEST[galleryId] : [];
+  return entries
+    .map(({ file, camera, date }) => ({
+      src: `/images/${galleryId}/${file}`,
+      alt: file.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ").trim(),
+      camera,
+      date,
+    }))
+    .sort((a, b) => a.src.localeCompare(b.src));
 }
 
 /* ------------------------------------------------------------------ */

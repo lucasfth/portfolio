@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Check, Clock3, RefreshCw, Trophy } from "lucide-react";
+import { Check, Clock3, RefreshCw, Share2, Trophy } from "lucide-react";
+import { buildShareText } from "@/lib/game/share";
 import type { DailyChallenge } from "@/lib/game/challenge";
 import type { WorkerLinter } from "harper.js";
 import { createChallenge } from "@/lib/game/challenge";
@@ -40,6 +41,7 @@ interface PlayResponse {
   message?: string;
   failedRuleIds?: string[];
   retryAfterMs?: number;
+  elapsedMs?: number;
 }
 
 
@@ -66,6 +68,8 @@ export default function GameClient({
   const [runToken, setRunToken] = useState<string | null>(null);
   const [clearing, setClearing] = useState(false);
   const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [serverElapsedMs, setServerElapsedMs] = useState<number | null>(null);
+  const [shareStatus, setShareStatus] = useState("");
   const [nickname, setNickname] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submissionError, setSubmissionError] = useState("");
@@ -236,6 +240,7 @@ export default function GameClient({
       const result = await play({ token: runToken, sentence });
       setRunToken(result.token ?? null);
       setCleared(result.cleared ?? cleared);
+      if (result.cleared === 20) setServerElapsedMs(result.elapsedMs ?? null);
     } catch (error) {
       setSubmissionError(error instanceof Error ? error.message : "The rule could not be cleared.");
     } finally {
@@ -292,11 +297,35 @@ export default function GameClient({
     }
   }
 
+  async function handleShare() {
+    const ms = scoreReceipt?.elapsedMs ?? serverElapsedMs;
+    const text = buildShareText({
+      date: challenge.date,
+      cleared,
+      elapsedMs: ms,
+      rank: scoreReceipt?.rank ?? null,
+    });
+    try {
+      if (typeof navigator.share === "function") {
+        await navigator.share({ text });
+        setShareStatus("");
+        return;
+      }
+      await navigator.clipboard.writeText(text);
+      setShareStatus("Result copied. Paste it anywhere.");
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      setShareStatus("Sharing is unavailable in this browser.");
+    }
+  }
+
   function resetRun() {
     setSentence("");
     setCleared(0);
     setRunToken(null);
     setStartedAt(null);
+    setServerElapsedMs(null);
+    setShareStatus("");
     setNickname("");
     setSubmissionError("");
     setScoreReceipt(null);
@@ -525,13 +554,28 @@ export default function GameClient({
                   {submissionError}
                 </p>
               )}
-              <button
-                className="mt-4 text-xs text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-foreground"
-                onClick={resetRun}
-                type="button"
-              >
-                Start a new run
-              </button>
+              <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
+                <button
+                  className="inline-flex items-center gap-1.5 text-xs text-foreground underline decoration-border underline-offset-4 transition-colors hover:opacity-80"
+                  onClick={() => void handleShare()}
+                  type="button"
+                >
+                  <Share2 aria-hidden="true" size={13} />
+                  Share result
+                </button>
+                <button
+                  className="text-xs text-muted-foreground underline decoration-border underline-offset-4 transition-colors hover:text-foreground"
+                  onClick={resetRun}
+                  type="button"
+                >
+                  Start a new run
+                </button>
+              </div>
+              {shareStatus && (
+                <p className="mt-2 text-xs text-muted-foreground" role="status">
+                  {shareStatus}
+                </p>
+              )}
             </div>
           ) : (
             <div className="mt-6 flex flex-wrap items-center justify-between gap-4">

@@ -4,7 +4,7 @@ import { SITE_URL } from "@/lib/content";
 
 export const revalidate = 1800;
 
-const DATA_URL = "https://raw.githubusercontent.com/lucasfth/loki-radar/main/public.json";
+const DATA_URL = "https://raw.githubusercontent.com/lucasfth/loki-radar/main/public.json?v=2";
 const DESCRIPTION =
   "A daily, machine-curated list of tech news, releases and repos I care about. Collected from feeds, Reddit, GitHub and Hacker News, ranked and summarised by a local LLM.";
 

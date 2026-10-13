@@ -75,12 +75,12 @@ export default function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col gap-2 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground/70">
+          <p className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground">
             © Lucas Hanson {new Date().getFullYear()}
           </p>
           <a
             href="/rss.xml"
-            className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground/70 transition-colors hover:text-foreground"
+            className="text-[10px] font-medium uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
           >
             RSS feed
           </a>

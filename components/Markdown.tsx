@@ -1,45 +1,24 @@
-"use client";
-
-import React, { useEffect, useState } from "react";
+import React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Link from "next/link";
 import Image from "next/image";
-import {
-  Prism as SyntaxHighlighter,
-  type SyntaxHighlighterProps,
-} from "react-syntax-highlighter";
-import {
-  oneDark,
-  oneLight,
-} from "react-syntax-highlighter/dist/esm/styles/prism";
-import CopyButton from "./CopyButton";
+import CodeBlock from "./LazyCodeBlock";
 import Mermaid from "./Mermaid";
 
 /**
  * Shared markdown renderer (replaces the old TextSection).
- * - Renders markdown into the dark `.md-body` style.
+ * Server component: react-markdown never ships to the browser. Only the
+ * interactive leaves (CodeBlock, Mermaid) are client components.
  * - Internal links use next/link, external links open in a new tab.
- * - Code blocks get a copy button + theme-aware syntax highlighting.
  * - Images use next/image for optimization.
  */
 export default function Markdown({ children }: { children: string }) {
-  const [isDark, setIsDark] = useState(true);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: light)");
-    setIsDark(!mq.matches);
-    const handler = (e: MediaQueryListEvent) => setIsDark(!e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  const theme = isDark ? oneDark : oneLight;
-
   const renderCode = ({
     inline,
     className,
     children,
+    node: _node,
     ...props
   }: any) => {
     const match = /language-(\w+)/.exec(className || "");
@@ -48,32 +27,7 @@ export default function Markdown({ children }: { children: string }) {
       return <Mermaid chart={codeContent} />;
     }
     if (!inline && match) {
-      return (
-        <div className="code-block-wrapper">
-          <CopyButton text={codeContent} />
-          <SyntaxHighlighter
-            style={{
-              ...theme,
-              // NOTE: the selector key must match the theme's exact key
-              // (double-quoted attribute) or the override lands on a phantom
-              // key and the theme's inline background wins. We force the
-              // container transparent so the .code-block-wrapper CSS owns the
-              // background — pure CSS, so it follows prefers-color-scheme with
-              // no pre-hydration flash. Token colors still come from `theme`.
-              'pre[class*="language-"]': {
-                ...theme['pre[class*="language-"]'],
-                background: "transparent",
-                borderRadius: "0",
-              },
-            } as SyntaxHighlighterProps["style"]}
-            language={match[1]}
-            PreTag="div"
-            {...props}
-          >
-            {codeContent}
-          </SyntaxHighlighter>
-        </div>
-      );
+      return <CodeBlock language={match[1]} code={codeContent} />;
     }
     return (
       <code className={className} {...props}>
@@ -82,7 +36,7 @@ export default function Markdown({ children }: { children: string }) {
     );
   };
 
-  const renderAnchor = ({ href, children, ...props }: any) => {
+  const renderAnchor = ({ href, children, node: _node, ...props }: any) => {
     const isInternal =
       (typeof href === "string" && (href.startsWith("/") || href.startsWith("#"))) ||
       href === undefined;
@@ -113,7 +67,7 @@ export default function Markdown({ children }: { children: string }) {
     );
   };
 
-  const renderImage = ({ src, alt, ...props }: any) => {
+  const renderImage = ({ src, alt, node: _node, ...props }: any) => {
     if (typeof src !== "string" || !src) {
       return <img src={src} alt={alt || ""} {...props} />;
     }

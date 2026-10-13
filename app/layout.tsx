@@ -5,6 +5,22 @@ import ScrollToTop from "@/components/ScrollToTop";
 import SmoothScroll from "@/components/SmoothScroll";
 import ClickSpark from "@/components/ClickSpark";
 import Header from "@/components/Header";
+import { Patrick_Hand, Space_Mono } from "next/font/google";
+
+// Self-hosted at build time: no render-blocking request to Google Fonts.
+const patrickHand = Patrick_Hand({
+  weight: "400",
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-patrick-hand",
+});
+const spaceMono = Space_Mono({
+  weight: ["400", "700"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-space-mono",
+});
 
 const SITE_URL = "https://lucashanson.dk";
 
@@ -77,22 +93,8 @@ export default function RootLayout({
 }) {
 
   return (
-    <html lang="en">
+    <html lang="en" className={`${patrickHand.variable} ${spaceMono.variable}`}>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap"
-          rel="stylesheet"
-        />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;1,700&display=swap"
-          rel="stylesheet"
-        />
         <Script id="extension-cleanup" strategy="beforeInteractive">
           {EXTENSION_CLEANUP}
         </Script>

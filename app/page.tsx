@@ -93,7 +93,7 @@ export default async function Home() {
                   src={front.profileImage}
                   alt="Portrait of Lucas Hanson"
                   fill
-                  sizes="(max-width: 768px) 100vw, 340px"
+                  sizes="340px"
                   className="object-cover"
                   style={{ filter: "grayscale(100%) contrast(1.05)" }}
                 />

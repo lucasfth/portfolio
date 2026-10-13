@@ -1,4 +1,5 @@
 import GalleryPageClient from "./GalleryPageClient";
+import Markdown from "@/components/Markdown";
 import {
   getGalleries,
   getGalleryImages,
@@ -56,7 +57,9 @@ export default async function GalleryPage({
     <GalleryPageClient
       title={gallery.title}
       description={gallery.description}
-      afterword={gallery.afterword}
+      afterword={
+        gallery.afterword ? <Markdown>{gallery.afterword}</Markdown> : undefined
+      }
       images={images}
     />
   );

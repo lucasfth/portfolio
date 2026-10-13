@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import BotId from "./BotId";
 import GameClient from "./GameClient";
 import { createChallenge } from "@/lib/game/challenge";
 import { SITE_URL } from "@/lib/content";
@@ -19,9 +20,12 @@ export const metadata: Metadata = {
 export default function GamePage() {
   const now = new Date();
   return (
-    <GameClient
-      initialChallenge={createChallenge(now)}
-      initialNow={now.toISOString()}
-    />
+    <>
+      <BotId />
+      <GameClient
+        initialChallenge={createChallenge(now)}
+        initialNow={now.toISOString()}
+      />
+    </>
   );
 }

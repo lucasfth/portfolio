@@ -163,9 +163,9 @@ export default function Header() {
             type="button"
             onClick={() => setSearchOpen(true)}
             className="ml-1 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
-            aria-label="Search the site"
+            aria-label="Search the site (⌘K)"
           >
-            <Search size={15} />
+            <Search size={15} aria-hidden="true" />
             <kbd className="font-mono text-[10px]">⌘K</kbd>
           </button>
         </div>

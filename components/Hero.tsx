@@ -1,8 +1,6 @@
-"use client";
-
+import type React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion } from "motion/react";
 import { ArrowRight, ArrowUpRight } from "lucide-react";
 import FlipText from "./FlipText";
 
@@ -45,15 +43,13 @@ export default function Hero({ name, tagline, heroImage }: HeroProps) {
       />
 
       <div className="mx-auto w-full max-w-6xl px-6 pt-28 pb-20">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-          className="mb-6 flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground"
+        <div
+          style={{ "--rise-delay": "0.1s" } as React.CSSProperties}
+          className="rise mb-6 flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground"
         >
           <span className="h-px w-8 bg-muted-foreground/40" />
           Portfolio · Copenhagen, DK
-        </motion.div>
+        </div>
 
         <h1 className="font-hand text-[clamp(3.5rem,13vw,11rem)] leading-[0.92] tracking-tight">
           <FlipText delay={0.15} duration={2.4}>
@@ -62,21 +58,17 @@ export default function Hero({ name, tagline, heroImage }: HeroProps) {
         </h1>
 
         {tagline && (
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-8 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
+          <p
+            style={{ "--rise-delay": "0.2s" } as React.CSSProperties}
+            className="rise mt-8 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg"
           >
             {tagline}
-          </motion.p>
+          </p>
         )}
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 1.1, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-10 flex flex-wrap items-center gap-4"
+        <div
+          style={{ "--rise-delay": "0.35s" } as React.CSSProperties}
+          className="rise mt-10 flex flex-wrap items-center gap-4"
         >
           <Link
             href="/projects"
@@ -95,19 +87,17 @@ export default function Hero({ name, tagline, heroImage }: HeroProps) {
               className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
             />
           </Link>
-        </motion.div>
+        </div>
       </div>
 
       {/* Scroll hint */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.6, duration: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground/60"
+      <div
+        style={{ "--rise-delay": "1.2s" } as React.CSSProperties}
+        className="rise absolute bottom-8 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-[0.3em] text-muted-foreground/60"
         aria-hidden="true"
       >
         Scroll
-      </motion.div>
+      </div>
     </section>
   );
 }

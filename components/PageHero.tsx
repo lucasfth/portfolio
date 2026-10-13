@@ -1,7 +1,4 @@
-"use client";
-
 import React from "react";
-import { motion } from "motion/react";
 
 interface PageHeroProps {
   eyebrow?: string;
@@ -23,33 +20,26 @@ export default function PageHero({ eyebrow, title, description }: PageHeroProps)
       />
       <div className="mx-auto w-full max-w-6xl">
         {eyebrow && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="mb-5 flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground"
+          <div
+            className="rise mb-5 flex items-center gap-3 text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground"
           >
             <span className="h-px w-8 bg-muted-foreground/40" />
             {eyebrow}
-          </motion.div>
+          </div>
         )}
-        <motion.h1
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-          className="font-hand text-5xl leading-none tracking-tight sm:text-7xl"
+        <h1
+          style={{ "--rise-delay": "0.05s" } as React.CSSProperties}
+          className="rise font-hand text-5xl leading-none tracking-tight sm:text-7xl"
         >
           {title}
-        </motion.h1>
+        </h1>
         {description && (
-          <motion.p
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-6 max-w-xl text-base leading-relaxed text-muted-foreground"
+          <p
+            style={{ "--rise-delay": "0.15s" } as React.CSSProperties}
+            className="rise mt-6 max-w-xl text-base leading-relaxed text-muted-foreground"
           >
             {description}
-          </motion.p>
+          </p>
         )}
       </div>
     </section>

@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import type React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Lightbox from "@/components/Lightbox";
-import Markdown from "@/components/Markdown";
 import { ArrowLeft, Camera } from "lucide-react";
 import type { GalleryImage } from "@/lib/content";
 import "./GalleryPage.css";
@@ -12,7 +12,7 @@ import "./GalleryPage.css";
 interface GalleryPageClientProps {
   title: string;
   description: string;
-  afterword?: string;
+  afterword?: React.ReactNode;
   images: GalleryImage[];
 }
 
@@ -52,7 +52,7 @@ export default function GalleryPageClient({
           </p>
           {afterword && (
             <div className="mt-6 max-w-xl text-sm text-muted-foreground">
-              <Markdown>{afterword}</Markdown>
+              {afterword}
             </div>
           )}
         </div>

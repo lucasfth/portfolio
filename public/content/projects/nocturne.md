@@ -3,6 +3,7 @@ title: nocturne
 tagline: A night-time LLM API on spare laptops, paid in sats
 description: An OpenAI-compatible LLM API served at night by up to four idle Mac laptops. No account, no card, no prompt logging. Pay per request over Lightning.
 keywords: [LLM API, OpenAI-compatible, Lightning, Bitcoin, sats, pay per request, self-hosted, inference, no logging, privacy]
+image: /images/nocturne.png
 tags: [Python, FastAPI, llama.cpp, Lightning]
 date: 2026-10
 schemaType: WebAPI

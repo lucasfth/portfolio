@@ -43,6 +43,8 @@ export interface Project {
   image?: string;
   tags?: string[];
   date?: string;
+  /** schema.org type for structured data (default CreativeWork), e.g. WebAPI for a live service. */
+  schemaType?: string;
   /** Markdown body, frontmatter stripped. */
   body: string;
 }
@@ -237,6 +239,7 @@ export function getProjects(): Project[] {
       image: (data.image as string) || extractHeaderImage(content),
       tags,
       date: data.date ? isoDate(data.date) : undefined,
+      schemaType: typeof data.schemaType === "string" ? data.schemaType : undefined,
       body: cleanBody(content),
     } satisfies Project;
   }).filter((p): p is Project => p !== null);

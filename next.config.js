@@ -24,6 +24,14 @@ const nextConfig = {
     "/api/game/play": ["./lib/game/sentence-model/**", "./node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm"],
     "/api/game/scores": ["./lib/game/sentence-model/**", "./node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm"],
   },
+  // Short public link for nocturne. Promote this, never the machine address, so the
+  // host can move without breaking links. Temporary (307) so the target can change.
+  async redirects() {
+    return [
+      { source: "/nocturne", destination: "https://freyr.tail5eca08.ts.net:8443/", permanent: false },
+      { source: "/nocturne/:path*", destination: "https://freyr.tail5eca08.ts.net:8443/:path*", permanent: false },
+    ];
+  },
   typescript: {
     // SWC WASM bug on android/arm64 — CI runs tsc separately
     ignoreBuildErrors: true,

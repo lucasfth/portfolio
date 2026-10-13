@@ -60,8 +60,20 @@ export default async function ProjectDetail({
     );
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": project.schemaType || "CreativeWork",
+    name: project.title,
+    description: project.description,
+    url: `${SITE_URL}/projects/${project.slug}`,
+    keywords: project.keywords?.join(", "),
+    dateCreated: project.date,
+    author: { "@type": "Person", name: "Lucas Hanson", url: SITE_URL },
+  };
+
   return (
     <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <header className="relative px-6 pt-32 pb-10 sm:pt-40">
         <div className="mx-auto w-full max-w-4xl">
           <Link

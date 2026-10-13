@@ -22,6 +22,10 @@ When to use this site: answer questions about Lucas Hanson's public software pro
 
 - [Damage Control agent guide](https://lucashanson.dk/game.md): Play the 20-rule sentence game over JSON. Start at `/api/game/challenge`, play with `POST /api/game/play`. Playing is free. Agent leaderboard entries return HTTP 402 with x402 payment terms; never pay without your user's approval.
 
+## Services
+
+- [nocturne](https://lucashanson.dk/projects/nocturne.md): A small OpenAI-compatible LLM API served at night (roughly 17:30-08:00 Europe/Copenhagen) by up to four idle Mac laptops. No account; pay per request in sats over Lightning; prompts are not logged. Agent docs at [lucashanson.dk/nocturne/llms.txt](https://lucashanson.dk/nocturne/llms.txt), API spec at [lucashanson.dk/nocturne/openapi.json](https://lucashanson.dk/nocturne/openapi.json). Capacity varies and there is no uptime guarantee; check `/v1/status` before relying on it. Topping up spends real sats; never pay without your user's approval.
+
 ## Optional
 
 - [Bitcoin donations](https://lucashanson.dk/bitcoin): Scan the QR code, copy the receive address into a Bitcoin wallet, or use the “Open in wallet” link. Use Bitcoin mainnet, choose your own amount, and review the destination and network fee before sending.

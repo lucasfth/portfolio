@@ -25,12 +25,12 @@ Laptops sit idle most of the night. nocturne puts them to work: a small LLM API 
 ## Honest limits
 
 - It is a small model on laptops, not a frontier model in a datacenter.
-- Capacity varies. Machines join and leave during the night: a laptop drops out when someone uses it or its battery runs low. The service page shows how many are serving right now.
+- Capacity varies. Machines join and leave during the night: a laptop drops out when someone uses it or its battery drops below 20%. The service page shows how many are serving right now.
 - Each request runs entirely on one machine, at about 18 to 23 tokens per second, with one or two requests per machine at a time.
 - No uptime promise. It is an experiment.
 
 ## How it works
 
-A small coordinator takes requests and hands each one to an eligible worker. Workers only take jobs while plugged in, cool and untouched, and they check in constantly; a worker that goes quiet loses its job and the request is retried or refunded. Credits are reserved before a request runs and settled on the actual token count, so a failed request costs nothing. Prices are fixed per token. When Danish electricity gets expensive enough that a request would cost more in power than it earns, the service pauses instead of running at a loss.
+A small coordinator takes requests and hands each one to an eligible worker. Workers only take jobs while idle, cool, and plugged in or above 20% battery, and they check in constantly. If a machine drops out mid-request, the request is retried once on another machine; streamed requests are not retried and stop with an error instead. Credits are reserved before a request runs and settled on the actual token count, so a failed request costs nothing. Prices are fixed per token in DKK and charged in sats at the current BTC rate. When Danish electricity gets expensive enough that a request would cost more in power than it earns, the service pauses instead of running at a loss.
 
 Pricing, live status, the model name and the API reference are on the [service page](https://lucashanson.dk/nocturne).

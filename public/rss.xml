@@ -6,12 +6,19 @@
         <link>https://lucashanson.dk/blog</link>
         <atom:link href="https://lucashanson.dk/rss.xml" rel="self" type="application/rss+xml"/>
         <language>en-us</language>
-        <lastBuildDate>Sun, 11 Oct 2026 06:05:00 GMT</lastBuildDate>
-        <pubDate>Sun, 11 Oct 2026 06:05:00 GMT</pubDate>
+        <lastBuildDate>Thu, 15 Oct 2026 19:17:52 GMT</lastBuildDate>
+        <pubDate>Thu, 15 Oct 2026 19:17:52 GMT</pubDate>
         <managingEditor>contact@lucashanson.dk (Lucas Hanson)</managingEditor>
         <webMaster>contact@lucashanson.dk (Lucas Hanson)</webMaster>
 
         
+        <item>
+          <title>My old iPad already had 7 years of my health data</title>
+          <description>An old iPad, an AI assistant that reads it, and a switch that had been off since install: how cross-checking wide health history from watch and scale works, and why the numbers stay off this site.</description>
+          <link>https://lucashanson.dk/blog/old-ipad-health-data</link>
+          <guid isPermaLink="true">https://lucashanson.dk/blog/old-ipad-health-data</guid>
+          <pubDate>Sat, 17 Oct 2026 00:00:00 GMT</pubDate>
+        </item>
         <item>
           <title>I configured a better shell. Then forgot how to use it.</title>
           <description>I built a Raycast extension to surface the shell commands I keep forgetting. Installing better tools is easy. Using them is the problem.</description>

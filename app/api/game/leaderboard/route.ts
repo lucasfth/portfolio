@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { fetchLeaderboard, isSetupError } from "@/lib/game/convex";
+import { fetchLeaderboard, isSetupError } from "@/lib/game/store";
 
 export const runtime = "nodejs";
 

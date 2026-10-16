@@ -87,10 +87,40 @@ Agents can play over JSON; see [`/game.md`](https://lucashanson.dk/game.md). Pla
 Server-side environment variables (never `NEXT_PUBLIC_`):
 
 - `GAME_RUN_SECRET`: at least 32 random characters. Signs run tokens. Without it the game API returns 503.
-- `CONVEX_DEPLOY_KEY`: the production deploy key of the `damage-control` Convex project, separate from CampusCup. Production builds (`npm run build`) deploy the Convex functions with it, and the build passes the deployment URL on to the server. Reads use a public query; only writes use the key. `PORTFOLIO_CONVEX_URL` and `PORTFOLIO_CONVEX_ADMIN_KEY` override it if set.
+- `SUPABASE_URL` and `SUPABASE_SECRET_KEY`: server-only Supabase project URL and secret key used by the game persistence adapter. Configure both as Vercel project environment variables for each required environment; use an uncommitted `.env.local` for local development. Never expose either as `NEXT_PUBLIC_` or commit credentials. The dedicated project is `jkelrfwaikcxughpsbqx` in `eu-west-3`; do not use the unrelated Rosbet project. Supabase CLI OAuth is separate from MCP access; authenticate the CLI interactively and never put CLI tokens in code.
 - `X402_PAY_TO`: a Base address that receives USDC. It enables paid agent entries; without it they are closed and the 402 lists no payment options. x402 does not settle on-chain Bitcoin, so `BITCOIN_ZPUB` cannot be reused here. Optional: `X402_FACILITATOR_URL` (default PayAI, `https://facilitator.payai.network`, no API key), `X402_NETWORK` (default `eip155:8453`), `X402_ASSET` (default Base USDC), `X402_AMOUNT` (default `100000`, 0.10 USDC), `X402_FACILITATOR_AUTH`.
 
-`npm run test:game` runs the rule engine, run token, x402 and leaderboard tests.
+### Supabase schema and types
+
+The versioned SQL migration in [`supabase/migrations/`](./supabase/migrations/) is the schema source of truth. Generated `lib/supabase/database.types.ts` is checked in for editor/TypeScript checking; regenerate it after changing the migration or applying an equivalent schema change:
+
+```bash
+node scripts/supabase-types.mjs
+node scripts/supabase-types.mjs --local
+node scripts/supabase-types.mjs --project-id jkelrfwaikcxughpsbqx
+npx tsc --noEmit
+```
+
+The default command targets the dedicated project above and requires Supabase CLI OAuth access; the local form requires a running Supabase CLI local stack. No credentials are embedded in the generator. Database behavior regressions are in [`supabase/tests/game.sql`](./supabase/tests/game.sql) and run against a local PostgreSQL database with the migration applied. They exercise the SQL implementation, not a mock. Builds do not apply or deploy schema changes. Apply migrations only as an explicit deployment operation, after approval, with `npx supabase link --project-ref jkelrfwaikcxughpsbqx` followed by `npx supabase db push`; do not add migration deployment to build hooks. This project uses a dedicated Supabase project and no Supabase Compute service.
+
+### Convex data cutover
+
+Before switching production writes, export and import both score rows and every used run ID, preserving their timestamps and identifiers. Quiesce game writes, take a final Convex snapshot/export during the write-freeze, import that final delta, then compare row counts and leaderboard results before routing traffic to Supabase. Keep the old deployment and data intact until the new persistence path and imported data have been verified; do not retire or clear Convex early.
+
+`npm run test:game` runs game logic tests. `DATABASE_URL="postgres:///portfolio_supabase_test?host=/tmp" npm run test:game:db` exercises the real SQL behavior and concurrent claim/score invariants against an isolated local database with the migrations applied. `npm run typecheck` also checks the generated-client contracts in `tests/database-types.ts`.
+
+With a real local Supabase/PostgREST service configured in `.env.local`, run
+`DATABASE_URL="postgres:///portfolio_supabase_test?host=/tmp" npm run test:game:store`
+to verify pagination beyond 1,000 rows, UTF-16 nickname tie ordering, date isolation,
+and the top-50 boundary through the actual persistence adapter. The local SQL tests
+need Supabase's `anon`, `authenticated`, and `service_role` roles; `supabase start`
+provides these automatically. The concurrency test connects as the local database
+owner so it can clean up only its own fixture rows.
+
+The applied initial migration is `20261016074632_game.sql`. The subsequent
+`20261016082130_unicode_nicknames.sql` correction requires an ICU-enabled Postgres
+installation (as provided by Supabase) and must be applied before cutover. The
+generated client types do not change for that constraint-only migration.
 
 ## Bitcoin donations
 

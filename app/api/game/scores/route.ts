@@ -1,5 +1,5 @@
 import { revalidateTag } from "next/cache";
-import { claimRun, fetchLeaderboard, isSetupError, storeBestScore } from "@/lib/game/convex";
+import { claimRun, fetchLeaderboard, isSetupError, storeBestScore } from "@/lib/game/store";
 import { checkSentence, normalizeNickname } from "@/lib/game/check";
 import { getUtcDate } from "@/lib/game/challenge";
 import { checkHuman } from "@/lib/game/human";

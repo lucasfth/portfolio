@@ -3,10 +3,10 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
-// One beacon per distinct page per minute. The pageview itself is the unit of
-// analytics; longer stays are not counted again.
-const THROTTLE_MS = 60_000;
-const CHECK_MS = 15_000;
+// One row per distinct page per half hour, per browser. Idling on a page does
+// not inflate the count; coming back later counts as a revisit.
+const THROTTLE_MS = 30 * 60_000;
+const CHECK_MS = 30_000;
 const STORAGE_KEY = "lucashanson-stats";
 const MAX_PATHS = 64;
 

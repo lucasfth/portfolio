@@ -180,9 +180,14 @@ export default function StatsLive({
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-4">
         <StatTile label="Last hour" value={numberFormat.format(data.last_1h)} sub="visits" />
         <StatTile label="Last 7 days" value={numberFormat.format(data.last_7d)} sub="visits" />
+        <StatTile
+          label="Unique today"
+          value={numberFormat.format(data.unique_today)}
+          sub="people by salted IP hash"
+        />
         <StatTile
           label="AI agent share"
           value={splitTotal ? `${Math.round((agent / splitTotal) * 100)}%` : "no data"}

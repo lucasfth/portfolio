@@ -25,6 +25,6 @@ export async function GET() {
     );
   }
   return Response.json(overview, {
-    headers: { "Cache-Control": "public, max-age=10, s-maxage=15" },
+    headers: { "Cache-Control": "no-store" },
   });
 }

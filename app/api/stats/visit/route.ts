@@ -1,5 +1,4 @@
-import { createHmac } from "node:crypto";
-import { isIP } from "node:net";
+import { dailyVisitHash, sanitizePath } from "@/lib/stats/identity";
 import { NextRequest } from "next/server";
 import { isStatsSetupError, recordVisit } from "@/lib/stats/store";
 
@@ -48,11 +47,6 @@ function isAgent(request: NextRequest): boolean {
   return AGENT_MARKERS.some((marker) => userAgent.includes(marker));
 }
 
-function sanitizePath(value: unknown): string | null {
-  if (typeof value !== "string" || value.length < 1 || value.length > 200) return null;
-  return /^\/[a-zA-Z0-9[/\-._?%=&#()~+]*/u.test(value) ? value : null;
-}
-
 function referrerDomain(request: NextRequest): string | null {
   const raw = request.headers.get("referer");
   if (!raw) return null;
@@ -71,21 +65,11 @@ function sanitizeRegion(value: unknown): string | null {
 }
 
 function clientIp(request: NextRequest): string | null {
-  const raw = request.headers.get("x-forwarded-for");
-  if (!raw) return null;
-  const first = raw.split(",")[0]?.trim().toLowerCase();
-  return first && isIP(first) ? first : null;
+  const raw = request.headers.get("x-vercel-forwarded-for") ?? request.headers.get("x-forwarded-for");
+  return raw?.split(",")[0]?.trim().toLowerCase() ?? null;
 }
 
-// Daily-rotated salt: same IP hashes identically within a UTC day, differently
-// across days, so counters stay per-day and the value is not linkable.
-function visitHash(request: NextRequest): string | null {
-  const ip = clientIp(request);
-  const secret = process.env.SUPABASE_SECRET_KEY;
-  if (!ip || !secret) return null;
-  const day = new Date().toISOString().slice(0, 10);
-  return createHmac("sha256", secret).update(`${day}:${ip}`).digest("hex");
-}
+
 
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown> = {};
@@ -108,7 +92,7 @@ export async function POST(request: NextRequest) {
       referrerDomain: referrerDomain(request),
       region: sanitizeRegion(body.region),
       visitorKind: isAgent(request) ? "agent" : "human",
-      visitHash: visitHash(request),
+      visitHash: dailyVisitHash(clientIp(request), process.env.SUPABASE_SECRET_KEY ?? ""),
     });
   } catch (error) {
     const detail = isStatsSetupError(error) ? "stats_unconfigured" : "stats_unavailable";

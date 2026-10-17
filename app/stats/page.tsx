@@ -6,7 +6,7 @@ import { emptyOverview, fetchStatsOverview, isStatsSetupError } from "@/lib/stat
 export const dynamic = "force-dynamic";
 
 const DESCRIPTION =
-  "Live, public analytics for this site. One row in Supabase Postgres per visit, written server-side only. No cookies, no fingerprinting, no raw IP addresses stored.";
+  "Live, public analytics for this site. One row in Supabase Postgres per visit, written server-side only. No cookies or raw IP addresses stored. Daily keyed IP hashes estimate unique visitors.";
 
 export const metadata = {
   title: "Stats",
@@ -76,16 +76,17 @@ export default async function StatsPage() {
               agents often send nothing.
             </li>
             <li>
-              Whether the visitor is a human browser or an AI agent, guessed from the user
-              agent on the server.
+              Whether a submitted beacon has a bot-like user agent. This can be spoofed;
+              crawlers that do not run JavaScript are not counted. Referrer hosts and
+              time zone labels appear in the public lists below.
             </li>
             <li>
-              A daily-salted hash of the IP address, used only to count how many people
-              visited in a day, never who. It rotates daily and cannot be matched across
-              days. No raw IP address is stored.
+              A keyed IP hash that rotates at Copenhagen midnight, used to estimate daily
+              unique network addresses, including bots. Shared networks can merge visitors;
+              changing networks can count one person twice. No raw IP address is stored.
             </li>
             <li className="pt-2 font-medium text-foreground">
-              No raw IP addresses, no cookies, no personal data, no third parties.
+              No raw IP addresses or cookies. IP hashes are pseudonymous, not anonymous. Hosting and database providers process requests.
             </li>
           </ul>
         </div>

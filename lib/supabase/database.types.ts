@@ -63,6 +63,7 @@ export type Database = {
           path: string
           referrer_domain: string | null
           region: string | null
+          visit_hash: string | null
           visitor_kind: string
         }
         Insert: {
@@ -71,6 +72,7 @@ export type Database = {
           path: string
           referrer_domain?: string | null
           region?: string | null
+          visit_hash?: string | null
           visitor_kind?: string
         }
         Update: {
@@ -79,6 +81,7 @@ export type Database = {
           path?: string
           referrer_domain?: string | null
           region?: string | null
+          visit_hash?: string | null
           visitor_kind?: string
         }
         Relationships: []
@@ -89,15 +92,26 @@ export type Database = {
     }
     Functions: {
       claim_game_run: { Args: { p_run_id: string }; Returns: boolean }
-      record_visit: {
-        Args: {
-          p_path: string
-          p_referrer_domain: string
-          p_region: string
-          p_visitor_kind: string
-        }
-        Returns: undefined
-      }
+      record_visit:
+        | {
+            Args: {
+              p_path: string
+              p_referrer_domain: string
+              p_region: string
+              p_visitor_kind: string
+            }
+            Returns: undefined
+          }
+        | {
+            Args: {
+              p_path: string
+              p_referrer_domain: string
+              p_region: string
+              p_visit_hash: string
+              p_visitor_kind: string
+            }
+            Returns: undefined
+          }
       save_game_best_score: {
         Args: {
           p_date: string

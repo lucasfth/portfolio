@@ -85,7 +85,8 @@ export default function StatsLive({
 }) {
   const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<StatsOverview>(initial);
-  const [stale, setStale] = useState(false);
+  const [stale, setStale] = useState(!available);
+  const [ready, setReady] = useState(available);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
 
   useEffect(() => {
@@ -93,7 +94,6 @@ export default function StatsLive({
   }, []);
 
   useEffect(() => {
-    if (!available) return;
     let cancelled = false;
     const tick = async () => {
       try {
@@ -103,13 +103,14 @@ export default function StatsLive({
         if (cancelled) return;
         if (typeof next?.total !== "number") throw new Error("stats_bad_shape");
         setData(next);
+        setReady(true);
         setStale(false);
         setUpdatedAt(new Date());
       } catch {
         if (!cancelled) setStale(true);
       }
     };
-    setUpdatedAt(new Date());
+    void tick();
     const interval = window.setInterval(tick, REFRESH_MS);
     return () => {
       cancelled = true;
@@ -151,7 +152,7 @@ export default function StatsLive({
     );
   }
 
-  if (!available) {
+  if (!ready) {
     return (
       <p className="rounded-2xl border border-border bg-foreground/[0.03] p-8 text-sm text-muted-foreground">
         The live stats panel is not available right now. The totals above still hold the
@@ -186,10 +187,10 @@ export default function StatsLive({
         <StatTile
           label="Unique today"
           value={numberFormat.format(data.unique_today)}
-          sub="people by salted IP hash"
+          sub="daily IP hashes, not individual people"
         />
         <StatTile
-          label="AI agent share"
+          label="Bot-labelled beacons"
           value={splitTotal ? `${Math.round((agent / splitTotal) * 100)}%` : "no data"}
           sub={splitTotal ? `${numberFormat.format(agent)} agent, ${numberFormat.format(human)} human` : "waiting for the first visits"}
         />

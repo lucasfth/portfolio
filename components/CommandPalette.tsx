@@ -17,6 +17,7 @@ export default function CommandPalette({
   status?: string;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -38,6 +39,12 @@ export default function CommandPalette({
 
   const matches = useMemo(() => searchItems(items, query), [items, query]);
 
+  useEffect(() => {
+    if (!listRef.current || !matches.length) return;
+    const selectedEl = listRef.current.children[selectedIndex] as HTMLElement | undefined;
+    selectedEl?.scrollIntoView({ block: "nearest" });
+  }, [selectedIndex, matches.length]);
+
   if (!open) return null;
 
   return (
@@ -51,12 +58,19 @@ export default function CommandPalette({
       }}
     >
       <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+        <span className="sr-only" aria-live="polite" aria-atomic="true">
+          {query ? `${matches.length} result${matches.length === 1 ? "" : "s"} found` : ""}
+        </span>
         <div className="flex items-center gap-3 border-b border-border px-4">
           <Search size={18} className="shrink-0 text-muted-foreground" aria-hidden="true" />
           <input
             ref={inputRef}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            role="combobox"
+            aria-expanded={matches.length > 0}
+            aria-controls="search-results-list"
+            aria-activedescendant={matches.length > 0 ? `search-result-${selectedIndex}` : undefined}
             onKeyDown={(event) => {
               if (event.key === "Escape") onClose();
               if (event.key === "ArrowDown") {
@@ -86,11 +100,13 @@ export default function CommandPalette({
             <X size={18} />
           </button>
         </div>
-        <div className="max-h-[50vh] overflow-y-auto p-2">
+        <div id="search-results-list" ref={listRef} role="listbox" className="max-h-[50vh] overflow-y-auto p-2">
           {matches.length ? (
             matches.map((item, index) => (
               <a
                 key={item.href}
+                id={`search-result-${index}`}
+                role="option"
                 href={item.href}
                 target={item.external ? "_blank" : undefined}
                 rel={item.external ? "noopener noreferrer" : undefined}

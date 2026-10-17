@@ -103,6 +103,10 @@ npx tsc --noEmit
 
 The default command targets the dedicated project above and requires Supabase CLI OAuth access; the local form requires a running Supabase CLI local stack. No credentials are embedded in the generator. Database behavior regressions are in [`supabase/tests/game.sql`](./supabase/tests/game.sql) and run against a local PostgreSQL database with the migration applied. They exercise the SQL implementation, not a mock. Builds do not apply or deploy schema changes. Apply migrations only as an explicit deployment operation, after approval, with `npx supabase link --project-ref jkelrfwaikcxughpsbqx` followed by `npx supabase db push`; do not add migration deployment to build hooks. This project uses a dedicated Supabase project and no Supabase Compute service.
 
+### Site stats
+
+`/stats` shows live, public analytics written by `lib/stats/store.ts` into the same dedicated project. The `visits` table (see `supabase/migrations/*_stats.sql`) stores one row per page view: path, referrer host, short browser time zone region, and a human/agent flag guessed server-side from the user agent. No IP addresses, cookies, or personal data. Writes and reads are `service_role` only through the `record_visit` and `stats_overview` functions; RLS denies every Data API role. The `/api/stats/visit` beacon and `/api/stats/overview` poll are internal routes and intentionally absent from the public API catalog (`/openapi.json`). No extra environment variables: stats reuse `SUPABASE_URL` and `SUPABASE_SECRET_KEY`, and the page degrades to a "not configured" state until both are present and the migration is applied.
+
 ### Convex data cutover
 
 Before switching production writes, export and import both score rows and every used run ID, preserving their timestamps and identifiers. Quiesce game writes, take a final Convex snapshot/export during the write-freeze, import that final delta, then compare row counts and leaderboard results before routing traffic to Supabase. Keep the old deployment and data intact until the new persistence path and imported data have been verified; do not retire or clear Convex early.

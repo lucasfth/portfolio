@@ -1,3 +1,5 @@
+import { createHmac } from "node:crypto";
+import { isIP } from "node:net";
 import { NextRequest } from "next/server";
 import { isStatsSetupError, recordVisit } from "@/lib/stats/store";
 
@@ -68,6 +70,23 @@ function sanitizeRegion(value: unknown): string | null {
   return typeof value === "string" && /^[A-Za-z][A-Za-z'-]{1,39}$/.test(value) ? value : null;
 }
 
+function clientIp(request: NextRequest): string | null {
+  const raw = request.headers.get("x-forwarded-for");
+  if (!raw) return null;
+  const first = raw.split(",")[0]?.trim().toLowerCase();
+  return first && isIP(first) ? first : null;
+}
+
+// Daily-rotated salt: same IP hashes identically within a UTC day, differently
+// across days, so counters stay per-day and the value is not linkable.
+function visitHash(request: NextRequest): string | null {
+  const ip = clientIp(request);
+  const secret = process.env.SUPABASE_SECRET_KEY;
+  if (!ip || !secret) return null;
+  const day = new Date().toISOString().slice(0, 10);
+  return createHmac("sha256", secret).update(`${day}:${ip}`).digest("hex");
+}
+
 export async function POST(request: NextRequest) {
   let body: Record<string, unknown> = {};
   try {
@@ -89,6 +108,7 @@ export async function POST(request: NextRequest) {
       referrerDomain: referrerDomain(request),
       region: sanitizeRegion(body.region),
       visitorKind: isAgent(request) ? "agent" : "human",
+      visitHash: visitHash(request),
     });
   } catch (error) {
     const detail = isStatsSetupError(error) ? "stats_unconfigured" : "stats_unavailable";

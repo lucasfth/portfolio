@@ -8,6 +8,7 @@ export type StatsOverview = {
   total: number;
   last_1h: number;
   last_7d: number;
+  unique_today: number;
   first_visit: string | null;
   hourly_48h: { hour: string; count: number }[];
   top_paths: { name: string; count: number }[];
@@ -82,6 +83,7 @@ export function emptyOverview(): StatsOverview {
     total: 0,
     last_1h: 0,
     last_7d: 0,
+    unique_today: 0,
     first_visit: null,
     hourly_48h: [],
     top_paths: [],
@@ -96,12 +98,14 @@ export async function recordVisit(input: {
   referrerDomain: string | null;
   region: string | null;
   visitorKind: VisitorKind;
+  visitHash: string | null;
 }): Promise<void> {
   const { error } = await database().rpc("record_visit", {
     p_path: input.path,
     p_referrer_domain: input.referrerDomain ?? "",
     p_region: input.region ?? "",
     p_visitor_kind: input.visitorKind,
+    p_visit_hash: input.visitHash ?? "",
   });
   if (error) throw error;
 }
@@ -114,6 +118,7 @@ export async function fetchStatsOverview(): Promise<StatsOverview> {
     total: toNumber(source.total),
     last_1h: toNumber(source.last_1h),
     last_7d: toNumber(source.last_7d),
+    unique_today: toNumber(source.unique_today),
     first_visit: typeof source.first_visit === "string" ? source.first_visit : null,
     hourly_48h: parseHourly(source.hourly_48h),
     top_paths: namedPairs(source.top_paths, "path"),

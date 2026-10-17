@@ -67,7 +67,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
-          id?: number
+          id?: never
           path: string
           referrer_domain?: string | null
           region?: string | null
@@ -75,7 +75,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
-          id?: number
+          id?: never
           path?: string
           referrer_domain?: string | null
           region?: string | null
@@ -96,7 +96,7 @@ export type Database = {
           p_region: string
           p_visitor_kind: string
         }
-        Returns: void
+        Returns: undefined
       }
       save_game_best_score: {
         Args: {
@@ -122,10 +122,7 @@ export type Database = {
           isSetofReturn: false
         }
       }
-      stats_overview: {
-        Args: Record<PropertyKey, never>
-        Returns: Json
-      }
+      stats_overview: { Args: never; Returns: Json }
     }
     Enums: {
       [_ in never]: never

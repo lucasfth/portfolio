@@ -56,12 +56,48 @@ export type Database = {
         }
         Relationships: []
       }
+      visits: {
+        Row: {
+          created_at: string
+          id: number
+          path: string
+          referrer_domain: string | null
+          region: string | null
+          visitor_kind: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          path: string
+          referrer_domain?: string | null
+          region?: string | null
+          visitor_kind?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          path?: string
+          referrer_domain?: string | null
+          region?: string | null
+          visitor_kind?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
       claim_game_run: { Args: { p_run_id: string }; Returns: boolean }
+      record_visit: {
+        Args: {
+          p_path: string
+          p_referrer_domain: string
+          p_region: string
+          p_visitor_kind: string
+        }
+        Returns: void
+      }
       save_game_best_score: {
         Args: {
           p_date: string
@@ -85,6 +121,10 @@ export type Database = {
           isOneToOne: true
           isSetofReturn: false
         }
+      }
+      stats_overview: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
       }
     }
     Enums: {

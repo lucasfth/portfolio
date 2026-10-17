@@ -5,6 +5,7 @@ import ScrollToTop from "@/components/ScrollToTop";
 import SmoothScroll from "@/components/SmoothScroll";
 import ClickSpark from "@/components/ClickSpark";
 import Header from "@/components/Header";
+import StatsBeacon from "@/components/StatsBeacon";
 import { Patrick_Hand, Space_Mono } from "next/font/google";
 
 // Self-hosted at build time: no render-blocking request to Google Fonts.
@@ -111,6 +112,7 @@ export default function RootLayout({
           <Footer />
           <ScrollToTop />
           <ClickSpark />
+          <StatsBeacon />
         </SmoothScroll>
       </body>
     </html>

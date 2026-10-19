@@ -11,11 +11,6 @@ heroImage: /images/snow/DSCF5108.jpg
 
 ![profile picture](/images/profile_pic.jpg)
 
-Software engineer and photographer in Copenhagen. CTO at EcoRay.
-Check out my projects here.
-
----
-
 I have a BSc. in Software Development from IT University of Copenhagen. Currently I am pursuing my MSc. in Computer Science at IT University of Copenhagen which I expect to finish at the end of 2026.
 Based in Copenhagen, Denmark.
 

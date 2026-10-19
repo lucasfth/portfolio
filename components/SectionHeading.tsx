@@ -27,6 +27,8 @@ const ICONS: Record<string, LucideIcon> = {
   Languages: Languages,
   Education: GraduationCap,
   Projects: Briefcase,
+  "Selected projects": Briefcase,
+  "Latest writing": PenLine,
   Blog: PenLine,
   Aperture: Aperture,
 };

@@ -6,7 +6,7 @@ import SectionHeading from "@/components/SectionHeading";
 import Reveal from "@/components/Reveal";
 import Markdown from "@/components/Markdown";
 import ExperienceTimeline from "@/components/ExperienceTimeline";
-import ProjectCard from "@/components/ProjectCard";
+import ProjectShowcase from "@/components/ProjectShowcase";
 import PostRow from "@/components/PostRow";
 import HomeGalleries from "@/components/HomeGalleries";
 import {
@@ -61,8 +61,8 @@ function Section({
 export default async function Home() {
   const front = getFrontpage();
   const { intro, sections } = parseFrontpage(front.body);
-  const projects = getProjects();
-  const posts = getBlogPosts();
+  const projects = getProjects().slice(0, 4);
+  const posts = getBlogPosts().slice(0, 3);
   const galleries = getGalleries();
   const galleryImages = await Promise.all(
     galleries.map((g) => getGalleryImages(g.id))
@@ -81,6 +81,60 @@ export default async function Home() {
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(person).replace(/</g, "\\u003c") }} />
       <Hero name={front.name} tagline={front.tagline} heroImage={front.heroImage} />
+
+      {/* Projects (auto-discovered) */}
+      {projects.length > 0 && (
+        <section id="projects" className="mx-auto w-full max-w-6xl scroll-mt-28 px-6 py-16 sm:py-24">
+          <SectionHeading
+            index={nextIndex()}
+            title="Selected projects"
+            description="Software, systems and research I have worked on."
+          />
+          <ProjectShowcase projects={projects.map(({slug,title,tagline,image,tags}) => ({slug,title,tagline,image,tags}))} />
+          <Reveal className="mt-10">
+            <Link
+              href="/projects"
+              className="group inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              All projects
+              <ArrowUpRight
+                size={16}
+                className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+              />
+            </Link>
+          </Reveal>
+        </section>
+      )}
+
+      {/* Blog (auto-discovered) */}
+      {posts.length > 0 && (
+        <section className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-24">
+          <SectionHeading
+            index={nextIndex()}
+            title="Latest writing"
+            description="Notes on software, self-hosting and the tools I use."
+          />
+          <div>
+            {posts.map((post, i) => (
+              <Reveal key={post.slug} delay={i * 60}>
+                <PostRow post={{ ...post, body: "" }} index={i} />
+              </Reveal>
+            ))}
+          </div>
+          <Reveal className="mt-10">
+            <Link
+              href="/blog"
+              className="group inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              All posts
+              <ArrowUpRight
+                size={16}
+                className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+              />
+            </Link>
+          </Reveal>
+        </section>
+      )}
 
       {/* About */}
       <section className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-24">
@@ -113,65 +167,6 @@ export default async function Home() {
         <Section key={s.title} section={s} index={nextIndex()} />
       ))}
 
-      {/* Projects (auto-discovered) */}
-      {projects.length > 0 && (
-        <section className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-24">
-          <SectionHeading
-            index={nextIndex()}
-            title="Projects"
-            description="A selection of the larger projects I have worked on."
-          />
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            {projects.map((p, i) => (
-              <Reveal key={p.slug} delay={i * 70}>
-                <ProjectCard project={{ ...p, body: "" }} />
-              </Reveal>
-            ))}
-          </div>
-          <Reveal className="mt-10">
-            <Link
-              href="/projects"
-              className="group inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              All projects
-              <ArrowUpRight
-                size={16}
-                className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-              />
-            </Link>
-          </Reveal>
-        </section>
-      )}
-
-      {/* Blog (auto-discovered) */}
-      {posts.length > 0 && (
-        <section className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-24">
-          <SectionHeading
-            index={nextIndex()}
-            title="Blog"
-            description="Thoughts, experiences and insights."
-          />
-          <div>
-            {posts.map((post, i) => (
-              <Reveal key={post.slug} delay={i * 60}>
-                <PostRow post={{ ...post, body: "" }} index={i} />
-              </Reveal>
-            ))}
-          </div>
-          <Reveal className="mt-10">
-            <Link
-              href="/blog"
-              className="group inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              All posts
-              <ArrowUpRight
-                size={16}
-                className="transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-              />
-            </Link>
-          </Reveal>
-        </section>
-      )}
 
       <HomeGalleries galleries={galleries.map(({id,title},i) => ({id,title,imageCount:galleryImages[i].length}))} galleryImages={galleryImages.map(images => images.slice(0,2).map(({src,alt}) => ({src,alt})))} index={nextIndex()} />
     </>

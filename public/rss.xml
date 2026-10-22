@@ -6,12 +6,26 @@
         <link>https://lucashanson.dk/blog</link>
         <atom:link href="https://lucashanson.dk/rss.xml" rel="self" type="application/rss+xml"/>
         <language>en-us</language>
-        <lastBuildDate>Sat, 17 Oct 2026 07:46:27 GMT</lastBuildDate>
-        <pubDate>Sat, 17 Oct 2026 07:46:27 GMT</pubDate>
+        <lastBuildDate>Thu, 22 Oct 2026 13:06:15 GMT</lastBuildDate>
+        <pubDate>Thu, 22 Oct 2026 13:06:15 GMT</pubDate>
         <managingEditor>contact@lucashanson.dk (Lucas Hanson)</managingEditor>
         <webMaster>contact@lucashanson.dk (Lucas Hanson)</webMaster>
 
         
+        <item>
+          <title>I made my local LLM slower, then faster</title>
+          <description>Over seven weeks I swapped the model on Mimer, turned on MTP speculative decoding in llama.cpp, and changed the serving engine. What each change measured, and what it did not prove.</description>
+          <link>https://lucashanson.dk/blog/slower-then-faster</link>
+          <guid isPermaLink="true">https://lucashanson.dk/blog/slower-then-faster</guid>
+          <pubDate>Fri, 23 Oct 2026 00:00:00 GMT</pubDate>
+        </item>
+        <item>
+          <title>I hardened my agent against injection. It started refusing &quot;what time is it.&quot;</title>
+          <description>Forty-one security refusals, one of them to a bare question mark. What happens when your prompt-injection defenses start treating your own platform as the attacker.</description>
+          <link>https://lucashanson.dk/blog/injection-refusals</link>
+          <guid isPermaLink="true">https://lucashanson.dk/blog/injection-refusals</guid>
+          <pubDate>Mon, 19 Oct 2026 00:00:00 GMT</pubDate>
+        </item>
         <item>
           <title>I secured my Bitcoin with two YubiKeys</title>
           <description>No hardware wallet. My Bitcoin is guarded by two YubiKeys I already use daily, a sentence I memorized, and a printed paper. Here is what I understand, and what I do not.</description>

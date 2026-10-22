@@ -31,9 +31,10 @@ export default function PostRow({ post, index }: { post: BlogPost; index: number
           {String(index + 1).padStart(2, "0")}
         </span>
         <div className="min-w-0">
-          <h3 className="truncate font-hand text-2xl tracking-tight sm:text-3xl">
+          <h3 className="text-balance font-heading text-xl tracking-tight sm:text-3xl">
             {post.title}
           </h3>
+          {date && <time dateTime={post.date} className="mt-2 block font-mono text-xs text-muted-foreground md:hidden">{date}</time>}
           {post.description && (
             <p className="mt-1 line-clamp-2 max-w-xl text-sm text-muted-foreground">
               {post.description}

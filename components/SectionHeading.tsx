@@ -12,7 +12,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Reveal from "./Reveal";
 
 /**
  * Monochrome icon per section title (replaces the old emoji headings).
@@ -48,14 +47,14 @@ export default function SectionHeading({
 }: SectionHeadingProps) {
   const Icon = ICONS[title];
   return (
-    <Reveal className={cn("mb-12", className)}>
+    <div className={cn("mb-12", className)}>
       <div className="flex items-center gap-4">
         {index && (
           <span className="font-mono text-xs tracking-[0.2em] text-muted-foreground">
             {index}
           </span>
         )}
-        <h2 className="flex items-center gap-3 font-hand text-4xl tracking-tight sm:text-5xl">
+        <h2 data-terminal-heading className="flex items-center gap-3 font-heading text-4xl tracking-tight sm:text-5xl">
           {Icon && (
             <Icon
               size={30}
@@ -68,11 +67,11 @@ export default function SectionHeading({
         </h2>
       </div>
       {description && (
-        <p className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+        <p data-terminal-heading className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">
           {description}
         </p>
       )}
       <div className="hairline-top mt-8 w-full" />
-    </Reveal>
+    </div>
   );
 }

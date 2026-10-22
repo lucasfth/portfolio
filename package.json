@@ -23,6 +23,7 @@
     "@scure/bip32": "2.4.0",
     "@supabase/supabase-js": "^2.118.0",
     "@vercel/og": "^1.0.3",
+    "ascii-reveal": "github:quanhoangindex/ascii-reveal",
     "botid": "^1.5.11",
     "clsx": "^2.1.1",
     "compromise": "14.19.0",

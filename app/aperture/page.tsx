@@ -1,6 +1,5 @@
 import PageHero from "@/components/PageHero";
 import GalleryTile from "@/components/GalleryTile";
-import Reveal from "@/components/Reveal";
 import { getGalleries, SITE_URL } from "@/lib/content";
 
 export const metadata = {
@@ -35,9 +34,7 @@ export default function Aperture() {
       <section className="mx-auto w-full max-w-6xl px-6 pb-24">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {galleries.map((g, i) => (
-            <Reveal key={g.id} delay={i * 70}>
-              <GalleryTile gallery={g} />
-            </Reveal>
+            <GalleryTile key={g.id} gallery={g} reveal={i < 4} />
           ))}
         </div>
       </section>

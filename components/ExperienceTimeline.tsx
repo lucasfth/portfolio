@@ -23,7 +23,7 @@ export default function ExperienceTimeline({ entries }: ExperienceTimelineProps)
             aria-hidden="true"
           />
           <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <h3 className="font-hand text-2xl tracking-tight">{entry.title}</h3>
+            <h3 className="font-heading text-2xl tracking-tight">{entry.title}</h3>
             {entry.dates && (
               <span className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
                 {entry.dates}

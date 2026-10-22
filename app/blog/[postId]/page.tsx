@@ -64,7 +64,7 @@ export default async function BlogPost({
   if (!post) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-40 text-center">
-        <h1 className="font-hand text-4xl">Post not found</h1>
+        <h1 className="font-heading text-4xl">Post not found</h1>
         <Link href="/blog" className="mt-6 inline-block text-muted-foreground hover:text-foreground">
           Back to blog
         </Link>
@@ -78,7 +78,7 @@ export default async function BlogPost({
     <>
       {/* Header */}
       <header className="relative px-6 pt-32 pb-10 sm:pt-40">
-        <div className="mx-auto w-full max-w-3xl">
+        <div className="mx-auto w-full max-w-[45rem]">
           <Link
             href="/blog"
             className="group mb-10 inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
@@ -91,11 +91,11 @@ export default async function BlogPost({
               {date}
             </p>
           )}
-          <h1 className="font-hand text-4xl leading-[1.05] tracking-tight sm:text-6xl">
+          <h1 className="font-heading text-4xl leading-[1.05] tracking-tight sm:text-6xl">
             {post.title}
           </h1>
           {post.image && (
-            <div className="relative mt-10 aspect-[16/9] w-full overflow-hidden rounded-3xl border border-border">
+            <div data-terminal-media className="relative mt-10 aspect-[16/9] w-full overflow-hidden rounded-[var(--media-radius)] border border-border">
               <Image
                 src={post.image}
                 alt={post.title}
@@ -103,7 +103,6 @@ export default async function BlogPost({
                 priority
                 sizes="(max-width: 768px) 100vw, 768px"
                 className="object-cover"
-                style={{ filter: "grayscale(40%) brightness(0.8)" }}
               />
             </div>
           )}
@@ -118,7 +117,7 @@ export default async function BlogPost({
       {/* Comments */}
       <section className="mx-auto w-full max-w-3xl px-6 pb-24">
         <div className="hairline-top mb-10 w-full" />
-        <h2 className="font-hand text-3xl">Comments</h2>
+        <h2 className="font-heading text-3xl">Comments</h2>
         <div className="mt-6">
           <BlogComments postId={postId} />
         </div>

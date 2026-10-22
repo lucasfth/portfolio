@@ -9,7 +9,7 @@ export default function NotFound() {
         <p className="font-mono text-xs uppercase tracking-[0.3em] text-muted-foreground">
           Error 404
         </p>
-        <h1 className="mt-4 font-hand text-6xl tracking-tight sm:text-7xl">
+        <h1 className="mt-4 font-heading text-6xl tracking-tight sm:text-7xl">
           Page not found
         </h1>
       </div>
@@ -48,7 +48,7 @@ export default function NotFound() {
       </div>
 
       <section className="mt-12">
-        <h2 className="font-hand text-3xl">
+        <h2 className="font-heading text-3xl">
           Training
         </h2>
         <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">
@@ -81,7 +81,7 @@ export default function NotFound() {
       </section>
 
       <section className="mt-12">
-        <h2 className="font-hand text-3xl">
+        <h2 className="font-heading text-3xl">
           Photography
         </h2>
         <div className="mt-4 space-y-4 text-sm leading-relaxed text-muted-foreground">

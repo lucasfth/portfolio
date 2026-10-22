@@ -52,7 +52,7 @@ export default async function ProjectDetail({
   if (!project) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-40 text-center">
-        <h1 className="font-hand text-4xl">Project not found</h1>
+        <h1 className="font-heading text-4xl">Project not found</h1>
         <Link href="/projects" className="mt-6 inline-block text-muted-foreground hover:text-foreground">
           Back to projects
         </Link>
@@ -75,7 +75,7 @@ export default async function ProjectDetail({
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       <header className="relative px-6 pt-32 pb-10 sm:pt-40">
-        <div className="mx-auto w-full max-w-4xl">
+        <div className="mx-auto w-full max-w-[45rem]">
           <Link
             href="/projects"
             className="group mb-10 inline-flex items-center gap-2 text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
@@ -83,7 +83,7 @@ export default async function ProjectDetail({
             <ArrowLeft size={14} className="transition-transform group-hover:-translate-x-1" />
             Projects
           </Link>
-          <h1 className="font-hand text-4xl leading-[1.05] tracking-tight sm:text-6xl">
+          <h1 className="font-heading text-4xl leading-[1.05] tracking-tight sm:text-6xl">
             {project.title}
           </h1>
           {project.tagline && (
@@ -105,8 +105,8 @@ export default async function ProjectDetail({
           )}
         </div>
         {project.image && (
-          <div className="mx-auto mt-10 w-full max-w-4xl px-0 sm:px-6">
-            <div className="relative aspect-[16/9] w-full overflow-hidden rounded-3xl border border-border">
+          <div className="mx-auto mt-10 w-full max-w-[45rem]">
+            <div data-terminal-media className="relative aspect-[16/9] w-full overflow-hidden rounded-[var(--media-radius)] border border-border">
               <Image
                 src={project.image}
                 alt={project.title}
@@ -114,7 +114,6 @@ export default async function ProjectDetail({
                 priority
                 sizes="(max-width: 768px) 100vw, 896px"
                 className="object-cover"
-                style={project.slug === "msc-thesis" ? undefined : { filter: "grayscale(30%) brightness(0.85)" }}
               />
             </div>
           </div>

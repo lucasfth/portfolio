@@ -1,6 +1,5 @@
 import PageHero from "@/components/PageHero";
 import ProjectCard from "@/components/ProjectCard";
-import Reveal from "@/components/Reveal";
 import { getProjects, SITE_URL } from "@/lib/content";
 
 export const metadata = {
@@ -34,10 +33,8 @@ export default function Projects() {
       />
       <section className="mx-auto w-full max-w-6xl px-6 pb-24">
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          {projects.map((p, i) => (
-            <Reveal key={p.slug} delay={i * 70}>
-              <ProjectCard project={p} />
-            </Reveal>
+          {projects.map((p) => (
+            <ProjectCard key={p.slug} project={p} />
           ))}
         </div>
       </section>

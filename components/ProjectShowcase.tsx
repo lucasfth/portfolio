@@ -3,14 +3,14 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import TerminalReveal from "./TerminalReveal";
 import { ArrowUpRight } from "lucide-react";
 
 type Preview = { slug: string; title: string; tagline?: string; image?: string; tags?: string[] };
 
 export default function ProjectShowcase({ projects }: { projects: Preview[] }) {
   const [selected, setSelected] = useState(0);
-  const reduce = useReducedMotion();
+  const [hasSwitched, setHasSwitched] = useState(false);
   const active = projects[selected];
   if (!active) return null;
   return (
@@ -20,7 +20,7 @@ export default function ProjectShowcase({ projects }: { projects: Preview[] }) {
           <article key={project.slug} className="work-entry" data-selected={selected === i}>
             <div className="work-entry-heading">
               <h3 className="work-title"><span className="work-number" aria-hidden="true">{String(i + 1).padStart(2, "0")}</span><Link href={`/projects/${encodeURIComponent(project.slug)}`}>{project.title}</Link></h3>
-              <button type="button" onClick={() => setSelected(i)} aria-pressed={selected === i} aria-label={`Preview ${project.title}`} className="work-preview-button">Preview</button>
+              <button type="button" onClick={() => { if (i !== selected) { setHasSwitched(true); setSelected(i); } }} aria-pressed={selected === i} aria-label={`Preview ${project.title}`} className="work-preview-button">Preview</button>
               <Link href={`/projects/${encodeURIComponent(project.slug)}`} aria-label={`Read ${project.title}`} className="work-open"><ArrowUpRight size={20} /></Link>
             </div>
             <p>{project.tagline}</p>
@@ -30,14 +30,12 @@ export default function ProjectShowcase({ projects }: { projects: Preview[] }) {
         ))}
       </div>
       <div className="work-stage" aria-label="Selected project preview">
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div key={active.slug} initial={{ opacity: 0, y: reduce ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reduce ? 0 : -6 }} transition={{ duration: reduce ? 0 : 0.2 }} className="work-stage-inner">
+          <TerminalReveal key={active.slug} enabled={hasSwitched}>
             <Link href={`/projects/${encodeURIComponent(active.slug)}`} className="work-stage-link">
               <div className="work-stage-image">{active.image && <Image src={active.image} alt={`Preview of ${active.title}`} fill sizes="(min-width: 768px) 50vw, 1px" className="object-cover" />}</div>
-              <div className="work-caption"><span>{active.title}</span><span>Explore project <ArrowUpRight size={16} /></span></div>
+              <div className="work-caption"><span>{active.title}</span><span data-ascii="skip">Explore project <ArrowUpRight size={16} /></span></div>
             </Link>
-          </motion.div>
-        </AnimatePresence>
+          </TerminalReveal>
         <span className="work-stage-note">Selected work / software & research</span>
       </div>
     </div>

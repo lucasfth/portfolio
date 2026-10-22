@@ -34,7 +34,7 @@ export default function Blog() {
         title="Blog"
         description="Thoughts, experiences and insights on software development, photography and the odd thing in between."
       />
-      <section className="mx-auto w-full max-w-4xl px-6 pb-24">
+      <section className="mx-auto w-full max-w-6xl px-6 pb-24">
         <div>
           {posts.map((post, i) => (
             <Reveal key={post.slug} delay={i * 60}>

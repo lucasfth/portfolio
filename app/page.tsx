@@ -94,7 +94,7 @@ export default async function Home() {
           <Reveal className="mt-10">
             <Link
               href="/projects"
-              className="group inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="group inline-flex min-h-8 items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               All projects
               <ArrowUpRight
@@ -124,7 +124,7 @@ export default async function Home() {
           <Reveal className="mt-10">
             <Link
               href="/blog"
-              className="group inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="group inline-flex min-h-8 items-center gap-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               All posts
               <ArrowUpRight

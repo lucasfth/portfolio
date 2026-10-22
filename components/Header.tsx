@@ -10,7 +10,7 @@ import CommandPalette, { type SearchItem } from "@/components/CommandPalette";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { name: "About", href: "/" },
+  { name: "About", href: "/about" },
   { name: "Projects", href: "/projects" },
   { name: "Blog", href: "/blog" },
   { name: "Aperture", href: "/aperture" },
@@ -126,7 +126,7 @@ export default function Header() {
       >
         <Link
           href="/"
-          className="flex items-center gap-2.5 pl-1"
+          className="flex shrink-0 items-center gap-2.5 pl-1"
           aria-current={pathname === "/" ? "page" : undefined}
         >
           <Image
@@ -136,13 +136,13 @@ export default function Header() {
             height={32}
             className="size-8 shrink-0 object-contain"
           />
-          <span className="font-hand text-xl tracking-wide">Lucas Hanson</span>
+          <span className="font-heading whitespace-nowrap text-lg font-semibold tracking-tight">Lucas Hanson</span>
         </Link>
 
         {/* Desktop links */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden lg:flex items-center gap-0.5">
           {NAV_ITEMS.map((item) => (
-            <Link key={item.href} href={item.href} className="relative px-4 py-2">
+            <Link key={item.href} href={item.href} className="relative px-2.5 py-2">
               <span
                 className={cn(
                   "text-xs font-medium uppercase tracking-[0.14em] transition-colors duration-300",
@@ -154,7 +154,7 @@ export default function Header() {
               {isActive(item.href) && (
                 <motion.span
                   layoutId="nav-underline"
-                  className="absolute inset-x-4 -bottom-0.5 h-px bg-foreground"
+                  className="absolute inset-x-2.5 -bottom-0.5 h-px bg-foreground"
                   transition={{ type: "spring", stiffness: 380, damping: 32 }}
                 />
               )}
@@ -173,7 +173,7 @@ export default function Header() {
 
         {/* Mobile toggle */}
         <button
-          className="md:hidden grid size-10 place-items-center text-foreground"
+          className="lg:hidden grid size-10 place-items-center text-foreground"
           onClick={() => setOpen((v) => !v)}
           aria-label={open ? "Close menu" : "Open menu"}
           aria-expanded={open}
@@ -192,7 +192,7 @@ export default function Header() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="md:hidden fixed inset-x-4 top-[88px] z-50 glass rounded-2xl p-2"
+          className="lg:hidden fixed inset-x-4 top-[88px] z-50 glass rounded-2xl p-2"
         >
           <button
             type="button"

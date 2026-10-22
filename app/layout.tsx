@@ -1,20 +1,14 @@
 import "./globals.css";
 import Script from "next/script";
 import Footer from "@/components/Footer";
+import { TitleReveals } from "@/components/TerminalReveal";
 import ScrollToTop from "@/components/ScrollToTop";
 import SmoothScroll from "@/components/SmoothScroll";
-import ClickSpark from "@/components/ClickSpark";
 import Header from "@/components/Header";
 import StatsBeacon from "@/components/StatsBeacon";
-import { Patrick_Hand, Space_Mono } from "next/font/google";
+import { Space_Mono } from "next/font/google";
 
 // Self-hosted at build time: no render-blocking request to Google Fonts.
-const patrickHand = Patrick_Hand({
-  weight: "400",
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-patrick-hand",
-});
 const spaceMono = Space_Mono({
   weight: ["400", "700"],
   style: ["normal", "italic"],
@@ -94,7 +88,7 @@ export default function RootLayout({
 }) {
 
   return (
-    <html lang="en" className={`${patrickHand.variable} ${spaceMono.variable}`}>
+    <html lang="en" className={spaceMono.variable}>
       <head>
         <Script id="extension-cleanup" strategy="beforeInteractive">
           {EXTENSION_CLEANUP}
@@ -108,10 +102,10 @@ export default function RootLayout({
           <Header />
           <main id="main-content" tabIndex={-1}>
             {children}
+            <TitleReveals />
           </main>
           <Footer />
           <ScrollToTop />
-          <ClickSpark />
           <StatsBeacon />
         </SmoothScroll>
       </body>

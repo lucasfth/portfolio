@@ -38,7 +38,7 @@ export default function GalleryPageClient({
             />
             Aperture
           </Link>
-          <h1 className="font-hand text-4xl leading-[1.05] tracking-tight sm:text-6xl">
+          <h1 className="font-heading text-4xl leading-[1.05] tracking-tight sm:text-6xl">
             {title}
           </h1>
           {description && (

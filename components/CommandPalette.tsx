@@ -130,8 +130,18 @@ export default function CommandPalette({
             <p className="px-3 py-6 text-sm text-muted-foreground">{status === "loading" || status === "idle" ? "Loading search…" : status === "error" ? "Search unavailable. Close and reopen to retry." : "No matches."}</p>
           )}
         </div>
-        <p className="border-t border-border px-4 py-3 text-[11px] text-muted-foreground">
-          ↑↓ to navigate · Enter to select · Esc to close
+        <p className="flex flex-wrap items-center gap-1.5 border-t border-border px-4 py-2.5 text-[11px] text-muted-foreground">
+          <span>
+            <kbd className="rounded border border-border bg-muted/60 px-1 py-0.5 font-mono text-[10px]" aria-label="Up and down arrows">↑↓</kbd> to navigate
+          </span>
+          <span aria-hidden="true">·</span>
+          <span>
+            <kbd className="rounded border border-border bg-muted/60 px-1 py-0.5 font-mono text-[10px]">Enter</kbd> to select
+          </span>
+          <span aria-hidden="true">·</span>
+          <span>
+            <kbd className="rounded border border-border bg-muted/60 px-1 py-0.5 font-mono text-[10px]">Esc</kbd> to close
+          </span>
         </p>
       </div>
     </div>

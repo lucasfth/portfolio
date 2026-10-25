@@ -5,7 +5,11 @@ export const runtime = "nodejs";
 // Fixed, static asset paths. These are the ONLY URLs this route fetches —
 // no user-provided value ever flows into a network request or an <img src>.
 const FONT_PATH = "/fonts/Inter-Bold.ttf";
+const MONO_PATH = "/fonts/SpaceMono-Regular.ttf";
 const IMAGE_PATH = "/images/urban/DSCF4550.jpg";
+// hbit mark from lucasfth/brand v1 (synced into public/brand/).
+const MARK_PATH = "/brand/hbit-mark-warm-on-dark.svg";
+const BEAMS = ["#f3874e", "#859867", "#5f9f9d"];
 
 // Keep titles short and single-line for the OG card.
 function cleanText(value: string | null, max = 120): string {
@@ -79,8 +83,22 @@ export async function GET(req: Request) {
     return new Response("OG font unavailable", { status: 500 });
   }
 
+  // Space Mono is optional; fall back to Inter if it cannot be fetched.
+  try {
+    const resp = host ? await fetch(`${proto}://${host}${MONO_PATH}`) : null;
+    if (resp?.ok) {
+      fonts.push({ name: "Space Mono", data: await resp.arrayBuffer(), weight: 400, style: "normal" });
+    }
+  } catch {
+    // keep Inter only
+  }
+  const mono = fonts.length > 1 ? "Space Mono" : "Inter";
+
   // Fixed local image (static path, not user input).
-  const imageSrc = await staticDataUrl(host, proto, IMAGE_PATH, "image/jpeg");
+  const [imageSrc, markSrc] = await Promise.all([
+    staticDataUrl(host, proto, IMAGE_PATH, "image/jpeg"),
+    staticDataUrl(host, proto, MARK_PATH, "image/svg+xml"),
+  ]);
 
   const imageResponse = new ImageResponse(
     (
@@ -102,16 +120,32 @@ export async function GET(req: Request) {
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 18,
-            maxWidth: 640,
+            justifyContent: "space-between",
+            height: "100%",
+            maxWidth: 620,
           }}
         >
-          <div style={{ fontSize: 46, fontWeight: 700, lineHeight: 1.05 }}>
-            {title}
+          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+            {markSrc && <img src={markSrc} alt="" width={56} height={56} />}
+            <div style={{ fontFamily: mono, fontSize: 22, color: "#f3ddb3", letterSpacing: 1 }}>
+              lucashanson.dk
+            </div>
           </div>
-          <div style={{ fontSize: 26, opacity: 0.85 }}>{subtitle}</div>
-          <div style={{ marginTop: 18, fontSize: 14, opacity: 0.65 }}>
-            lucashanson.dk — Photos & code
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+            <div style={{ fontSize: title.length > 40 ? 48 : 64, fontWeight: 700, lineHeight: 1.08, letterSpacing: -1.5 }}>
+              {title}
+            </div>
+            <div style={{ display: "flex" }}>
+              {BEAMS.map((c) => (
+                <div key={c} style={{ width: 44, height: 8, background: c }} />
+              ))}
+            </div>
+            <div style={{ fontFamily: mono, fontSize: 26, color: "#a8a090" }}>{subtitle}</div>
+          </div>
+
+          <div style={{ fontFamily: mono, fontSize: 16, color: "#6b6b6b", letterSpacing: 2 }}>
+            {"PHOTOS & CODE"}
           </div>
         </div>
 
@@ -121,15 +155,15 @@ export async function GET(req: Request) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: 420,
-              height: 420,
+              width: 440,
+              height: 518,
             }}
           >
             <img
               src={imageSrc}
               alt=""
-              width={420}
-              height={420}
+              width={440}
+              height={518}
               style={{
                 objectFit: "cover",
                 borderRadius: 8,

@@ -31,6 +31,16 @@ export const metadata = {
   keywords:
     "software developer, portfolio, personal website, IT University of Copenhagen, DHI, hand gesture interaction, hybrid meetings, JavaScript, React, Python, ITU, Lucas Hanson",
   authors: [{ name: "Lucas Frey Torres Hanson" }],
+  // Icons are synced from lucasfth/brand v1 (scripts/sync.sh); do not edit them here.
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
   alternates: {
     canonical: SITE_URL,
     // rss.xml is generated at build time by scripts/generateRSS.js.

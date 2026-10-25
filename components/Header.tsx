@@ -2,7 +2,6 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, useScroll, useMotionValueEvent } from "motion/react";
 import { Menu, Search, X } from "lucide-react";
@@ -129,13 +128,11 @@ export default function Header() {
           className="flex shrink-0 items-center gap-2.5 pl-1"
           aria-current={pathname === "/" ? "page" : undefined}
         >
-          <Image
-            src="/favicon-32x32.png"
-            alt=""
-            width={32}
-            height={32}
-            className="size-8 shrink-0 object-contain"
-          />
+          {/* hbit mark from lucasfth/brand v1; follows the browser appearance like the rest of the site. */}
+          <picture className="size-8 shrink-0">
+            <source srcSet="/brand/hbit-mark-warm-on-light.svg" media="(prefers-color-scheme: light)" />
+            <img src="/brand/hbit-mark-warm-on-dark.svg" alt="" width={32} height={32} className="size-8" />
+          </picture>
           <span className="font-heading whitespace-nowrap text-lg font-semibold tracking-tight">Lucas Hanson</span>
         </Link>
 

@@ -1,36 +1,4 @@
-"use client";
-
-import React from "react";
-import {
-  Aperture,
-  Briefcase,
-  GraduationCap,
-  HandHeart,
-  Languages,
-  PenLine,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
 import { cn } from "@/lib/utils";
-
-/**
- * Monochrome icon per section title (replaces the old emoji headings).
- * Resolved here, inside the client component, because icon components
- * (functions) cannot be passed as props from a server component across the
- * RSC boundary — only the serializable title string can.
- */
-const ICONS: Record<string, LucideIcon> = {
-  "About me": UserRound,
-  "IT Work experience": Briefcase,
-  Volunteering: HandHeart,
-  Languages: Languages,
-  Education: GraduationCap,
-  Projects: Briefcase,
-  "Selected projects": Briefcase,
-  "Latest writing": PenLine,
-  Blog: PenLine,
-  Aperture: Aperture,
-};
 
 interface SectionHeadingProps {
   index?: string;
@@ -45,7 +13,6 @@ export default function SectionHeading({
   description,
   className,
 }: SectionHeadingProps) {
-  const Icon = ICONS[title];
   return (
     <div className={cn("mb-12", className)}>
       <div className="flex items-center gap-4">
@@ -54,15 +21,7 @@ export default function SectionHeading({
             {index}
           </span>
         )}
-        <h2 data-terminal-heading className="flex items-center gap-3 font-heading text-4xl tracking-tight sm:text-5xl">
-          {Icon && (
-            <Icon
-              size={30}
-              strokeWidth={1.5}
-              className="shrink-0 text-foreground/70"
-              aria-hidden="true"
-            />
-          )}
+        <h2 data-terminal-heading className="font-heading text-4xl tracking-tight sm:text-5xl">
           {title}
         </h2>
       </div>

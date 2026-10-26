@@ -54,6 +54,8 @@ test('short reveals hold each glyph longer', () => {
   const source = readFileSync('components/TerminalReveal.tsx', 'utf8');
   assert.match(source, /tick: 120/);
   assert.match(source, /speed: 2/);
+  // ascii-reveal v0.3.0 switched the default duration to "fast"; cinematic restores the pre-0.3 pacing.
+  assert.match(source, /duration: "cinematic"/);
 });
 
 test('navbar wordmark cannot wrap or shrink', () => {

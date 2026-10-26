@@ -27,7 +27,7 @@ function useTerminalReveal(scope: React.RefObject<HTMLElement | null>, titlesOnl
           if (images.length) await Promise.all(images.map(image => image.decode().catch(() => {})));
           if (cancelled || !target.isConnected) return;
           try {
-            const controller = createAsciiReveal(target, { preset: { ...presets.terminal, tick: 120, ...(images.length ? { color: "source" as const } : {}) }, origin: "top-left", speed: 2 });
+            const controller = createAsciiReveal(target, { preset: { ...presets.terminal, tick: 120, ...(images.length ? { color: "source" as const } : {}) }, origin: "top-left", speed: 2, duration: "cinematic" });
             controllers.push(controller);
             await controller.reveal().catch(() => controller.destroy());
           } catch {

@@ -6,12 +6,19 @@
         <link>https://lucashanson.dk/blog</link>
         <atom:link href="https://lucashanson.dk/rss.xml" rel="self" type="application/rss+xml"/>
         <language>en-us</language>
-        <lastBuildDate>Thu, 22 Oct 2026 13:06:15 GMT</lastBuildDate>
-        <pubDate>Thu, 22 Oct 2026 13:06:15 GMT</pubDate>
+        <lastBuildDate>Mon, 26 Oct 2026 15:30:26 GMT</lastBuildDate>
+        <pubDate>Mon, 26 Oct 2026 15:30:26 GMT</pubDate>
         <managingEditor>contact@lucashanson.dk (Lucas Hanson)</managingEditor>
         <webMaster>contact@lucashanson.dk (Lucas Hanson)</webMaster>
 
         
+        <item>
+          <title>I made my agents&apos; memory checkable</title>
+          <description>Four problems, four fixes: blind search, no undo, silent staleness, and unguarded writes. What each change does, and what it does not prove.</description>
+          <link>https://lucashanson.dk/blog/muninn-checkable-memory</link>
+          <guid isPermaLink="true">https://lucashanson.dk/blog/muninn-checkable-memory</guid>
+          <pubDate>Mon, 26 Oct 2026 00:00:00 GMT</pubDate>
+        </item>
         <item>
           <title>I made my local LLM slower, then faster</title>
           <description>Over seven weeks I swapped the model on Mimer, turned on MTP speculative decoding in llama.cpp, and changed the serving engine. What each change measured, and what it did not prove.</description>

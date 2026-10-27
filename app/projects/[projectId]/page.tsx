@@ -1,4 +1,4 @@
-import Image from "next/image";
+import ThemeImage from "@/components/ThemeImage";
 import Link from "next/link";
 import Markdown from "@/components/Markdown";
 import Reveal from "@/components/Reveal";
@@ -104,11 +104,11 @@ export default async function ProjectDetail({
             </div>
           )}
         </div>
-        {project.image && (
+        {(project.image || project.imageLight || project.imageDark) && (
           <div className="mx-auto mt-10 w-full max-w-[45rem]">
             <div data-terminal-media className="relative aspect-[16/9] w-full overflow-hidden rounded-[var(--media-radius)] border border-border">
-              <Image
-                src={project.image}
+              <ThemeImage
+                image={project.image} imageLight={project.imageLight} imageDark={project.imageDark}
                 alt={project.title}
                 fill
                 priority

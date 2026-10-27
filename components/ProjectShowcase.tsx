@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
+import ThemeImage from "./ThemeImage";
+import type { ThemeImageSources } from "@/lib/theme-image";
 import Link from "next/link";
 import TerminalReveal from "./TerminalReveal";
 import { ArrowUpRight } from "lucide-react";
 
-type Preview = { slug: string; title: string; tagline?: string; image?: string; tags?: string[] };
+type Preview = ThemeImageSources & { slug: string; title: string; tagline?: string; image?: string; tags?: string[] };
 
 export default function ProjectShowcase({ projects }: { projects: Preview[] }) {
   const [selected, setSelected] = useState(0);
@@ -25,14 +26,14 @@ export default function ProjectShowcase({ projects }: { projects: Preview[] }) {
             </div>
             <p>{project.tagline}</p>
             <div className="work-tags">{project.tags?.slice(0, 3).join(" / ")}</div>
-            {project.image && <Link href={`/projects/${encodeURIComponent(project.slug)}`} className="work-mobile-image" tabIndex={-1} aria-hidden="true"><Image src={project.image} alt="" width={720} height={450} sizes="100vw" /></Link>}
+            {(project.image || project.imageLight || project.imageDark) && <Link href={`/projects/${encodeURIComponent(project.slug)}`} className="work-mobile-image" tabIndex={-1} aria-hidden="true"><ThemeImage image={project.image} imageLight={project.imageLight} imageDark={project.imageDark} alt="" width={720} height={450} sizes="100vw" /></Link>}
           </article>
         ))}
       </div>
       <div className="work-stage" aria-label="Selected project preview">
           <TerminalReveal key={active.slug} enabled={hasSwitched}>
             <Link href={`/projects/${encodeURIComponent(active.slug)}`} className="work-stage-link">
-              <div className="work-stage-image">{active.image && <Image src={active.image} alt={`Preview of ${active.title}`} fill sizes="(min-width: 768px) 50vw, 1px" className="object-cover" />}</div>
+              <div className="work-stage-image">{(active.image || active.imageLight || active.imageDark) && <ThemeImage image={active.image} imageLight={active.imageLight} imageDark={active.imageDark} alt={`Preview of ${active.title}`} fill sizes="(min-width: 768px) 50vw, 1px" className="object-cover" />}</div>
               <div className="work-caption"><span>{active.title}</span><span data-ascii="skip">Explore project <ArrowUpRight size={16} /></span></div>
             </Link>
           </TerminalReveal>

@@ -14,6 +14,7 @@ import { readFileSync, readdirSync, existsSync, statSync } from "fs";
 import { join } from "path";
 import matter from "gray-matter";
 import galleryManifest from "./gallery-manifest.json";
+import type { ThemeImageSources } from "./theme-image";
 
 export const SITE_URL = "https://lucashanson.dk";
 
@@ -23,7 +24,7 @@ const CONTENT_DIR = join(process.cwd(), "public", "content");
 /* Types                                                               */
 /* ------------------------------------------------------------------ */
 
-export interface BlogPost {
+export interface BlogPost extends ThemeImageSources {
   slug: string;
   title: string;
   description: string;
@@ -34,7 +35,7 @@ export interface BlogPost {
   body: string;
 }
 
-export interface Project {
+export interface Project extends ThemeImageSources {
   slug: string;
   title: string;
   tagline: string;
@@ -64,6 +65,10 @@ export interface FrontpageMeta {
   tagline: string;
   profileImage?: string;
   heroImage?: string;
+  heroImageLight?: string;
+  heroImageDark?: string;
+  profileImageLight?: string;
+  profileImageDark?: string;
   /** Markdown body, frontmatter stripped. */
   body: string;
 }
@@ -197,6 +202,8 @@ export function getBlogPosts(): BlogPost[] {
       keywords: parseKeywords(data),
       date: isoDate(data.date),
       image: (data.image as string) || extractHeaderImage(content),
+      imageLight: data.imageLight as string | undefined,
+      imageDark: data.imageDark as string | undefined,
       body: cleanBody(content),
     } satisfies BlogPost;
   }).filter((p): p is BlogPost => p !== null);
@@ -237,6 +244,8 @@ export function getProjects(): Project[] {
         (data.description as string) || firstParagraph(content).slice(0, 160),
       keywords: parseKeywords(data),
       image: (data.image as string) || extractHeaderImage(content),
+      imageLight: data.imageLight as string | undefined,
+      imageDark: data.imageDark as string | undefined,
       tags,
       date: data.date ? isoDate(data.date) : undefined,
       schemaType: typeof data.schemaType === "string" ? data.schemaType : undefined,
@@ -364,6 +373,10 @@ export function getFrontpage(): FrontpageMeta {
     tagline: (data.tagline as string) || "",
     profileImage: data.profileImage as string | undefined,
     heroImage: (data.heroImage as string) || extractHeaderImage(content),
+    heroImageLight: data.heroImageLight as string | undefined,
+    heroImageDark: data.heroImageDark as string | undefined,
+    profileImageLight: data.profileImageLight as string | undefined,
+    profileImageDark: data.profileImageDark as string | undefined,
     body: content,
   };
 }

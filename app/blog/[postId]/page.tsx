@@ -1,4 +1,4 @@
-import Image from "next/image";
+import ThemeImage from "@/components/ThemeImage";
 import Link from "next/link";
 import Markdown from "@/components/Markdown";
 import BlogComments from "./BlogComments";
@@ -94,10 +94,10 @@ export default async function BlogPost({
           <h1 className="font-heading text-4xl leading-[1.05] tracking-tight sm:text-6xl">
             {post.title}
           </h1>
-          {post.image && (
+          {(post.image || post.imageLight || post.imageDark) && (
             <div data-terminal-media className="relative mt-10 aspect-[16/9] w-full overflow-hidden rounded-[var(--media-radius)] border border-border">
-              <Image
-                src={post.image}
+              <ThemeImage
+                image={post.image} imageLight={post.imageLight} imageDark={post.imageDark}
                 alt={post.title}
                 fill
                 priority

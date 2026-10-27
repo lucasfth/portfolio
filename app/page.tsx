@@ -1,4 +1,4 @@
-import Image from "next/image";
+import ThemeImage from "@/components/ThemeImage";
 import { person } from "@/lib/agent-content";
 import Link from "next/link";
 import Hero from "@/components/Hero";
@@ -80,7 +80,7 @@ export default async function Home() {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(person).replace(/</g, "\\u003c") }} />
-      <Hero name={front.name} tagline={front.tagline} heroImage={front.heroImage} />
+      <Hero name={front.name} tagline={front.tagline} heroImage={front.heroImage} heroImageLight={front.heroImageLight} heroImageDark={front.heroImageDark} />
 
       {/* Projects (auto-discovered) */}
       {projects.length > 0 && (
@@ -90,7 +90,7 @@ export default async function Home() {
             title="Selected projects"
             description="Software, systems and research I have worked on."
           />
-          <ProjectShowcase projects={projects.map(({slug,title,tagline,image,tags}) => ({slug,title,tagline,image,tags}))} />
+          <ProjectShowcase projects={projects.map(({slug,title,tagline,image,imageLight,imageDark,tags}) => ({slug,title,tagline,image,imageLight,imageDark,tags}))} />
           <Reveal className="mt-10">
             <Link
               href="/projects"
@@ -140,11 +140,11 @@ export default async function Home() {
       <section className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-24">
         <SectionHeading index={nextIndex()} title="About me" />
         <div className="grid grid-cols-1 gap-10 md:grid-cols-[minmax(0,340px)_1fr] md:gap-16">
-          {front.profileImage && (
+          {(front.profileImage || front.profileImageLight || front.profileImageDark) && (
             <Reveal>
               <div className="relative aspect-square w-full max-w-[340px] overflow-hidden rounded-3xl border border-border">
-                <Image
-                  src={front.profileImage}
+                <ThemeImage
+                  image={front.profileImage} imageLight={front.profileImageLight} imageDark={front.profileImageDark}
                   alt="Portrait of Lucas Hanson"
                   fill
                   sizes="340px"

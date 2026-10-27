@@ -2,7 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
-import Image from "next/image";
+import ThemeImage from "@/components/ThemeImage";
 import { ArrowUpRight } from "lucide-react";
 import type { Project } from "@/lib/content";
 
@@ -17,10 +17,10 @@ export default function ProjectCard({ project }: { project: Project }) {
       className="group relative block overflow-hidden rounded-[var(--media-radius)] border border-border bg-card transition-colors duration-300 hover:border-border-strong"
     >
       {/* Cover image */}
-      {project.image && (
+      {(project.image || project.imageLight || project.imageDark) && (
         <div data-terminal-media className="relative aspect-[16/10] w-full overflow-hidden">
-          <Image
-            src={project.image}
+          <ThemeImage
+            image={project.image} imageLight={project.imageLight} imageDark={project.imageDark}
             alt={project.title}
             fill
             sizes="(max-width: 768px) 100vw, 50vw"

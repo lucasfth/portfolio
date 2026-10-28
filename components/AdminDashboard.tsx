@@ -147,7 +147,7 @@ export default function AdminDashboard() {
 
   // Panel fetches, once per sign-in.
   useEffect(() => {
-    if (!hasSession || !hydrated.current) return;
+    if (!hasSession || hydrated.current) return;
     hydrated.current = true;
     api("/api/admin/weather").then(setWeather);
     api("/api/admin/stocks").then(setStocks);
@@ -380,7 +380,7 @@ export default function AdminDashboard() {
           ) : null}
         </Panel>
 
-        <Panel eyebrow="Weather" title="Hellerup" loading={!weather} error={weather?.status === "error" ? weather.message : null}>
+        <Panel eyebrow="Weather" title="Copenhagen" loading={!weather} error={weather?.status === "error" ? weather.message : null}>
           {weather && weather.status === "ok" && weather.current ? (
             <div>
               <p className="text-xl font-medium tracking-tight">{weather.current.desc}</p>

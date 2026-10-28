@@ -47,7 +47,7 @@ const STOCK_WATCHLIST: [symbol: string, name: string][] = [
 
 export async function fetchWeather() {
   try {
-    const data = await cached("weather", 60_000, () => getJson("https://wttr.in/Hellerup?format=j1"));
+    const data = await cached("weather", 60_000, () => getJson("https://wttr.in/Copenhagen?format=j1"));
     const current = data?.current_condition?.[0];
     const today = data?.weather?.[0];
     if (!current || !today) throw new Error("unexpected wttr.in shape");

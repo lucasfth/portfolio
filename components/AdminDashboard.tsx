@@ -583,7 +583,7 @@ export default function AdminDashboard() {
           className="lg:col-span-5"
         >
           <ul>
-            {radar!.items.map((item, i) => (
+            {(radar && radar.status === "ok" ? radar.items : []).map((item, i) => (
               <li key={item.url} className="border-b border-border last:border-b-0">
                 <a
                   href={item.url}
@@ -637,7 +637,7 @@ export default function AdminDashboard() {
             <span>Last / Chg</span>
           </div>
           <ul>
-            {stocks!.stocks.map((s) => {
+            {(stocks && stocks.status === "ok" ? stocks.stocks : []).map((s) => {
               const up = s.changePct >= 0;
               const isTop = topMover?.symbol === s.symbol;
               return (
@@ -677,6 +677,8 @@ export default function AdminDashboard() {
           meta={weather?.updated ? `as of ${fmtTime(weather.updated)}` : "wttr.in"}
           className="lg:col-span-2"
         >
+          {weather && weather.status === "ok" && weather.current ? (
+          <>
           <p className="text-5xl font-light tabular-nums tracking-tight">
             {weather!.current!.temp.toFixed(0)}
             <span className="ml-1 text-2xl text-muted-foreground">°C</span>
@@ -710,6 +712,8 @@ export default function AdminDashboard() {
               </div>
             </dl>
           ) : null}
+          </>
+          ) : null}
         </Panel>
 
         <Panel
@@ -720,6 +724,7 @@ export default function AdminDashboard() {
           meta={`${github?.commits.length ?? "--"} commits`}
           className="lg:col-span-5"
         >
+          {github && github.status === "ok" ? (
           <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
             <div>
               <p className={`${MONO} mb-3 text-[11px] ${TRACK} text-muted-foreground`}>Commits</p>
@@ -794,6 +799,7 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
+          ) : null}
         </Panel>
 
         <Panel

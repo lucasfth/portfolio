@@ -1,12 +1,12 @@
 "use client";
 
-// The /admin overnight module: Supabase email/password sign-in, then panels
-// that replace the Telegram morning brief. Live panels (radar, stocks,
-// weather, GitHub) fetch through /api/admin/* with the user session; the
-// overnight panel reads admin_reports directly with RLS.
+// The /admin overnight module: Supabase email/password sign-in, then a
+// control panel that replaces the Telegram morning brief. Live panels
+// (radar, stocks, weather, GitHub) fetch through /api/admin/* with the user
+// session; the overnight panel reads admin_reports directly with RLS.
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { ArrowUpRight, LogOut } from "lucide-react";
+import { ArrowUpRight, LogOut, RefreshCw } from "lucide-react";
 import { browserSupabase } from "@/lib/admin/browser";
 import type {
   AdminReport,
@@ -22,59 +22,213 @@ type SessionShape = {
 } | null;
 
 type Phase = "boot" | "anon" | "auth" | "cfg";
+type ModuleState = "loading" | "ok" | "error";
 
-function cphNow(): string {
+const MONO = "font-mono";
+const TRACK = "uppercase tracking-[0.18em]";
+
+function cphNow(full = false): string {
   return new Date().toLocaleString("en-GB", {
+    timeZone: "Europe/Copenhagen",
+    weekday: full ? "short" : undefined,
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: full ? "2-digit" : undefined,
+  });
+}
+
+function cphDate(): string {
+  return new Date().toLocaleDateString("en-GB", {
     timeZone: "Europe/Copenhagen",
     weekday: "short",
     day: "numeric",
     month: "short",
+  });
+}
+
+function fmtTime(iso: string): string {
+  return new Date(iso).toLocaleTimeString("en-GB", {
+    timeZone: "Europe/Copenhagen",
     hour: "2-digit",
     minute: "2-digit",
   });
 }
 
 function changeCell(pct: number) {
-  if (!Number.isFinite(pct)) return <span className="text-muted-foreground">--</span>;
+  if (!Number.isFinite(pct)) return <span className="text-muted-foreground/60">--</span>;
   const up = pct >= 0;
   return (
-    <span className={up ? "text-emerald-400/90" : "text-rose-400/90"}>
+    <span className={`${MONO} text-xs tabular-nums ${up ? "text-emerald-400/90" : "text-rose-400/90"}`}>
       {up ? "▲" : "▼"} {Math.abs(pct).toFixed(1)}%
     </span>
+  );
+}
+
+function statusState(data: { status: string } | null): ModuleState {
+  if (data === null) return "loading";
+  return data.status === "ok" ? "ok" : "error";
+}
+
+function stateWord(state: ModuleState) {
+  return state === "ok" ? "OK" : state === "error" ? "FAULT" : "SYNC";
+}
+
+function Dot({ state }: { state: ModuleState }) {
+  const cls =
+    state === "ok"
+      ? "bg-emerald-400/90"
+      : state === "error"
+        ? "bg-rose-400/90"
+        : "animate-pulse bg-muted-foreground/40";
+  return <span aria-hidden className={`inline-block h-1.5 w-1.5 shrink-0 ${cls}`} />;
+}
+
+function Sparkline({ values, up }: { values: number[]; up: boolean }) {
+  if (values.length < 2) return <span className="inline-block h-[18px] w-16 align-middle" />;
+  const w = 64;
+  const h = 18;
+  const pad = 1.5;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = max - min || 1;
+  const pts = values
+    .map((v, i) => {
+      const x = pad + (i / (values.length - 1)) * (w - 2 * pad);
+      const y = h - pad - ((v - min) / span) * (h - 2 * pad);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+  const last = pts.split(" ").pop()!.split(",");
+  return (
+    <svg
+      width={w}
+      height={h}
+      viewBox={`0 0 ${w} ${h}`}
+      aria-hidden
+      className={`shrink-0 ${up ? "text-emerald-400/70" : "text-rose-400/70"}`}
+    >
+      <polyline points={pts} fill="none" stroke="currentColor" strokeWidth={1} />
+      <circle cx={last[0]} cy={last[1]} r={1.5} fill="currentColor" />
+    </svg>
+  );
+}
+
+function Chip({ label, on }: { label: string; on: boolean }) {
+  return (
+    <span
+      className={`border px-3 py-1.5 ${MONO} text-[11px] ${TRACK} ${
+        on ? "border-emerald-400/40 text-emerald-400/90" : "border-rose-400/40 text-rose-400/90"
+      }`}
+    >
+      {label}: {on ? "OK" : "NO"}
+    </span>
+  );
+}
+
+function LoadingLines() {
+  return (
+    <div className="space-y-3" aria-hidden>
+      <div className="h-3 w-3/4 animate-pulse bg-foreground/[0.06]" />
+      <div className="h-3 w-1/2 animate-pulse bg-foreground/[0.06]" />
+      <div className="h-3 w-2/3 animate-pulse bg-foreground/[0.06]" />
+    </div>
   );
 }
 
 function Panel({
   eyebrow,
   title,
-  children,
+  meta,
+  state,
   error,
-  loading,
+  children,
   className = "",
 }: {
   eyebrow: string;
   title?: string;
-  children: ReactNode;
+  meta?: string | null;
+  state: ModuleState;
   error?: string | null;
-  loading?: boolean;
+  children: ReactNode;
   className?: string;
 }) {
+  const loading = state === "loading";
   return (
-    <section className={className}>
-      <div className="mb-4 flex items-baseline justify-between gap-4 border-b border-border pb-3">
-        <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">{eyebrow}</p>
-          {title ? <h2 className="mt-1 text-lg font-medium tracking-tight">{title}</h2> : null}
+    <section className={`border border-border bg-background/40 ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-5 py-3">
+        <div className="flex min-w-0 items-baseline gap-3">
+          <p className={`${MONO} text-[11px] ${TRACK} text-muted-foreground`}>{eyebrow}</p>
+          {title ? <h2 className="truncate text-sm font-medium tracking-tight text-foreground/90">{title}</h2> : null}
+        </div>
+        <div className="flex shrink-0 items-center gap-3">
+          {meta ? (
+            <span className={`${MONO} text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60`}>{meta}</span>
+          ) : null}
+          <span className="flex items-center gap-1.5">
+            <Dot state={state} />
+            <span
+              className={`${MONO} text-[10px] ${TRACK} ${
+                state === "ok"
+                  ? "text-emerald-400/80"
+                  : state === "error"
+                    ? "text-rose-400/90"
+                    : "text-muted-foreground/60"
+              }`}
+            >
+              {stateWord(state)}
+            </span>
+          </span>
         </div>
       </div>
-      {loading ? (
-        <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">Loading</p>
-      ) : error ? (
-        <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">Unavailable: {error}</p>
-      ) : (
-        children
-      )}
+      <div className="px-5 py-5">
+        {loading ? (
+          <LoadingLines />
+        ) : state === "error" ? (
+          <p className={`${MONO} text-xs ${TRACK} text-muted-foreground`}>Unavailable: {error ?? "source error"}</p>
+        ) : (
+          children
+        )}
+      </div>
     </section>
+  );
+}
+
+type BoardCell = {
+  code: string;
+  state: ModuleState;
+  value: string;
+  sub: string;
+};
+
+function Board({ cells }: { cells: BoardCell[] }) {
+  return (
+    <div className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-5">
+      {cells.map((c) => (
+        <div key={c.code} className="bg-background px-4 py-3">
+          <div className="flex items-center justify-between">
+            <span className={`${MONO} text-[10px] ${TRACK} text-muted-foreground/70`}>{c.code}</span>
+            <span className="flex items-center gap-1.5">
+              <Dot state={c.state} />
+              <span
+                className={`${MONO} text-[10px] ${TRACK} ${
+                  c.state === "ok"
+                    ? "text-muted-foreground/60"
+                    : c.state === "error"
+                      ? "text-rose-400/90"
+                      : "text-muted-foreground/50"
+                }`}
+              >
+                {stateWord(c.state)}
+              </span>
+            </span>
+          </div>
+          <p className="mt-2 truncate text-sm tabular-nums text-foreground/90">{c.value}</p>
+          <p className={`${MONO} mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60`}>{c.sub}</p>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -85,7 +239,9 @@ export default function AdminDashboard() {
   const [password, setPassword] = useState("");
   const [signInError, setSignInError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [clock, setClock] = useState("");
+  const [lastSync, setLastSync] = useState<string | null>(null);
   const hydrated = useRef(false);
 
   const [weather, setWeather] = useState<WeatherPayload | null>(null);
@@ -109,6 +265,38 @@ export default function AdminDashboard() {
     },
     [session],
   );
+
+  const loadAll = useCallback(async () => {
+    const sb = browserSupabase();
+    const [w, s, g, r] = await Promise.all([
+      api("/api/admin/weather"),
+      api("/api/admin/stocks"),
+      api("/api/admin/github"),
+      api("/api/admin/radar"),
+    ]);
+    setWeather(w);
+    setStocks(s);
+    setGithub(g);
+    setRadar(r);
+    if (sb) {
+      sb.from("admin_reports")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(120)
+        .then(({ data, error }) => {
+          if (!error && Array.isArray(data)) {
+            setReports(
+              (data as AdminReport[]).map((r) => ({
+                ...r,
+                details: r.details && typeof r.details === "object" ? r.details : {},
+              })),
+            );
+          } else {
+            setReports([]);
+          }
+        });
+    }
+  }, [api]);
 
   // Session lifecycle.
   useEffect(() => {
@@ -137,11 +325,11 @@ export default function AdminDashboard() {
     };
   }, []);
 
-  // Clock.
+  // Live clock (seconds resolution, control-room cadence).
   useEffect(() => {
-    const tick = () => setClock(cphNow());
+    const tick = () => setClock(cphNow(true));
     tick();
-    const id = setInterval(tick, 30_000);
+    const id = setInterval(tick, 1_000);
     return () => clearInterval(id);
   }, []);
 
@@ -149,30 +337,20 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!hasSession || hydrated.current) return;
     hydrated.current = true;
-    api("/api/admin/weather").then(setWeather);
-    api("/api/admin/stocks").then(setStocks);
-    api("/api/admin/github").then(setGithub);
-    api("/api/admin/radar").then(setRadar);
-    const sb = browserSupabase();
-    if (sb) {
-      sb.from("admin_reports")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(120)
-        .then(({ data, error }) => {
-          if (!error && Array.isArray(data)) {
-            setReports(
-              (data as AdminReport[]).map((r) => ({
-                ...r,
-                details: r.details && typeof r.details === "object" ? r.details : {},
-              })),
-            );
-          } else {
-            setReports([]);
-          }
-        });
-    }
-  }, [hasSession, api]);
+    void loadAll().then(() => setLastSync(cphNow()));
+  }, [hasSession, loadAll]);
+
+  const refresh = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    setWeather(null);
+    setStocks(null);
+    setGithub(null);
+    setRadar(null);
+    await loadAll();
+    setRefreshing(false);
+    setLastSync(cphNow());
+  };
 
   const signIn = async () => {
     const sb = browserSupabase();
@@ -211,18 +389,16 @@ export default function AdminDashboard() {
 
   if (phase === "boot") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-6 pb-24 pt-32 sm:pt-40">
-        <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">Loading</p>
+      <div className="mx-auto w-full max-w-6xl px-6 pb-24 pt-32 sm:pt-40">
+        <p className={`${MONO} text-xs ${TRACK} text-muted-foreground`}>Loading</p>
       </div>
     );
   }
 
   if (phase === "cfg") {
     return (
-      <div className="mx-auto w-full max-w-5xl px-6 pb-24 pt-32 sm:pt-40">
-        <p className="font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground">
-          Admin module not configured (Supabase env missing).
-        </p>
+      <div className="mx-auto w-full max-w-6xl px-6 pb-24 pt-32 sm:pt-40">
+        <p className={`${MONO} text-xs ${TRACK} text-muted-foreground`}>Admin module not configured (Supabase env missing).</p>
       </div>
     );
   }
@@ -230,55 +406,63 @@ export default function AdminDashboard() {
   if (phase === "anon") {
     return (
       <div className="mx-auto w-full max-w-sm px-6 pb-24 pt-32 sm:pt-40">
-        <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Admin</p>
-        <h1 className="mt-2 text-2xl font-medium tracking-tight">Sign in</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The overnight overview: radar, stocks, weather, GitHub and what ran while you slept.
+        <div className="border border-border bg-background/40 px-8 py-8">
+          <div className="flex items-center justify-between">
+            <p className={`${MONO} text-[11px] ${TRACK} text-muted-foreground`}>Admin access</p>
+            <Dot state="error" />
+          </div>
+          <h1 className="mt-3 text-2xl font-medium tracking-tight">Sign in</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            The overnight control panel: radar, watchlist, weather, GitHub and what ran while you slept.
+          </p>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              signIn();
+            }}
+            className="mt-8 space-y-4"
+          >
+            <input
+              type="email"
+              required
+              aria-label="Email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              className="w-full border border-border bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-border-strong"
+            />
+            <input
+              type="password"
+              required
+              aria-label="Password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full border border-border bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-border-strong"
+            />
+            <button
+              type="submit"
+              disabled={busy}
+              className={`w-full border border-foreground bg-foreground py-3 ${MONO} text-xs uppercase tracking-[0.18em] transition-opacity disabled:opacity-50`}
+            >
+              {busy ? "Signing in" : "Sign in"}
+            </button>
+            {signInError ? <p className="text-xs text-rose-400/90">{signInError}</p> : null}
+            <button
+              type="button"
+              disabled={busy}
+              onClick={resetPassword}
+              className={`w-full border border-border py-3 ${MONO} text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50`}
+            >
+              Forgot password
+            </button>
+          </form>
+        </div>
+        <p className={`${MONO} mt-4 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/50`}>
+          Restricted. Sessions are stored locally; row-level security enforces access.
         </p>
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            signIn();
-          }}
-          className="mt-8 space-y-4"
-        >
-          <input
-            type="email"
-            required
-            aria-label="Email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="w-full border border-border bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-border-strong"
-          />
-          <input
-            type="password"
-            required
-            aria-label="Password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="w-full border border-border bg-transparent px-4 py-3 text-sm outline-none placeholder:text-muted-foreground focus:border-border-strong"
-          />
-          <button
-            type="submit"
-            disabled={busy}
-            className="w-full border border-foreground bg-foreground py-3 font-mono text-xs uppercase tracking-[0.18em] transition-opacity disabled:opacity-50"
-          >
-            {busy ? "Signing in" : "Sign in"}
-          </button>
-          {signInError ? <p className="text-xs text-rose-400/90">{signInError}</p> : null}
-          <button
-            type="button"
-            disabled={busy}
-            onClick={resetPassword}
-            className="w-full border border-border py-3 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
-          >
-            Forgot password
-          </button>
-        </form>
       </div>
     );
   }
@@ -300,210 +484,366 @@ export default function AdminDashboard() {
   const latestNight = (reports ?? [])[0]?.night;
   const tonight = (reports ?? []).filter((r) => !latestNight || r.night === latestNight);
 
+  const ws = statusState(weather);
+  const ss = statusState(stocks);
+  const gs = statusState(github);
+  const rs = statusState(radar);
+  const os: ModuleState = reports === null ? "loading" : "ok";
+
+  const stocksList = ss === "ok" ? stocks!.stocks : [];
+  const topMover = stocksList.length
+    ? stocksList.reduce((a, b) => (Math.abs(b.changePct) >= Math.abs(a.changePct) ? b : a))
+    : null;
+  const nightLabel = latestNight ? latestNight.slice(5).split("-").reverse().join(" ") : null;
+
+  const cells: BoardCell[] = [
+    {
+      code: "RDR",
+      state: rs,
+      value: rs === "ok" ? `${radar!.items.length} items` : rs === "error" ? "feed fault" : "syncing",
+      sub: "llm-radar, 2x daily",
+    },
+    {
+      code: "MKT",
+      state: ss,
+      value:
+        ss === "ok" && topMover
+          ? `${topMover.symbol} ${topMover.changePct >= 0 ? "▲" : "▼"} ${Math.abs(topMover.changePct).toFixed(1)}%`
+          : ss === "error"
+            ? "quote fault"
+            : "syncing",
+      sub: stocksList.length ? `${stocksList.length} names tracked` : "names tracked",
+    },
+    {
+      code: "WX",
+      state: ws,
+      value:
+        ws === "ok" ? `${weather!.current!.temp.toFixed(0)}°C ${weather!.current!.desc}` : ws === "error" ? "wx fault" : "syncing",
+      sub: ws === "ok" ? `wind ${weather!.current!.wind.toFixed(0)} km/h · CPH` : "copenhagen",
+    },
+    {
+      code: "GHT",
+      state: gs,
+      value:
+        gs === "ok" ? `${github!.commits.length}c · ${github!.openPulls.length}pr` : gs === "error" ? "gh fault" : "syncing",
+      sub: "github, last 24h",
+    },
+    {
+      code: "OVT",
+      state: os,
+      value: os === "loading" ? "syncing" : nightLabel ?? "standby",
+      sub: os === "ok" ? `${tonight.length} reports` : "",
+    },
+  ];
+
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 pb-24 pt-32 sm:pt-40">
-      <div className="mb-12 flex flex-wrap items-end justify-between gap-6 border-b border-border pb-6">
+    <div className="mx-auto w-full max-w-6xl px-6 pb-24 pt-32 sm:pt-40">
+      <div className="mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-border pb-6">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Admin</p>
+          <p className={`${MONO} text-[11px] ${TRACK} text-muted-foreground`}>Admin</p>
           <h1 className="mt-2 text-3xl font-medium tracking-tight">Overnight</h1>
+          <p className={`${MONO} mt-2 text-xs uppercase tracking-[0.14em] text-muted-foreground/70`}>
+            {cphDate()} · Copenhagen
+          </p>
         </div>
-        <div className="flex items-center gap-6">
-          <p className="font-mono text-xs text-muted-foreground">{clock} Copenhagen</p>
-          <p className="hidden font-mono text-xs text-muted-foreground sm:block">{session?.user?.email}</p>
-          <button
-            onClick={signOut}
-            className="flex items-center gap-2 border border-border px-4 py-2 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <LogOut size={14} /> Sign out
-          </button>
+        <div className="flex flex-col items-start gap-3 sm:items-end">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={refresh}
+              disabled={refreshing}
+              className={`flex items-center gap-2 border border-border px-4 py-2 ${MONO} text-xs uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50`}
+            >
+              <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /> Refresh
+            </button>
+            <button
+              onClick={signOut}
+              className={`flex items-center gap-2 border border-border px-4 py-2 ${MONO} text-xs uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground`}
+            >
+              <LogOut size={14} /> Sign out
+            </button>
+          </div>
+          <p className={`${MONO} text-xs tabular-nums text-muted-foreground`}>
+            {clock}
+            <span className="ml-3 text-muted-foreground/60">SYNC {lastSync ?? "--:--:--"}</span>
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-14 md:grid-cols-2">
-        <Panel eyebrow="Radar" className="md:col-span-2" loading={!radar} error={radar?.status === "error" ? radar.message : null}>
-          {radar && radar.status === "ok" ? (
-            <>
-              <p className="mb-6 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground/70">
-                {radar.generated
-                  ? `Updated ${new Date(radar.generated).toLocaleString("en-GB", { timeZone: "Europe/Copenhagen", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} Copenhagen time`
-                  : "Compiled twice daily"}
-              </p>
-              <ul>
-                {radar.items.map((item) => (
-                  <li key={item.url} className="border-b border-border">
-                    <a
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-baseline justify-between gap-6 py-4 transition-colors duration-300 hover:bg-foreground/[0.03]"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate text-[15px] font-medium">{item.title}</span>
-                        <span className="mt-1 block font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground/70">
-                          {item.tag} / {item.source}
-                        </span>
-                      </span>
-                      <ArrowUpRight size={16} className="shrink-0 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                    </a>
-                  </li>
-                ))}
-              </ul>
-              <a
-                href="/radar"
-                className="mt-6 inline-flex items-center gap-2 font-mono text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Open the full radar <ArrowUpRight size={14} />
-              </a>
-            </>
-          ) : null}
-        </Panel>
+      <div className="mb-14">
+        <Board cells={cells} />
+      </div>
 
-        <Panel eyebrow="Stocks" title="Watchlist" loading={!stocks} error={stocks?.status === "error" ? stocks.message : null}>
-          {stocks && stocks.status === "ok" ? (
-            <ul>
-              {stocks.stocks.map((s) => (
-                <li key={s.symbol} className="flex items-baseline justify-between gap-4 border-b border-border py-3">
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-medium">{s.name}</span>
-                    <span className="font-mono text-[11px] uppercase tracking-wide text-muted-foreground/70">{s.symbol}</span>
+      <div className="grid grid-cols-1 gap-10 lg:grid-cols-5">
+        <Panel
+          eyebrow="Radar"
+          title="Signal feed"
+          state={rs}
+          error={radar?.message}
+          meta={radar?.generated ? `updated ${fmtTime(radar.generated)}` : "compiled 2x daily"}
+          className="lg:col-span-5"
+        >
+          <ul>
+            {radar!.items.map((item, i) => (
+              <li key={item.url} className="border-b border-border last:border-b-0">
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex items-baseline gap-4 py-3.5 transition-colors duration-300 hover:bg-foreground/[0.03]"
+                >
+                  <span className={`${MONO} w-6 shrink-0 text-[11px] tabular-nums text-muted-foreground/50`}>
+                    {String(i + 1).padStart(2, "0")}
                   </span>
-                  <span className="shrink-0 text-right">
-                    <span className="block text-sm tabular-nums">
-                      {s.price.toFixed(2)}
-                      <span className="ml-1 font-mono text-[11px] text-muted-foreground">{s.currency}</span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[15px] font-medium">{item.title}</span>
+                    <span className={`${MONO} mt-1 block text-[11px] uppercase tracking-[0.14em] text-muted-foreground/70`}>
+                      {item.source}
                     </span>
-                    <span className="font-mono text-xs tabular-nums">{changeCell(s.changePct)}</span>
                   </span>
+                  <span
+                    className={`${MONO} hidden shrink-0 border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80 sm:inline-block`}
+                  >
+                    {item.tag}
+                  </span>
+                  <ArrowUpRight
+                    size={15}
+                    className="shrink-0 self-center text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
+                  />
+                </a>
+              </li>
+            ))}
+          </ul>
+          <a
+            href="/radar"
+            className={`mt-6 inline-flex items-center gap-2 ${MONO} text-xs uppercase tracking-[0.18em] text-muted-foreground transition-colors hover:text-foreground`}
+          >
+            Open the full radar <ArrowUpRight size={14} />
+          </a>
+        </Panel>
+
+        <Panel
+          eyebrow="Market"
+          title="Watchlist"
+          state={ss}
+          error={stocks?.message}
+          meta={stocks?.asOf ? `as of ${fmtTime(stocks.asOf)}` : "stooq"}
+          className="lg:col-span-3"
+        >
+          <div
+            className={`${MONO} mb-2 flex items-baseline justify-between text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50`}
+          >
+            <span>Symbol</span>
+            <span className="flex-1 px-3 text-right">Trend</span>
+            <span>Last / Chg</span>
+          </div>
+          <ul>
+            {stocks!.stocks.map((s) => {
+              const up = s.changePct >= 0;
+              const isTop = topMover?.symbol === s.symbol;
+              return (
+                <li key={s.symbol} className="flex items-center gap-4 border-b border-border py-3 last:border-b-0">
+                  <div className="min-w-0 flex-1">
+                    <p className={`${MONO} text-xs uppercase tracking-[0.1em]`}>
+                      {s.symbol}
+                      {isTop ? (
+                        <span
+                          className={`${MONO} ml-2 border border-border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.18em] text-muted-foreground/80`}
+                        >
+                          Top
+                        </span>
+                      ) : null}
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.name}</p>
+                  </div>
+                  <Sparkline values={s.closes} up={up} />
+                  <div className="w-32 shrink-0 text-right">
+                    <span className="text-sm tabular-nums">
+                      {s.price.toFixed(2)}
+                      <span className={`${MONO} ml-1 text-[11px] text-muted-foreground/70`}>{s.currency}</span>
+                    </span>
+                    <span className="ml-2 align-middle">{changeCell(s.changePct)}</span>
+                  </div>
                 </li>
-              ))}
-            </ul>
+              );
+            })}
+          </ul>
+        </Panel>
+
+        <Panel
+          eyebrow="Env"
+          title="Copenhagen"
+          state={ws}
+          error={weather?.message}
+          meta={weather?.updated ? `as of ${fmtTime(weather.updated)}` : "wttr.in"}
+          className="lg:col-span-2"
+        >
+          <p className="text-5xl font-light tabular-nums tracking-tight">
+            {weather!.current!.temp.toFixed(0)}
+            <span className="ml-1 text-2xl text-muted-foreground">°C</span>
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{weather!.current!.desc}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Chip label="Bike" on={weather!.current!.bike} />
+            <Chip label="Waterproof" on={weather!.current!.waterproof} />
+          </div>
+          {weather!.today ? (
+            <dl className={`${MONO} mt-6 space-y-1.5 text-xs uppercase tracking-[0.14em]`}>
+              <div className="flex justify-between gap-6">
+                <dt className="text-muted-foreground/60">Range</dt>
+                <dd className="tabular-nums">
+                  {weather!.today!.mint.toFixed(0)}° – {weather!.today!.max.toFixed(0)}°
+                </dd>
+              </div>
+              <div className="flex justify-between gap-6">
+                <dt className="text-muted-foreground/60">Wind</dt>
+                <dd className="tabular-nums">{weather!.current!.wind.toFixed(0)} km/h</dd>
+              </div>
+              <div className="flex justify-between gap-6">
+                <dt className="text-muted-foreground/60">UV</dt>
+                <dd className="tabular-nums">{weather!.today!.uv.toFixed(0)}</dd>
+              </div>
+              <div className="flex justify-between gap-6">
+                <dt className="text-muted-foreground/60">Sun</dt>
+                <dd className="tabular-nums">
+                  {weather!.today!.sunrise} – {weather!.today!.sunset}
+                </dd>
+              </div>
+            </dl>
           ) : null}
         </Panel>
 
-        <Panel eyebrow="Weather" title="Copenhagen" loading={!weather} error={weather?.status === "error" ? weather.message : null}>
-          {weather && weather.status === "ok" && weather.current ? (
+        <Panel
+          eyebrow="GitHub"
+          title="Last 24 hours"
+          state={gs}
+          error={github?.message}
+          meta={`${github?.commits.length ?? "--"} commits`}
+          className="lg:col-span-5"
+        >
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
             <div>
-              <p className="text-xl font-medium tracking-tight">{weather.current.desc}</p>
-              <p className="mt-1 text-sm tabular-nums text-muted-foreground">
-                {weather.current.temp.toFixed(0)}C, feels {weather.current.feels.toFixed(0)}C
-                {" · "}wind {weather.current.wind.toFixed(0)} km/h
-              </p>
-              {weather.today ? (
-                <p className="mt-3 font-mono text-xs uppercase tracking-[0.14em] text-muted-foreground/80">
-                  {weather.today.mint.toFixed(0)}C to {weather.today.max.toFixed(0)}C · sunrise {weather.today.sunrise} · sunset {weather.today.sunset}
-                </p>
-              ) : null}
-              <div className="mt-4 flex gap-6 font-mono text-xs uppercase tracking-[0.18em]">
-                <span className={weather.current.bike ? "text-foreground" : "text-muted-foreground/60"}>
-                  Bike: {weather.current.bike ? "Yes" : "No"}
-                </span>
-                <span className={weather.current.waterproof ? "text-foreground" : "text-muted-foreground/60"}>
-                  Waterproof: {weather.current.waterproof ? "Yes" : "No"}
-                </span>
-              </div>
+              <p className={`${MONO} mb-3 text-[11px] ${TRACK} text-muted-foreground`}>Commits</p>
+              {github!.commits.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Quiet day.</p>
+              ) : (
+                <ul>
+                  {github!.commits.slice(0, 10).map((c) => (
+                    <li key={c.repo + c.sha} className="border-b border-border last:border-b-0">
+                      <a
+                        href={c.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block py-2.5 transition-colors hover:bg-foreground/[0.03]"
+                      >
+                        <span className="block truncate text-sm">{c.message}</span>
+                        <span className={`${MONO} text-[11px] text-muted-foreground/70`}>
+                          {c.repo} · {c.author}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
-          ) : null}
+            <div>
+              <p className={`${MONO} mb-3 text-[11px] ${TRACK} text-muted-foreground`}>Open pull requests</p>
+              {github!.openPulls.length === 0 ? (
+                <p className="text-sm text-muted-foreground">None open.</p>
+              ) : (
+                <ul>
+                  {github!.openPulls.map((p) => (
+                    <li key={p.repo + p.number} className="border-b border-border last:border-b-0">
+                      <a
+                        href={p.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block py-2.5 transition-colors hover:bg-foreground/[0.03]"
+                      >
+                        <span className="block truncate text-sm">{p.title}</span>
+                        <span className={`${MONO} text-[11px] text-muted-foreground/70`}>
+                          {p.repo} · #{p.number}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div>
+              <p className={`${MONO} mb-3 text-[11px] ${TRACK} text-muted-foreground`}>Issues touched</p>
+              {github!.issues.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nothing new.</p>
+              ) : (
+                <ul>
+                  {github!.issues.map((i) => (
+                    <li key={i.repo + i.number} className="border-b border-border last:border-b-0">
+                      <a
+                        href={i.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block py-2.5 transition-colors hover:bg-foreground/[0.03]"
+                      >
+                        <span className="block truncate text-sm">{i.title}</span>
+                        <span className={`${MONO} text-[11px] text-muted-foreground/70`}>
+                          {i.repo} · #{i.number} · {i.state}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </Panel>
 
-        <Panel eyebrow="GitHub" title="Last 24 hours" className="md:col-span-2" loading={!github} error={github?.status === "error" ? github.message : null}>
-          {github && github.status === "ok" ? (
-            <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
-              <div>
-                <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Commits</p>
-                {github.commits.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Quiet day.</p>
-                ) : (
-                  <ul>
-                    {github.commits.slice(0, 10).map((c) => (
-                      <li key={c.repo + c.sha} className="border-b border-border">
-                        <a href={c.url} target="_blank" rel="noopener noreferrer" className="block py-2.5 transition-colors hover:bg-foreground/[0.03]">
-                          <span className="block truncate text-sm">{c.message}</span>
-                          <span className="font-mono text-[11px] text-muted-foreground/70">
-                            {c.repo} · {c.author}
-                          </span>
-                        </a>
-                      </li>
+        <Panel
+          eyebrow="Overnight"
+          title={latestNight ? `Night of ${nightLabel}` : "No reports yet"}
+          state={os}
+          meta={reports === null ? null : `${tonight.length} reports tonight`}
+          className="lg:col-span-5"
+        >
+          {tonight.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nothing ran yet. Reports land automatically from the overnight jobs.</p>
+          ) : (
+            <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
+              {reportKinds.map(({ kind, label }) => {
+                const rows = reportsByKind.get(kind) ?? [];
+                if (rows.length === 0) return null;
+                return (
+                  <div key={kind}>
+                    <p className={`${MONO} mb-3 flex items-baseline justify-between text-[11px] ${TRACK} text-muted-foreground`}>
+                      <span>{label}</span>
+                      <span className="tabular-nums text-muted-foreground/50">{rows.length}</span>
+                    </p>
+                    {rows.map((r) => (
+                      <div key={r.id} className="border-b border-border py-3 last:border-b-0">
+                        <p className="text-sm font-medium">{r.title}</p>
+                        {r.summary ? <p className="mt-1 text-sm text-muted-foreground">{r.summary}</p> : null}
+                        {Array.isArray(r.details.lines) && r.details.lines.length > 0 ? (
+                          <ul className="mt-2 space-y-1">
+                            {r.details.lines.slice(0, 12).map((line, idx) => (
+                              <li key={idx} className={`${MONO} text-xs leading-relaxed text-muted-foreground/90`}>
+                                {line}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </div>
                     ))}
-                  </ul>
-                )}
-              </div>
-              <div>
-                <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Open pull requests</p>
-                {github.openPulls.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">None open.</p>
-                ) : (
-                  <ul>
-                    {github.openPulls.map((p) => (
-                      <li key={p.repo + p.number} className="border-b border-border">
-                        <a href={p.url} target="_blank" rel="noopener noreferrer" className="block py-2.5 transition-colors hover:bg-foreground/[0.03]">
-                          <span className="block truncate text-sm">{p.title}</span>
-                          <span className="font-mono text-[11px] text-muted-foreground/70">
-                            {p.repo} · #{p.number}
-                          </span>
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <div>
-                <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">Issues touched</p>
-                {github.issues.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Nothing new.</p>
-                ) : (
-                  <ul>
-                    {github.issues.map((i) => (
-                      <li key={i.repo + i.number} className="border-b border-border">
-                        <a href={i.url} target="_blank" rel="noopener noreferrer" className="block py-2.5 transition-colors hover:bg-foreground/[0.03]">
-                          <span className="block truncate text-sm">{i.title}</span>
-                          <span className="font-mono text-[11px] text-muted-foreground/70">
-                            {i.repo} · #{i.number} · {i.state}
-                          </span>
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
+                  </div>
+                );
+              })}
             </div>
-          ) : null}
-        </Panel>
-
-        <Panel eyebrow="Overnight" title={latestNight ? `Night of ${latestNight}` : "No reports yet"} className="md:col-span-2" loading={reports === null}>
-          {reports !== null ? (
-            tonight.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nothing ran yet. Reports land automatically from the overnight jobs.</p>
-            ) : (
-              <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
-                {reportKinds.map(({ kind, label }) => {
-                  const rows = reportsByKind.get(kind) ?? [];
-                  if (rows.length === 0) return null;
-                  return (
-                    <div key={kind}>
-                      <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.28em] text-muted-foreground">{label}</p>
-                      {rows.map((r) => (
-                        <div key={r.id} className="border-b border-border py-3">
-                          <p className="text-sm font-medium">{r.title}</p>
-                          {r.summary ? <p className="mt-1 text-sm text-muted-foreground">{r.summary}</p> : null}
-                          {Array.isArray(r.details.lines) && r.details.lines.length > 0 ? (
-                            <ul className="mt-2 space-y-1">
-                              {r.details.lines.slice(0, 12).map((line, idx) => (
-                                <li key={idx} className="font-mono text-xs leading-relaxed text-muted-foreground/90">
-                                  {line}
-                                </li>
-                              ))}
-                            </ul>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  );
-                })}
-              </div>
-            )
-          ) : null}
+          )}
         </Panel>
       </div>
+
+      <p
+        className={`${MONO} mt-16 border-t border-border pt-6 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50`}
+      >
+        Sources: llm-radar · stooq · wttr.in · github · supabase — refreshed on sign-in and on demand
+      </p>
     </div>
   );
 }

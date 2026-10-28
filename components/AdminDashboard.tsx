@@ -21,6 +21,12 @@ type SessionShape = {
   user: { email?: string | null };
 } | null;
 
+type FinanceAccount = { name: string; balance: number; source: string; lastSync: string | null; bankStatus: string | null };
+type FinancePayload = { schemaVersion: number; currency: string; generatedAt: string; total: number; mixedDates: boolean; simIncluded: boolean; nordea: { balance: number; status: string; accounts: FinanceAccount[]; lastSync: string | null }; saxo: { total: number; investments: number; cash: number; asOf: string; mode: string; liveSync: boolean }; limitations: string[] };
+
+const FINANCE_ENDPOINT = "https://gimle.tail3e4ba0.ts.net/finance/report";
+const ACTUAL_URL = "https://gimle.tail3e4ba0.ts.net:8447";
+
 type Phase = "boot" | "anon" | "auth" | "cfg";
 type ModuleState = "loading" | "ok" | "error";
 
@@ -232,6 +238,50 @@ function Board({ cells }: { cells: BoardCell[] }) {
   );
 }
 
+function validFinancePayload(value: unknown): value is FinancePayload {
+  if (!value || typeof value !== "object") return false;
+  const p = value as Partial<FinancePayload>;
+  return p.schemaVersion === 1 && p.currency === "DKK" && typeof p.generatedAt === "string" &&
+    typeof p.total === "number" && Boolean(p.nordea && p.saxo && Array.isArray(p.limitations)) &&
+    typeof p.nordea?.balance === "number" && Array.isArray(p.nordea?.accounts) &&
+    typeof p.saxo?.total === "number" && typeof p.saxo?.asOf === "string" &&
+    p.nordea.accounts.every(a => typeof a.name === "string" && typeof a.balance === "number" && typeof a.source === "string");
+}
+
+async function fetchFinanceReport(token: string): Promise<FinancePayload> {
+  const response = await fetch(FINANCE_ENDPOINT, { cache: "no-store", headers: { Authorization: `Bearer ${token}` } });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const payload: unknown = await response.json();
+  if (!validFinancePayload(payload)) throw new Error("Unexpected finance report format");
+  return payload;
+}
+
+async function refreshFinance(token: string): Promise<FinancePayload> {
+  const response = await fetch(FINANCE_ENDPOINT.replace("/report", "/refresh"), {
+    method: "POST", cache: "no-store", headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const payload: unknown = await response.json();
+  if (!validFinancePayload(payload)) throw new Error("Unexpected finance report format");
+  return payload;
+}
+
+function FinancePanel({ finance, error }: { finance: FinancePayload | null; error: string | null }) {
+  const state: ModuleState = finance ? "ok" : error ? "error" : "loading";
+  return (
+    <Panel eyebrow="Finance" title="Daily follow-up" state={state} error={error} meta={finance ? `report ${fmtTime(finance.generatedAt)}` : "private link"} className="lg:col-span-5">
+      {finance ? <>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[{label:"Nordea",total:finance.nordea.balance,source:finance.nordea.status,updated:finance.nordea.lastSync},{label:"Saxo",total:finance.saxo.total,source:"Manual statement snapshot",updated:finance.saxo.asOf}].map(item=><div key={item.label} className="border border-border px-4 py-4"><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>{item.label}</p><p className="mt-3 text-lg tabular-nums">{item.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency })}</p><p className="mt-1 text-sm">{item.source}</p><p className={`${MONO} mt-2 text-[11px] text-muted-foreground`}>Source date: {item.updated ?? "unknown"}</p></div>)}
+        </div>
+        <p className={`${MONO} mt-4 text-xs text-muted-foreground`}>Combined indicative total: {finance.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency })}. Mixed source dates; manual Saxo valuation is not live sync.</p>
+        <ul className={`${MONO} mt-3 space-y-1 text-[11px] text-muted-foreground`}>{finance.limitations.map((x,i)=><li key={i}>{x}</li>)}</ul>
+      </> : null}
+      <a href={ACTUAL_URL} target="_blank" rel="noopener noreferrer" className={`mt-5 inline-flex items-center gap-2 ${MONO} text-xs uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground`}>Open Actual <ArrowUpRight size={14} /></a>
+    </Panel>
+  );
+}
+
 export default function AdminDashboard() {
   const [phase, setPhase] = useState<Phase>("boot");
   const [session, setSession] = useState<SessionShape>(null);
@@ -249,6 +299,8 @@ export default function AdminDashboard() {
   const [github, setGithub] = useState<GithubPayload | null>(null);
   const [radar, setRadar] = useState<RadarPayload | null>(null);
   const [reports, setReports] = useState<AdminReport[] | null>(null);
+  const [finance, setFinance] = useState<FinancePayload | null>(null);
+  const [financeError, setFinanceError] = useState<string | null>(null);
 
   const hasSession = Boolean(session);
 
@@ -278,6 +330,10 @@ export default function AdminDashboard() {
     setStocks(s);
     setGithub(g);
     setRadar(r);
+    if (session?.access_token) {
+      try { const report = await fetchFinanceReport(session.access_token); setFinance(report); setFinanceError(null); }
+      catch (error) { setFinance(null); setFinanceError(error instanceof Error ? error.message : "Finance endpoint unavailable"); }
+    }
     if (sb) {
       sb.from("admin_reports")
         .select("*")
@@ -296,7 +352,7 @@ export default function AdminDashboard() {
           }
         });
     }
-  }, [api]);
+  }, [api, session?.access_token]);
 
   // Session lifecycle.
   useEffect(() => {
@@ -346,7 +402,10 @@ export default function AdminDashboard() {
     setWeather(null);
     setStocks(null);
     setGithub(null);
-    setRadar(null);
+    if (session?.access_token) {
+      try { const report = await refreshFinance(session.access_token); setFinance(report); setFinanceError(null); }
+      catch (error) { setFinanceError(error instanceof Error ? error.message : "Finance refresh failed"); }
+    }
     await loadAll();
     setRefreshing(false);
     setLastSync(cphNow());
@@ -571,6 +630,10 @@ export default function AdminDashboard() {
 
       <div className="mb-14">
         <Board cells={cells} />
+      </div>
+
+      <div className="mb-14">
+        <FinancePanel finance={finance} error={financeError} />
       </div>
 
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-5">

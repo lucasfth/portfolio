@@ -19,7 +19,7 @@
 .hero-footnote a, .hero-image-label a { min-height: 32px; }
 #main-content a.group.mb-10 { min-height: 32px; }
 #main-content a.text-link { display: inline-flex; align-items: center; min-height: 32px; }
-.hero-image-label { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; gap: 12px; padding: 48px 22px 22px; background: linear-gradient(transparent,rgba(0,0,0,.7)); color: white; font-size: 12px; }
+.hero-image-label { position: absolute; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; gap: 12px; padding: 48px 22px 22px; background: linear-gradient(transparent, color-mix(in srgb, var(--color-overlay) 70%, transparent)); color: var(--color-foreground); font-size: 12px; }
 .work-showcase { display: grid; grid-template-columns: 1fr 1.2fr; gap: 5vw; align-items: start; }
 .work-entry { border-top: 1px solid var(--color-border); padding: 22px 0; }
 .work-entry:last-child { border-bottom: 1px solid var(--color-border); }
@@ -47,35 +47,48 @@
 @media (prefers-reduced-motion: reduce) { .hero-actions svg, .work-open svg { transition: none; } html { scroll-behavior: auto; } }
 
 
-/*
- * Theme: dark is the default (defined in @theme below). A light variant is
- * applied when the browser is in light mode via a :root override of the same
- * --color-* tokens, so every Tailwind token utility flips automatically.
- * Hardcoded effect styles (.glass, gradients, scrollbar, code blocks, ...) get
- * light variants in the light block near the end of this file.
- */
-
 /* The library hides source text with an inherited WebKit fill.
    Overlay glyphs must paint with their own animated color. */
 .ar-overlay > span { -webkit-text-fill-color: currentColor; }
 
+/* Theme: exact Catppuccin Mocha by default, exact Latte in light appearance. */
 @theme {
   /* Typography */
   --font-heading: Arial, Helvetica, sans-serif;
   --font-mono: var(--font-space-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Monochrome Obsidian palette (dark-first) */
-  --color-background: #050505;
-  --color-foreground: #fafafa;
-  --color-card: #0d0d0f;
-  --color-card-foreground: #fafafa;
-  --color-muted: #141417;
-  --color-muted-foreground: #a1a1aa;
-  --color-border: rgba(255, 255, 255, 0.09);
-  --color-border-strong: rgba(255, 255, 255, 0.18);
-  --color-ring: #d4d4d8;
-  --color-accent: #fafafa;
-  --color-accent-foreground: #050505;
+  /* Catppuccin Mocha */
+  --color-background: #1e1e2e;
+  --color-foreground: #cdd6f4;
+  --color-card: #181825;
+  --color-card-foreground: #cdd6f4;
+  --color-muted: #313244;
+  --color-muted-foreground: #a6adc8;
+  --color-border: #45475a;
+  --color-border-strong: #585b70;
+  --color-ring: #b4befe;
+  --color-accent: #89b4fa;
+  --color-accent-foreground: #1e1e2e;
+  --color-overlay: #11111b;
+  --color-subtext: #bac2de;
+  --syntax-text: #cdd6f4;
+  --syntax-comment: #6c7086;
+  --syntax-subtext: #a6adc8;
+  --syntax-blue: #89b4fa;
+  --syntax-red: #f38ba8;
+  --syntax-peach: #fab387;
+  --syntax-green: #a6e3a1;
+  --syntax-yellow: #f9e2af;
+  --syntax-teal: #94e2d5;
+  --syntax-sky: #89dceb;
+
+  /* Semantic palette utility colors used by the admin dashboard. */
+  --color-emerald-400: #a6e3a1;
+  --color-rose-400: #f38ba8;
+  --color-rose-300: #eba0ac;
+  --color-amber-400: #f9e2af;
+  --color-amber-300: #f9e2af;
+  --color-sky-300: #89dceb;
 
   /* Radii */
   --radius-lg: 1.25rem;
@@ -91,10 +104,10 @@
     border-color: var(--color-border);
   }
 
-  :root {
-    /* Ambient glow color: white on dark, subtle black on light. */
-    --glow: rgba(255, 255, 255, 0.16);
-    --glow-strong: rgba(255, 255, 255, 0.07);
+:root {
+    color-scheme: dark;
+    --glow: rgba(180, 190, 254, 0.16);
+    --glow-strong: rgba(180, 190, 254, 0.07);
   }
 
   html {
@@ -131,8 +144,8 @@
   }
 
   ::selection {
-    background: #fafafa;
-    color: #050505;
+    background: var(--color-accent);
+    color: var(--color-accent-foreground);
   }
 
   ::-webkit-scrollbar {
@@ -140,15 +153,15 @@
     height: 10px;
   }
   ::-webkit-scrollbar-track {
-    background: #0a0a0a;
+    background: var(--color-overlay);
   }
   ::-webkit-scrollbar-thumb {
-    background: #26262b;
+    background: var(--color-muted);
     border-radius: 999px;
-    border: 2px solid #0a0a0a;
+    border: 2px solid var(--color-overlay);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #3f3f46;
+    background: var(--color-border-strong);
   }
 
   img {
@@ -157,31 +170,32 @@
   }
 }
 
+
 /* ---------- Reusable effect utilities ---------- */
 
 .glass {
-  background: rgba(12, 12, 14, 0.6);
+  background: color-mix(in srgb, var(--color-card) 80%, transparent);
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border);
 }
 
 .text-gradient {
-  background: linear-gradient(180deg, #fafafa 0%, #a1a1aa 55%, #52525b 100%);
+  background: linear-gradient(180deg, var(--color-foreground) 0%, var(--color-muted-foreground) 55%, var(--color-border-strong) 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 .wordmark-gradient {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 255, 0.12) 62%, rgba(255, 255, 255, 0) 100%);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--color-foreground) 85%, transparent) 0%, color-mix(in srgb, var(--color-foreground) 12%, transparent) 62%, transparent 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
 .hairline-top {
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-border-strong), transparent);
   height: 1px;
 }
 
@@ -259,7 +273,7 @@
   border-radius: 50%;
   filter: blur(120px);
   opacity: 0.5;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.14) 0%, transparent 60%);
+  background: radial-gradient(circle, color-mix(in srgb, var(--color-accent) 14%, transparent) 0%, transparent 60%);
   animation: light-drift 18s var(--ease-out-expo) infinite alternate;
 }
 #light-one::before { top: -20%; left: -10%; }
@@ -323,12 +337,12 @@
 .md-body a {
   color: var(--color-foreground);
   text-decoration: underline;
-  text-decoration-color: rgba(255, 255, 255, 0.35);
+  text-decoration-color: color-mix(in srgb, var(--color-foreground) 35%, transparent);
   text-underline-offset: 4px;
   transition: text-decoration-color 0.2s ease, color 0.2s ease;
 }
 .md-body a:hover {
-  text-decoration-color: #fafafa;
+  text-decoration-color: var(--color-foreground);
 }
 .md-body ul, .md-body ol {
   padding-left: 1.25rem;
@@ -337,10 +351,10 @@
 .md-body li { margin: 0.4rem 0; }
 .md-body ul { list-style: disc; }
 .md-body ol { list-style: decimal; }
-.md-body strong { color: #fafafa; font-weight: 700; }
-.md-body em { color: #d4d4d8; }
+.md-body strong { color: var(--color-foreground); font-weight: 700; }
+.md-body em { color: var(--color-subtext); }
 .md-body blockquote {
-  border-left: 2px solid rgba(255, 255, 255, 0.25);
+  border-left: 2px solid var(--color-border-strong);
   padding-left: 1rem;
   margin: 1.5rem 0;
   color: var(--color-muted-foreground);
@@ -348,13 +362,13 @@
 .md-body hr {
   border: none;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  background: linear-gradient(90deg, transparent, var(--color-border), transparent);
   margin: 2.5rem 0;
 }
 .md-body code {
   font-family: var(--font-mono);
   font-size: 0.85em;
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--color-foreground) 8%, transparent);
   padding: 0.15em 0.4em;
   border-radius: 6px;
 }
@@ -397,7 +411,7 @@
   border-radius: 14px;
   overflow: hidden;
   border: 1px solid var(--color-border);
-  background: #0b0b0d; /* dark default; light override below */
+  background: var(--color-overlay);
 }
 .code-block-wrapper [class*="language-"] {
   margin: 0 !important;
@@ -417,7 +431,7 @@
   position: absolute;
   top: 10px;
   right: 10px;
-  background: rgba(20, 20, 23, 0.9);
+  background: color-mix(in srgb, var(--color-muted) 90%, transparent);
   border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 5px 10px;
@@ -430,7 +444,7 @@
   line-height: 1;
 }
 .copy-button:hover {
-  background: #1c1c1f;
+  background: var(--color-muted);
   border-color: var(--color-border-strong);
   transform: translateY(-1px);
 }
@@ -441,7 +455,7 @@
   top: -100px;
   left: 0;
   background: var(--color-foreground);
-  color: #050505;
+  color: var(--color-background);
   padding: 8px 16px;
   z-index: 200;
   transition: top 0.3s;
@@ -456,7 +470,7 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  background: rgba(12, 12, 14, 0.7);
+  background: color-mix(in srgb, var(--color-card) 70%, transparent);
   border: 1px solid var(--color-border);
   border-radius: 50%;
   width: 44px;
@@ -481,90 +495,98 @@
   transform: translateY(-2px);
 }
 
-/* ---------- Light mode (follows the browser appearance) ---------- */
+/* ---------- Light mode: Catppuccin Latte ---------- */
 @media (prefers-color-scheme: light) {
   :root {
-    --glow: rgba(0, 0, 0, 0.08);
-    --glow-strong: rgba(0, 0, 0, 0.05);
-    --color-background: #fafafa;
-    --color-foreground: #0a0a0a;
-    --color-card: #ffffff;
-    --color-card-foreground: #0a0a0a;
-    --color-muted: #f0f0f2;
-    --color-muted-foreground: #52525b;
-    --color-border: rgba(0, 0, 0, 0.1);
-    --color-border-strong: rgba(0, 0, 0, 0.2);
-    --color-ring: #71717a;
-    --color-accent: #0a0a0a;
-    --color-accent-foreground: #fafafa;
+    color-scheme: light;
+    --glow: rgba(136, 57, 239, 0.08);
+    --glow-strong: rgba(136, 57, 239, 0.05);
+    --color-background: #eff1f5;
+    --color-foreground: #4c4f69;
+    --color-card: #e6e9ef;
+    --color-card-foreground: #4c4f69;
+    --color-muted: #ccd0da;
+    --color-muted-foreground: #6c6f85;
+    --color-border: #bcc0cc;
+    --color-border-strong: #acb0be;
+    --color-ring: #7287fd;
+    --color-accent: #1e66f5;
+    --color-accent-foreground: #eff1f5;
+    --color-overlay: #dce0e8;
+    --color-subtext: #5c5f77;
+    --syntax-text: #4c4f69;
+    --syntax-comment: #9ca0b0;
+    --syntax-subtext: #6c6f85;
+    --syntax-blue: #1e66f5;
+    --syntax-red: #d20f39;
+    --syntax-peach: #fe640b;
+    --syntax-green: #40a02b;
+    --syntax-yellow: #df8e1d;
+    --syntax-teal: #179299;
+    --syntax-sky: #04a5e5;
+
+    /* Semantic palette utility colors: Catppuccin Latte. */
+    --color-emerald-400: #40a02b;
+    --color-rose-400: #e64553;
+    --color-rose-300: #e64553;
+    --color-amber-400: #df8e1d;
+    --color-amber-300: #df8e1d;
+    --color-sky-300: #04a5e5;
   }
 
   ::selection {
-    background: #0a0a0a;
-    color: #fafafa;
+    background: var(--color-accent);
+    color: var(--color-accent-foreground);
   }
 
   ::-webkit-scrollbar-track {
-    background: #efeff1;
+    background: var(--color-overlay);
   }
   ::-webkit-scrollbar-thumb {
-    background: #c7c7cc;
-    border-color: #efeff1;
+    background: var(--color-muted);
+    border-color: var(--color-overlay);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #a1a1aa;
+    background: var(--color-border-strong);
   }
 
   .glass {
-    background: rgba(255, 255, 255, 0.6);
-    border-color: rgba(0, 0, 0, 0.08);
+    background: color-mix(in srgb, var(--color-card) 60%, transparent);
+    border-color: var(--color-border);
   }
 
   .text-gradient {
-    background: linear-gradient(180deg, #0a0a0a 0%, #52525b 55%, #a1a1aa 100%);
+    background: linear-gradient(180deg, var(--color-foreground) 0%, var(--color-muted-foreground) 55%, var(--color-border-strong) 100%);
   }
 
   .hairline-top {
-    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.3), transparent);
+    background: linear-gradient(90deg, transparent, var(--color-border-strong), transparent);
   }
 
   .lighting-section::before {
-    background: radial-gradient(circle, rgba(0, 0, 0, 0.06) 0%, transparent 60%);
+    background: radial-gradient(circle, color-mix(in srgb, var(--color-accent) 6%, transparent) 0%, transparent 60%);
   }
 
   .md-body a {
-    text-decoration-color: rgba(0, 0, 0, 0.35);
+    text-decoration-color: color-mix(in srgb, var(--color-foreground) 35%, transparent);
   }
-  .md-body a:hover {
-    text-decoration-color: #0a0a0a;
-  }
-  .md-body strong { color: #0a0a0a; }
-  .md-body em { color: #52525b; }
-  .md-body blockquote {
-    border-left-color: rgba(0, 0, 0, 0.25);
-  }
+  .md-body a:hover,
+  .md-body strong { color: var(--color-foreground); }
+  .md-body em { color: var(--color-subtext); }
+  .md-body blockquote { border-left-color: var(--color-border-strong); }
   .md-body hr {
-    background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15), transparent);
+    background: linear-gradient(90deg, transparent, var(--color-border), transparent);
   }
   .md-body code {
-    background: rgba(0, 0, 0, 0.06);
+    background: color-mix(in srgb, var(--color-foreground) 8%, transparent);
   }
 
-  .code-block-wrapper {
-    background: #f5f5f6;
-  }
   .copy-button {
-    background: rgba(255, 255, 255, 0.9);
+    background: color-mix(in srgb, var(--color-card) 80%, transparent);
   }
-  .copy-button:hover {
-    background: #ffffff;
-  }
-
-  .skip-link {
-    color: var(--color-background);
-  }
+  .copy-button:hover { background: var(--color-card); }
 
   .scroll-to-top {
-    background: rgba(255, 255, 255, 0.7);
+    background: color-mix(in srgb, var(--color-card) 70%, transparent);
   }
 }

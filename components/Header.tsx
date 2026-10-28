@@ -99,20 +99,20 @@ export default function Header() {
             ? {
                 borderRadius: 18,
                 boxShadow: light
-                  ? "0 12px 40px rgba(0,0,0,0.16)"
-                  : "0 12px 40px rgba(0,0,0,0.45)",
+                  ? "0 12px 40px rgba(30,30,46,0.16)"
+                  : "0 12px 40px rgba(17,17,27,0.45)",
                 backgroundColor: light
-                  ? "rgba(255,255,255,0.78)"
-                  : "rgba(12,12,14,0.72)",
+                  ? "rgba(239,241,245,0.78)"
+                  : "rgba(24,24,37,0.72)",
               }
             : {
                 borderRadius: 999,
                 boxShadow: light
-                  ? "0 4px 20px rgba(0,0,0,0.10)"
-                  : "0 4px 20px rgba(0,0,0,0.25)",
+                  ? "0 4px 20px rgba(30,30,46,0.10)"
+                  : "0 4px 20px rgba(17,17,27,0.25)",
                 backgroundColor: light
-                  ? "rgba(255,255,255,0.55)"
-                  : "rgba(12,12,14,0.45)",
+                  ? "rgba(239,241,245,0.55)"
+                  : "rgba(24,24,37,0.45)",
               }
         }
         transition={{ duration: 0.3, ease: "easeOut" }}

@@ -71,8 +71,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #d99538;
-  box-shadow: 0 0 18px rgba(217, 149, 56, 0.25);
+  background: var(--color-accent);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--color-accent) 25%, transparent);
 }
 
 @keyframes bitcoin-orbit {
@@ -102,7 +102,7 @@
   color: var(--color-muted-foreground);
 }
 
-.bitcoin-network > svg { color: #d99538; }
+.bitcoin-network > svg { color: var(--color-accent); }
 .bitcoin-network-divider { padding: 0 8px; color: var(--color-muted-foreground); }
 
 .bitcoin-qr {

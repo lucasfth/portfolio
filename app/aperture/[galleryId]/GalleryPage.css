@@ -18,7 +18,7 @@
   overflow: hidden;
   border-radius: 14px;
   padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border);
   cursor: pointer;
   background: none;
   transition:
@@ -27,20 +27,20 @@
 }
 
 .gallery-item:focus-visible {
-  outline: 2px solid #fafafa;
+  outline: 2px solid var(--color-ring);
   outline-offset: 3px;
 }
 
 .gallery-item:hover {
   transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.22);
+  border-color: var(--color-border-strong);
 }
 
 .gallery-item::after {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.75), transparent 40%);
+  background: linear-gradient(to top, color-mix(in srgb, var(--color-overlay) 75%, transparent), transparent 40%);
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
@@ -67,8 +67,8 @@
   font-size: 0.6rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+  color: var(--color-foreground);
+  text-shadow: 0 1px 4px color-mix(in srgb, var(--color-background) 80%, transparent);
   opacity: 0;
   transition: opacity 0.4s ease;
   pointer-events: none;
@@ -93,18 +93,5 @@
 @media screen and (max-width: 460px) {
   .gallery-grid {
     column-count: 1;
-  }
-}
-
-/* Light mode: follow the browser appearance */
-@media (prefers-color-scheme: light) {
-  .gallery-item {
-    border-color: rgba(0, 0, 0, 0.08);
-  }
-  .gallery-item:focus-visible {
-    outline-color: #0a0a0a;
-  }
-  .gallery-item:hover {
-    border-color: rgba(0, 0, 0, 0.22);
   }
 }

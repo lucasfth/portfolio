@@ -22,9 +22,12 @@ type SessionShape = {
 } | null;
 
 type FinanceAccount = { name: string; balance: number; source: string; lastSync: string | null; bankStatus: string | null };
-type FinancePayload = { schemaVersion: number; currency: string; generatedAt: string; total: number; mixedDates: boolean; simIncluded: boolean; nordea: { balance: number; status: string; accounts: FinanceAccount[]; lastSync: string | null }; saxo: { total: number; investments: number; cash: number; asOf: string; mode: string; liveSync: boolean }; limitations: string[] };
+type FinancePayload = { schemaVersion: number; currency: string; generatedAt: string; total: number; mixedDates: boolean; simIncluded: boolean; nordea: { balance: number; status: string; accounts: FinanceAccount[]; lastSync: string | null }; saxo: { total: number; investments: number; cash: number; asOf: string; mode: string; liveSync: boolean }; limitations: string[]; estimate?: { total: number; additionalSavings: number; currency: "DKK"; assumptions: string[]; asOf: string }; syncHealth?: { lastAttempt: string | null; lastSuccess: string | null; status: string; reference: string | null } };
+type CronJob = { id: string; name: string; kind: "maintenance" | "information"; enabled: boolean; status: string; lastRun: string | null; nextRun: string | null; reference: string | null; referenceType: "session" | "run" | "job" | null; summary: string; details: string | null };
+type CronPayload = { generatedAt: string; jobs: CronJob[]; limitations: string[] };
 
 const FINANCE_ENDPOINT = "https://gimle.tail3e4ba0.ts.net/finance/report";
+const CRON_ENDPOINT = "https://gimle.tail3e4ba0.ts.net/finance/cron-status";
 const ACTUAL_URL = "https://gimle.tail3e4ba0.ts.net:8447";
 
 type Phase = "boot" | "anon" | "auth" | "cfg";
@@ -133,6 +136,23 @@ function Chip({ label, on }: { label: string; on: boolean }) {
   );
 }
 
+function AsciiActivity() {
+  const [frame, setFrame] = useState(0);
+  useEffect(() => {
+    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let timer: ReturnType<typeof setInterval> | undefined;
+    const update = () => {
+      if (timer) clearInterval(timer);
+      if (!motion.matches) timer = setInterval(() => setFrame(value => (value + 1) % 4), 180);
+      else setFrame(0);
+    };
+    update();
+    motion.addEventListener("change", update);
+    return () => { if (timer) clearInterval(timer); motion.removeEventListener("change", update); };
+  }, []);
+  return <span aria-hidden className="inline-block w-[7ch] font-mono">{["[>   ]", "[=>  ]", "[==> ]", "[ ==>]"][frame]}</span>;
+}
+
 function LoadingLines() {
   return (
     <div className="space-y-3" aria-hidden>
@@ -190,7 +210,7 @@ function Panel({
       </div>
       <div className="px-5 py-5">
         {loading ? (
-          <LoadingLines />
+          <div role="status"><p className={`${MONO} mb-3 text-xs text-muted-foreground`}><AsciiActivity /> Loading</p><LoadingLines /></div>
         ) : state === "error" ? (
           <p className={`${MONO} text-xs ${TRACK} text-muted-foreground`}>Unavailable: {error ?? "source error"}</p>
         ) : (
@@ -266,15 +286,45 @@ async function refreshFinance(token: string): Promise<FinancePayload> {
   return payload;
 }
 
-function FinancePanel({ finance, error }: { finance: FinancePayload | null; error: string | null }) {
+function CronSidebar({ data, error }: { data: CronPayload | null; error: string | null }) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const [showPaused, setShowPaused] = useState(false);
+  const [expanded, setExpanded] = useState<string[]>([]);
+  const visible = (data?.jobs ?? []).filter(job => job.enabled || showPaused);
+  async function copy(ref: string) { try { await navigator.clipboard.writeText(ref); setCopied(ref); window.setTimeout(() => setCopied(null), 1600); } catch { setCopied("unavailable"); } }
+  return <aside className="border border-border bg-background/40 p-5 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto" aria-label="Scheduled jobs">
+    <header className="flex items-baseline justify-between border-b border-border pb-3"><div><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>Scheduler</p><h2 className="mt-1 text-sm font-medium">Cron status</h2></div><span className={`${MONO} text-[10px] text-muted-foreground`}>{data ? fmtTime(data.generatedAt) : "--:--"}</span></header>
+    {error ? <p role="status" className={`${MONO} mt-3 text-xs text-rose-300`}>Status unavailable: {error}</p> : null}
+    {!data && !error ? <div className="mt-4"><LoadingLines/><p className={`${MONO} mt-3 text-xs text-muted-foreground`}><AsciiActivity /> Checking schedules</p></div> : null}
+    {data ? <>
+      <div className="mt-3 space-y-3">{visible.map(job => {
+        const overdue = job.enabled && job.nextRun && new Date(job.nextRun).getTime() < Date.now() && job.status !== "running";
+        const running = job.status.toLowerCase() === "running";
+        const failed = ["error", "failed", "failure"].includes(job.status.toLowerCase());
+        const unknown = !["ok","success","succeeded","idle","paused","disabled","running","overdue","error","failed","failure"].includes(job.status.toLowerCase());
+        const label = !job.enabled ? "PAUSED" : running ? "RUNNING" : failed ? "FAILED" : overdue ? "OVERDUE" : unknown ? `UNKNOWN · ${job.status}` : job.status.toUpperCase();
+        const tone = failed ? "text-rose-300" : overdue || unknown ? "text-amber-300" : running ? "text-sky-300" : "text-muted-foreground";
+        return <article key={job.id} className="border-b border-border pb-3 last:border-0"><div className="flex items-start justify-between gap-2"><p className="text-sm">{job.name}</p><span className={`${MONO} shrink-0 text-[9px] ${tone}`}>{label}</span></div><p className={`${MONO} mt-1 text-[10px] text-muted-foreground`}>{job.kind} · {job.nextRun ? `next ${fmtTime(job.nextRun)}` : "next unknown"}</p>{job.lastRun ? <p className={`${MONO} mt-1 text-[10px] text-muted-foreground`}>Last run {fmtTime(job.lastRun)}</p> : null}<p className="mt-2 text-xs text-foreground/80">{job.summary}</p>{job.kind === "information" && job.details ? <><button type="button" aria-expanded={expanded.includes(job.id)} onClick={()=>setExpanded(v=>v.includes(job.id)?v.filter(x=>x!==job.id):[...v,job.id])} className={`${MONO} mt-2 text-[10px] text-muted-foreground underline`}>{expanded.includes(job.id)?"Hide details":"Details"}</button>{expanded.includes(job.id)?<p className={`${MONO} mt-2 whitespace-pre-wrap break-words text-[10px] text-muted-foreground`}>{job.details}</p>:null}</> : null}{job.reference ? <button type="button" onClick={()=>void copy(job.reference!)} className={`${MONO} mt-2 block max-w-full break-all text-left text-[10px] text-muted-foreground underline`}>{copied === job.reference ? "Copied" : copied === "unavailable" ? "Clipboard unavailable" : `${job.referenceType ?? "reference"}: ${job.reference}`}</button> : null}</article>;
+      })}</div>
+      {data.limitations.length ? <ul className={`${MONO} mt-3 space-y-1 text-[10px] text-muted-foreground`}>{data.limitations.map((x,i)=><li key={i}>{x}</li>)}</ul> : null}
+      <button type="button" onClick={()=>setShowPaused(v=>!v)} className={`${MONO} mt-3 text-[10px] text-muted-foreground underline`}>{showPaused?"Collapse paused jobs":"Show paused jobs"}</button>
+    </> : null}
+  </aside>;
+}
+
+function FinancePanel({ finance, error, refreshing }: { finance: FinancePayload | null; error: string | null; refreshing: boolean }) {
   const state: ModuleState = finance ? "ok" : error ? "error" : "loading";
   return (
     <Panel eyebrow="Finance" title="Daily follow-up" state={state} error={error} meta={finance ? `report ${fmtTime(finance.generatedAt)}` : "private link"} className="lg:col-span-5">
+      {error && finance ? <p role="status" className={`${MONO} mb-4 border border-amber-400/30 px-3 py-2 text-xs text-amber-300`}>Refresh unavailable ({error}); showing last available report.</p> : null}
+      {refreshing ? <p role="status" className={`${MONO} mb-4 text-xs text-muted-foreground`}><AsciiActivity />Updating finance data…</p> : null}
       {finance ? <>
         <div className="grid gap-3 sm:grid-cols-2">
           {[{label:"Nordea",total:finance.nordea.balance,source:finance.nordea.status,updated:finance.nordea.lastSync},{label:"Saxo",total:finance.saxo.total,source:"Manual statement snapshot",updated:finance.saxo.asOf}].map(item=><div key={item.label} className="border border-border px-4 py-4"><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>{item.label}</p><p className="mt-3 text-lg tabular-nums">{item.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency })}</p><p className="mt-1 text-sm">{item.source}</p><p className={`${MONO} mt-2 text-[11px] text-muted-foreground`}>Source date: {item.updated ?? "unknown"}</p></div>)}
         </div>
-        <p className={`${MONO} mt-4 text-xs text-muted-foreground`}>Combined indicative total: {finance.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency })}. Mixed source dates; manual Saxo valuation is not live sync.</p>
+        <p className={`${MONO} mt-4 text-xs text-muted-foreground`}>Supported subtotal (partial assets): {finance.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency })}. This is not net worth.</p>
+        {finance.estimate ? <div className="mt-4 border border-border px-4 py-3"><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>Estimated known assets · historical assumptions · as of {finance.estimate.asOf}</p><p className="mt-2 text-lg tabular-nums">{finance.estimate.total.toLocaleString("en-GB", { style: "currency", currency: finance.estimate.currency })}</p><p className={`${MONO} mt-1 text-xs text-muted-foreground`}>Includes assumed additional savings of {finance.estimate.additionalSavings.toLocaleString("en-GB", { style: "currency", currency: finance.estimate.currency })}; not net worth.</p><ul className={`${MONO} mt-2 space-y-1 text-[11px] text-muted-foreground`}>{finance.estimate.assumptions.map((x,i)=><li key={i}>{x}</li>)}</ul></div> : null}
+        {finance.syncHealth ? <p className={`${MONO} mt-3 text-xs text-muted-foreground`}>Bank sync: {finance.syncHealth.status} · last success {finance.syncHealth.lastSuccess ? fmtTime(finance.syncHealth.lastSuccess) : "unknown"}{finance.syncHealth.lastAttempt && finance.syncHealth.status !== "ok" ? ` · last attempt ${fmtTime(finance.syncHealth.lastAttempt)}` : ""}</p> : null}
         <ul className={`${MONO} mt-3 space-y-1 text-[11px] text-muted-foreground`}>{finance.limitations.map((x,i)=><li key={i}>{x}</li>)}</ul>
       </> : null}
       <a href={ACTUAL_URL} target="_blank" rel="noopener noreferrer" className={`mt-5 inline-flex items-center gap-2 ${MONO} text-xs uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground`}>Open Actual <ArrowUpRight size={14} /></a>
@@ -301,6 +351,9 @@ export default function AdminDashboard() {
   const [reports, setReports] = useState<AdminReport[] | null>(null);
   const [finance, setFinance] = useState<FinancePayload | null>(null);
   const [financeError, setFinanceError] = useState<string | null>(null);
+  const [financeRefreshError, setFinanceRefreshError] = useState<string | null>(null);
+  const [cron, setCron] = useState<CronPayload | null>(null);
+  const [cronError, setCronError] = useState<string | null>(null);
 
   const hasSession = Boolean(session);
 
@@ -331,8 +384,10 @@ export default function AdminDashboard() {
     setGithub(g);
     setRadar(r);
     if (session?.access_token) {
-      try { const report = await fetchFinanceReport(session.access_token); setFinance(report); setFinanceError(null); }
-      catch (error) { setFinance(null); setFinanceError(error instanceof Error ? error.message : "Finance endpoint unavailable"); }
+      const headers = { Authorization: `Bearer ${session.access_token}` };
+      const cronRequest = fetch(CRON_ENDPOINT, { cache: "no-store", headers }).then(async response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json() as Promise<CronPayload>; }).then(value => { if (!value || typeof value.generatedAt !== "string" || !Array.isArray(value.jobs) || !Array.isArray(value.limitations) || !value.limitations.every(x => typeof x === "string") || !value.jobs.every(job => job && typeof job.id === "string" && typeof job.name === "string" && typeof job.status === "string" && typeof job.enabled === "boolean" && ["maintenance", "information"].includes(job.kind) && typeof job.summary === "string" && [job.lastRun, job.nextRun, job.reference, job.details].every(x => x === null || typeof x === "string") && [null, "session", "run", "job"].includes(job.referenceType))) throw new Error("Unexpected cron status format"); setCron(value); setCronError(null); }).catch(error => setCronError(error instanceof Error ? error.message : "Cron status unavailable"));
+      const financeRequest = fetchFinanceReport(session.access_token).then(report => { setFinance(report); setFinanceError(null); }).catch(error => { setFinanceError(error instanceof Error ? error.message : "Finance endpoint unavailable"); });
+      await Promise.all([cronRequest, financeRequest]);
     }
     if (sb) {
       sb.from("admin_reports")
@@ -403,8 +458,8 @@ export default function AdminDashboard() {
     setStocks(null);
     setGithub(null);
     if (session?.access_token) {
-      try { const report = await refreshFinance(session.access_token); setFinance(report); setFinanceError(null); }
-      catch (error) { setFinanceError(error instanceof Error ? error.message : "Finance refresh failed"); }
+      try { const report = await refreshFinance(session.access_token); setFinance(report); setFinanceError(null); setFinanceRefreshError(null); }
+      catch (error) { setFinanceRefreshError(error instanceof Error ? error.message : "Finance refresh failed"); }
     }
     await loadAll();
     setRefreshing(false);
@@ -633,10 +688,11 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mb-14">
-        <FinancePanel finance={finance} error={financeError} />
+        <FinancePanel finance={finance} error={financeRefreshError ?? financeError} refreshing={refreshing} />
       </div>
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-5">
+      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
+        <div className="order-2 space-y-10 lg:order-1 lg:col-span-9">
         <Panel
           eyebrow="Radar"
           title="Signal feed"
@@ -906,6 +962,8 @@ export default function AdminDashboard() {
             </div>
           )}
         </Panel>
+        </div>
+        <div className="order-1 lg:order-2 lg:col-span-3"><CronSidebar data={cron} error={cronError} /></div>
       </div>
 
       <p

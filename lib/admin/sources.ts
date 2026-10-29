@@ -27,9 +27,9 @@ async function getJson(url: string, timeoutMs = 10000, headers: Record<string, s
   return res.json();
 }
 
+import { collectGithub, createGithubCache } from "./github.mjs";
+
 const GITHUB_TOKEN = process.env.GITHUB_ADMIN_TOKEN ?? "";
-const GH_HEADERS: Record<string, string> = GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {};
-const GITHUB_WINDOW_HOURS = 24;
 
 // The watchlist mirrors the morning briefing (life/004-Stock-Watchlist.md).
 // Cap each symbol's uncertainty: the admin overview, not a trading terminal.
@@ -121,147 +121,29 @@ export async function fetchStocks() {
   return { status: "ok", asOf: new Date().toISOString(), stocks };
 }
 
-async function githubRepos(owner: string, limit = 12): Promise<{ repos: any[]; failed: boolean }> {
-  const url =
-    owner === "lucasfth"
-      ? `https://api.github.com/users/${owner}/repos?per_page=100&sort=pushed&direction=desc`
-      : `https://api.github.com/orgs/${owner}/repos?per_page=60&sort=pushed&direction=desc`;
-  try {
-    const repos = await getJson(url, 10000, GH_HEADERS);
-    if (!Array.isArray(repos)) return { repos: [], failed: false };
-    return { repos: repos.filter((r) => r && typeof r.full_name === "string").slice(0, limit), failed: false };
-  } catch {
-    return { repos: [], failed: true };
-  }
-}
-
-export async function fetchGithub() {
-  try {
-    const since = new Date(Date.now() - GITHUB_WINDOW_HOURS * 3600_000).toISOString();
-    const [personalR, orgR] = await Promise.all([githubRepos("lucasfth", 12), githubRepos("EcoRayDev", 12)]);
-    // Both repo-list fetches failing means GitHub is unreachable (or the
-    // token is wrong); a single failure still yields partial coverage.
-    if (personalR.failed && orgR.failed) {
-      return {
-        status: "error",
-        message: "GitHub unreachable (repo list failed)",
-        windowHours: GITHUB_WINDOW_HOURS,
-        commits: [],
-        openPulls: [],
-        issues: [],
-      };
-    }
-    const personal = personalR.repos;
-    const org = orgR.repos.filter((r) => !personal.some((p) => p.full_name === r.full_name));
-    const repos = [...personal, ...org].slice(0, 20);
-
-    const [commitResults, pullResults, issueResults] = await Promise.all([
-      Promise.allSettled(
-        repos.map(async (repo) => {
-          const commits = await getJson(
-            `https://api.github.com/repos/${repo.full_name}/commits?since=${since}&per_page=6`,
-            8000,
-            GH_HEADERS,
-          );
-          return Array.isArray(commits)
-            ? commits.map((c: any) => ({
-                repo: repo.full_name,
-                sha: c.sha?.slice(0, 7) ?? "",
-                message: String(c.commit?.message ?? "").split("\n")[0].slice(0, 120),
-                author: c.commit?.author?.name ?? c.author?.login ?? "",
-                url: c.html_url ?? `https://github.com/${repo.full_name}/commit/${c.sha}`,
-                committed: c.commit?.committer?.date ?? c.commit?.author?.date ?? "",
-              }))
-            : [];
-        }),
-      ),
-      Promise.allSettled(
-        repos.map(async (repo) => {
-          const pulls = await getJson(
-            `https://api.github.com/repos/${repo.full_name}/pulls?state=open&per_page=4`,
-            8000,
-            GH_HEADERS,
-          );
-          return Array.isArray(pulls)
-            ? pulls
-                .filter((p: any) => p.user?.login === "lucasfth" || p.draft === false)
-                .slice(0, 3)
-                .map((p: any) => ({
-                  repo: repo.full_name,
-                  number: p.number,
-                  title: String(p.title ?? "").slice(0, 120),
-                  state: p.state,
-                  url: p.html_url ?? `https://github.com/${repo.full_name}/pull/${p.number}`,
-                }))
-            : [];
-        }),
-      ),
-      Promise.allSettled(
-        personal.map(async (repo) => {
-          const issues = await getJson(
-            `https://api.github.com/repos/${repo.full_name}/issues?since=${since}&state=all&per_page=6`,
-            8000,
-            GH_HEADERS,
-          );
-          return Array.isArray(issues)
-            ? issues
-                .filter((i: any) => !i.pull_request && i.user?.login === "lucasfth")
-                .slice(0, 3)
-                .map((i: any) => ({
-                  repo: repo.full_name,
-                  number: i.number,
-                  title: String(i.title ?? "").slice(0, 120),
-                  state: i.state,
-                  url: i.html_url ?? `https://github.com/${repo.full_name}/issues/${i.number}`,
-                }))
-            : [];
-        }),
-      ),
-    ]);
-
-    const commits = commitResults
-      .filter((r): r is PromiseFulfilledResult<any[]> => r.status === "fulfilled")
-      .flatMap((r) => r.value)
-      .filter((c) => c.sha)
-      .slice(0, 25);
-    const openPulls = pullResults
-      .filter((r): r is PromiseFulfilledResult<any[]> => r.status === "fulfilled")
-      .flatMap((r) => r.value)
-      .slice(0, 12);
-    const issues = issueResults
-      .filter((r): r is PromiseFulfilledResult<any[]> => r.status === "fulfilled")
-      .flatMap((r) => r.value)
-      .slice(0, 8);
-
-    // Per-repo calls are isolated; if every one rejected, that is a source
-    // failure masquerading as a quiet day (review finding F2).
-    const attempted = repos.length + repos.length + personal.length;
-    const failed =
-      commitResults.filter((r) => r.status === "rejected").length +
-      pullResults.filter((r) => r.status === "rejected").length +
-      issueResults.filter((r) => r.status === "rejected").length;
-    if (attempted > 0 && failed === attempted) {
-      return {
-        status: "error",
-        message: "GitHub source calls failed",
-        windowHours: GITHUB_WINDOW_HOURS,
-        commits: [],
-        openPulls: [],
-        issues: [],
-      };
-    }
-    return { status: "ok", windowHours: GITHUB_WINDOW_HOURS, commits, openPulls, issues };
-  } catch (error) {
-    return {
-      status: "error",
-      message: error instanceof Error ? error.message : "github fetch failed",
-      windowHours: GITHUB_WINDOW_HOURS,
-      commits: [],
-      openPulls: [],
-      issues: [],
-    };
-  }
-}
+export const fetchGithub = createGithubCache(() => collectGithub({
+    request: async (path, body, signal) => {
+      const response = await fetch(`https://api.github.com${path}`, {
+        method: body ? "POST" : "GET",
+        headers: {
+          Accept: "application/vnd.github+json",
+          "User-Agent": "lucashanson.dk admin",
+          ...(GITHUB_TOKEN ? { Authorization: `Bearer ${GITHUB_TOKEN}` } : {}),
+          ...(body ? { "Content-Type": "application/json" } : {}),
+        },
+        body: body ? JSON.stringify(body) : undefined,
+        signal,
+        cache: "no-store",
+      });
+      if (!response.ok) {
+        throw Object.assign(new Error("GitHub source unavailable"), {
+          status: response.status,
+          rateLimited: response.headers.get("x-ratelimit-remaining") === "0" || response.headers.has("retry-after"),
+        });
+      }
+      return response.json();
+    },
+}));
 
 export async function fetchRadar() {
   try {

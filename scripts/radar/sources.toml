@@ -1,0 +1,62 @@
+# Loki Radar sources. visibility: public items may be published to lucashanson.dk/radar,
+# private items only reach Lucas's morning briefing.
+
+[[rss]]
+group = "public"
+feeds = [
+  ["Simon Willison", "https://simonwillison.net/atom/everything/"],
+  ["Latent Space", "https://www.latent.space/feed"],
+  ["Interconnects", "https://www.interconnects.ai/feed"],
+  ["AI News (smol.ai)", "https://news.smol.ai/rss.xml"],
+  ["antirez", "https://antirez.com/rss"],
+  ["Hugging Face blog", "https://huggingface.co/blog/feed.xml"],
+  ["Ollama blog", "https://ollama.com/blog/rss.xml"],
+  ["OpenAI", "https://openai.com/news/rss.xml"],
+  ["GitHub changelog", "https://github.blog/changelog/feed/"],
+  ["Krebs on Security", "https://krebsonsecurity.com/feed/"],
+  ["The Hacker News", "https://feeds.feedburner.com/TheHackersNews"],
+  ["The Register", "https://www.theregister.com/headlines.atom"],
+  ["Ars Technica", "https://feeds.arstechnica.com/arstechnica/index"],
+  ["The Verge", "https://www.theverge.com/rss/index.xml"],
+  ["Changelog News", "https://changelog.com/news/feed"],
+  ["TLDR AI", "https://tldr.tech/api/rss/ai"],
+  ["Version2", "https://www.version2.dk/rss"],
+  ["Ingenioeren", "https://www.ing.dk/rss/nyheder"],
+  ["Computerworld DK", "https://www.computerworld.dk/rss/all"],
+  ["Bluesky: Karpathy", "https://bsky.app/profile/karpathy.bsky.social/rss"],
+  ["Bluesky: Simon Willison", "https://bsky.app/profile/simonwillison.net/rss"],
+  ["HN best", "https://hnrss.org/best"],
+]
+
+[[rss]]
+group = "private"
+feeds = [
+  ["Yahoo: NVDA", "https://feeds.finance.yahoo.com/rss/2.0/headline?s=NVDA&region=US&lang=en-US"],
+  ["Yahoo: TSLA", "https://feeds.finance.yahoo.com/rss/2.0/headline?s=TSLA&region=US&lang=en-US"],
+  ["Yahoo: QCOM", "https://feeds.finance.yahoo.com/rss/2.0/headline?s=QCOM&region=US&lang=en-US"],
+  ["Yahoo: MSFT", "https://feeds.finance.yahoo.com/rss/2.0/headline?s=MSFT&region=US&lang=en-US"],
+  ["Yahoo: Novo Nordisk", "https://feeds.finance.yahoo.com/rss/2.0/headline?s=NVO&region=US&lang=en-US"],
+  ["Yahoo: Orsted", "https://feeds.finance.yahoo.com/rss/2.0/headline?s=DNNGY&region=US&lang=en-US"],
+  ["Yahoo: DSV", "https://feeds.finance.yahoo.com/rss/2.0/headline?s=DSDVY&region=US&lang=en-US"],
+  ["CoinDesk", "https://www.coindesk.com/arc/outboundfeeds/rss/"],
+]
+
+[reddit]
+public = ["LocalLLaMA", "LocalLLM", "openclaw", "ClaudeAI", "selfhosted", "commandline", "netsec", "MachineLearning", "macapps"]
+private = ["copenhagen", "dkfinance", "Bitcoin"]
+
+[github]
+# releases of everything Lucas has starred, plus fast-rising new repos and trending
+user = "lucasfth"
+trending = true
+new_repos_days = 7
+
+[nostr]
+enabled = true
+relays = ["wss://nos.lol", "wss://relay.primal.net"]
+tags = ["localllm", "llm", "agents", "mcp", "opensource", "selfhosting", "security"]
+# Optional verified hex public keys; never place private keys here.
+authors = []
+limit = 80
+per_relay_limit = 60
+timeout_seconds = 12

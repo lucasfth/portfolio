@@ -40,3 +40,15 @@ test('retained session freshness separates heartbeat, ended and clock skew', () 
   assert.throws(()=>validateFleet({...data,raw:'SECRET'}));
   assert.throws(()=>validateFleet({...data,hosts:[data.hosts[0],data.hosts[0]]}));
 });
+
+test('optional activity v1 accepts old Mac reports and strictly validates paired source evidence', () => {
+  assert.deepEqual(validateReport(report(), now), report());
+  const active={...report(), workingSince:report().startedAt, toolsInFlight:2};
+  assert.deepEqual(validateReport(active,now),active);
+  assert.deepEqual(validateReport({...report(),state:'idle',workingSince:null,toolsInFlight:0},now).state,'idle');
+  for(const change of [{workingSince:null},{toolsInFlight:0},{workingSince:null,toolsInFlight:0},{workingSince:active.workingSince,toolsInFlight:-1},{workingSince:active.workingSince,toolsInFlight:257},{workingSince:active.workingSince,toolsInFlight:0.5},{workingSince:new Date(now+1).toISOString(),toolsInFlight:0},{workingSince:new Date(now-2000).toISOString(),toolsInFlight:0},{state:'idle',workingSince:active.workingSince,toolsInFlight:0},{state:'ended',workingSince:null,toolsInFlight:1},{workingSince:null,toolsInFlight:null},{title:'PRIVATE_PROMPT'}, {toolsInFlight:'1',workingSince:active.workingSince}]) {
+    assert.throws(()=>validateReport({...report(),...change},now),JSON.stringify(change));
+  }
+  const receipt=new Date(now).toISOString();
+  assert.deepEqual(validateFleet({schemaVersion:1,readAt:receipt,hosts:[{id:'gimle',lastReceivedAt:receipt,sessions:[{...active,receivedAt:receipt}]},{id:'macbook',lastReceivedAt:null,sessions:[]}]}).hosts[0].sessions[0].toolsInFlight,2);
+});

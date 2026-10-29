@@ -42,9 +42,50 @@ test('compiled fleet activity is event-backed, stable active-first, semantic and
   assert.ok(markup.indexOf('Active session')<markup.indexOf('Responding session'),'stable same-priority order');
   assert.ok(markup.includes('Working since'));assert.ok(markup.includes('Responding'));
   const disclosure=document.querySelector('details');assert.ok(disclosure);assert.equal(disclosure.hasAttribute('open'),false);assert.match(disclosure.querySelector('summary').textContent,/Ended sessions.*1/);
-  assert.ok(document.querySelector('.text-sky-700'));assert.ok(markup.includes('dark:text-sky-300'));
+  assert.ok(document.querySelector('.text-accent'));assert.ok(document.querySelector('[class="text-(--syntax-peach)"]'));
   const stale=renderFleet(model,true,Date.parse(at)+121000);
   assert.ok(stale.includes('Last reported: Running tools'));assert.ok(stale.includes('stale'));assert.ok(stale.includes('Showing last received values'));
-  for(const state of ['idle','error','unknown','ended']){const html=renderFleet({...data,hosts:[{...data.hosts[0],sessions:[{...session,state}]},data.hosts[1]]},false,Date.parse(at));assert.ok(html.includes(state==='error'?'text-rose-700':state==='unknown'?'text-amber-700':'text-muted-foreground'));}
+  for(const state of ['idle','error','unknown','ended']){const html=renderFleet({...data,hosts:[{...data.hosts[0],sessions:[{...session,state}]},data.hosts[1]]},false,Date.parse(at));assert.ok(html.includes(state==='error'?'text-(--syntax-red)':state==='unknown'?'text-amber-400':'text-muted-foreground'));}
   const malicious=renderFleet({...data,hosts:[{...data.hosts[0],sessions:[{...session,label:'<img src=x onerror=alert(1)>'}]},data.hosts[1]]},false,Date.parse(at));assert.ok(!parseHTML(malicious).document.querySelector('img'));
+});
+
+test('compiled fleet labels resolve to Hugi-inspired Mocha and Latte tokens, with stale tones neutral', async()=>{
+  const [{parseHTML},{default:postcss},{default:tailwind}]=await Promise.all([import('linkedom'),import('postcss'),import('@tailwindcss/postcss')]);
+  const css=await postcss([tailwind()]).process(readFileSync(new URL('../app/globals.css',import.meta.url),'utf8'),{from:fileURLToPath(new URL('../app/globals.css',import.meta.url))});
+  const tokens={dark:{},light:{}};const colors=new Map();
+  css.root.walkDecls(decl=>{
+    if(!decl.parent.selector?.includes(':root'))return;
+    let light=false;for(let parent=decl.parent;parent;parent=parent.parent){if(parent.type==='atrule'&&parent.name==='media'&&parent.params.includes('prefers-color-scheme: light'))light=true;}
+    tokens[light?'light':'dark'][decl.prop]=decl.value;
+  });
+  css.root.walkRules(rule=>{
+    const color=rule.nodes.find(node=>node.type==='decl'&&node.prop==='color')?.value;
+    if(color)colors.set(rule.selector.replace(/\\(.)/g,'$1'),color);
+  });
+  const cases=[
+    ['working',0,at,'Responding','text-accent','#89b4fa','#1e66f5'],
+    ['working',2,at,'Running tools','text-(--syntax-peach)','#fab387','#fe640b'],
+    ['error',0,null,'Error','text-(--syntax-red)','#f38ba8','#d20f39'],
+    ['idle',0,null,'Idle','text-muted-foreground','#a6adc8','#6c6f85'],
+    ['unknown',0,null,'Unknown','text-amber-400','#f9e2af','#df8e1d'],
+    ['ended',0,null,'Ended','text-muted-foreground','#a6adc8','#6c6f85'],
+    ['blocked',0,null,'Blocked','text-amber-400','#f9e2af','#df8e1d'],
+    ['done',0,null,'Done (reported)','text-muted-foreground','#a6adc8','#6c6f85'],
+    ['working',undefined,undefined,'Working (legacy observation)','text-accent','#89b4fa','#1e66f5'],
+  ];
+  for(const [state,toolsInFlight,workingSince,label,tone,dark,light] of cases){
+    const model={...data,hosts:[{...data.hosts[0],sessions:[{...session,state,toolsInFlight,workingSince}]},data.hosts[1]]};
+    for(const [age,ageLabel] of [[0,''],[121000,'stale'],[-31000,'clock-skew']]){
+      const qualification=state==='ended'?'':ageLabel;
+      const {document}=parseHTML('<html><body>'+renderFleet(model,false,Date.parse(at)+age)+'</body></html>');
+      const row=document.querySelector('li');const status=row.querySelector('p > span');
+      assert.equal(status.textContent,(qualification?'Last reported: ':'')+label);
+      assert.equal(status.className,qualification?'text-muted-foreground':tone,label);
+      if(qualification)assert.ok(row.textContent.includes(qualification));
+      const variable=colors.get('.'+status.className)?.match(/^var\((--[\w-]+)\)$/)?.[1];
+      assert.ok(variable,`compiled CSS utility for ${status.className}`);
+      assert.equal(tokens.dark[variable],qualification?'#a6adc8':dark,`${label}: Mocha`);
+      assert.equal(tokens.light[variable]??tokens.dark[variable],qualification?'#6c6f85':light,`${label}: Latte`);
+    }
+  }
 });

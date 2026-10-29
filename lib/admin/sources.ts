@@ -1,4 +1,5 @@
 import "server-only";
+import { getRadarEdition } from "@/lib/radar/publication";
 
 // Server-side data sources for the /admin overnight module.
 //
@@ -147,10 +148,8 @@ export const fetchGithub = createGithubCache(() => collectGithub({
 
 export async function fetchRadar() {
   try {
-    const data = await cached("radar", 1800_000, () =>
-      getJson("https://raw.githubusercontent.com/lucasfth/loki-radar/main/public.json?v=2", 10000),
-    );
-    const items: any[] = Array.isArray(data?.items) ? data.items : [];
+    const data = await cached("radar", 1800_000, getRadarEdition);
+    const items: any[] = data.items;
     const top = items
       .filter((i) => typeof i?.url === "string" && i.url.startsWith("http"))
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))

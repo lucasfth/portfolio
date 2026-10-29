@@ -5,11 +5,12 @@ import { sessionFreshness, validateFleet, type FleetSnapshot, type FleetSession 
 function timestamp(value: string | null) {
   return value ? new Date(value).toLocaleString("en-GB", { timeZone: "Europe/Copenhagen", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }) : "Not observed";
 }
-// Scheduler semantic tones, with light-mode counterparts; text always carries state too.
+// Hugi composer activity targets; existing tokens switch Mocha/Latte with appearance.
+// Idle/ended stay neutral: Hugi's idle border is a per-session identity, not a state.
 function stateTone(session: FleetSession) {
-  return session.state === "error" ? "text-rose-700 dark:text-rose-300"
-    : session.state === "unknown" || session.state === "blocked" ? "text-amber-700 dark:text-amber-300"
-    : session.state === "working" ? "text-sky-700 dark:text-sky-300" : "text-muted-foreground";
+  return session.state === "error" ? "text-(--syntax-red)"
+    : session.state === "unknown" || session.state === "blocked" ? "text-amber-400"
+    : session.state === "working" ? (session.toolsInFlight ? "text-(--syntax-peach)" : "text-accent") : "text-muted-foreground";
 }
 function stateText(session: FleetSession) {
   if (session.state === "working") return session.workingSince ? (session.toolsInFlight ? "Running tools" : "Responding") : "Working (legacy observation)";

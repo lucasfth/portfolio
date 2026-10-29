@@ -8,6 +8,7 @@
 import { Children, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowUpRight, LogOut, RefreshCw } from "lucide-react";
 import { browserSupabase } from "@/lib/admin/browser";
+import AdminFleetPanel from "@/components/AdminFleetPanel";
 import type {
   AdminReport,
   GithubPayload,
@@ -22,7 +23,7 @@ import { activateDialog, cronJobDetail } from "@/lib/admin/detail-dialog.mjs";
 
 type SessionShape = {
   access_token: string;
-  user: { email?: string | null };
+  user: { id: string; email?: string | null };
 } | null;
 
 type FinanceAccount = { name: string; balance: number; source: string; lastSync: string | null; bankStatus: string | null };
@@ -383,12 +384,12 @@ export default function AdminDashboard() {
       .then(({ data }) => {
         if (!mounted) return;
         const s = data.session;
-        setSession(s ? { access_token: s.access_token, user: { email: s.user.email } } : null);
+        setSession(s ? { access_token: s.access_token, user: { id: s.user.id, email: s.user.email } } : null);
         setPhase(s ? "auth" : "anon");
       })
       .catch(() => mounted && setPhase("cfg"));
     const { data: sub } = sb.auth.onAuthStateChange((_event, s) => {
-      setSession(s ? { access_token: s.access_token, user: { email: s.user.email } } : null);
+      setSession(s ? { access_token: s.access_token, user: { id: s.user.id, email: s.user.email } } : null);
       setPhase(s ? "auth" : "anon");
     });
     return () => {
@@ -441,7 +442,7 @@ export default function AdminDashboard() {
       return;
     }
     if (data.session) {
-      setSession({ access_token: data.session.access_token, user: { email: email.trim() } });
+      setSession({ access_token: data.session.access_token, user: { id: data.session.user.id, email: data.session.user.email } });
       setPhase("auth");
     }
   };
@@ -651,6 +652,8 @@ export default function AdminDashboard() {
       <div className="mb-14">
         <Board cells={cells} />
       </div>
+
+      {session?.access_token ? <AdminFleetPanel key={session.user.id} token={session.access_token} /> : null}
 
       <div className="mb-14">
         <FinancePanel finance={finance} error={financeRefreshError ?? financeError} refreshing={refreshing} />

@@ -8,7 +8,9 @@ const dashboard = readFileSync('components/AdminDashboard.tsx', 'utf8');
 // Source/token-math regression, not a browser/pixel audit. This bounded reader
 // handles the sheet's root/theme, layer, media, class and :is() rules. Tailwind
 // text utilities derive from @theme tokens and slash alpha; no palette is copied.
-// Unsupported selectors/conditions on relevant admin declarations fail closed.
+// Unsupported selector/at-rule forms are skipped, not evaluated. Future rules
+// using forms such as @supports can therefore cause false negatives; extend this
+// reader's model when the admin sheet gains them. This is not a CSS validator.
 function splitOutside(value, separator) {
   let depth = 0;
   return value.split('').reduce((parts, char) => {

@@ -5,20 +5,23 @@ import { createAsciiReveal, presets } from "ascii-reveal/core";
 import { usePathname } from "next/navigation";
 
 /** Enhance real server-rendered content; never hide it while loading the effect. */
-function useTerminalReveal(scope: React.RefObject<HTMLElement | null>, titlesOnly = false, enabled = true) {
+function useTerminalReveal(scope: React.RefObject<HTMLElement | null>, titlesOnly = false, enabled = true, loading = false, loadingLoop = false) {
   const pathname = usePathname();
   useLayoutEffect(() => {
-    if (!enabled || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if ((!enabled && !loading) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     let cancelled = false;
-    const controllers: { destroy(): void }[] = [];
+    const controllers: { destroy(): void; shimmer(on: boolean): void; reveal(): Promise<void> }[] = [];
     let observer: IntersectionObserver | undefined;
     async function start() {
       try {
-        // Headings use system fonts: start synchronously before the hydration
-        // paint instead of waiting for the unrelated body font and a lazy chunk.
         const root = titlesOnly ? document.getElementById("main-content") : scope.current;
         if (cancelled || !root) return;
-        // Image previews must be decoded before the grid samples their pixels.
+        if (!titlesOnly && loading && loadingLoop) {
+          const controller = createAsciiReveal(root, { preset: { ...presets.terminal, tick: 120 }, origin: "top-left", speed: 2, duration: "cinematic" });
+          controllers.push(controller);
+          controller.shimmer(true);
+          return;
+        }
         if (!titlesOnly) await Promise.all(Array.from(root.querySelectorAll("img")).map(image => image.decode().catch(() => {})));
         if (cancelled) return;
         const targets = titlesOnly ? Array.from(root.querySelectorAll<HTMLElement>("h1, [data-terminal-heading], [data-terminal-media]")) : [root];
@@ -46,13 +49,12 @@ function useTerminalReveal(scope: React.RefObject<HTMLElement | null>, titlesOnl
           else observer.observe(target);
         }
       } catch {
-        // An optional animation must never prevent reading the page.
         controllers.forEach(controller => controller.destroy());
       }
     }
     void start();
     return () => { cancelled = true; observer?.disconnect(); controllers.forEach(controller => controller.destroy()); };
-  }, [pathname, scope, titlesOnly, enabled]);
+  }, [pathname, scope, titlesOnly, enabled, loading, loadingLoop]);
 }
 
 export function TitleReveals() {
@@ -61,8 +63,8 @@ export function TitleReveals() {
   return null;
 }
 
-export default function TerminalReveal({ children, enabled = true }: { children: ReactNode; enabled?: boolean }) {
+export default function TerminalReveal({ children, enabled = true, loading = false, loadingLoop = false }: { children: ReactNode; enabled?: boolean; loading?: boolean; loadingLoop?: boolean }) {
   const scope = useRef<HTMLDivElement>(null);
-  useTerminalReveal(scope, false, enabled);
+  useTerminalReveal(scope, false, enabled, loading, loadingLoop);
   return <div ref={scope} className="terminal-reveal">{children}</div>;
 }

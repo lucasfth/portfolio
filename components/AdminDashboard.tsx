@@ -5,7 +5,7 @@
 // (radar, stocks, weather, GitHub) fetch through /api/admin/* with the user
 // session; the overnight panel reads admin_reports directly with RLS.
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Children, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowUpRight, LogOut, RefreshCw } from "lucide-react";
 import { browserSupabase } from "@/lib/admin/browser";
 import type {
@@ -15,6 +15,10 @@ import type {
   StockPayload,
   WeatherPayload,
 } from "@/lib/admin/types";
+import TerminalReveal from "@/components/TerminalReveal";
+import { fetchJsonWithRetry } from "@/lib/admin/fetch-json-with-retry.mjs";
+import { createRequestCoordinator, payloadRefreshError, reportReadResult, retainSuccessfulPayload } from "@/lib/admin/dashboard-state.mjs";
+import { activateDialog, cronJobDetail } from "@/lib/admin/detail-dialog.mjs";
 
 type SessionShape = {
   access_token: string;
@@ -136,89 +140,26 @@ function Chip({ label, on }: { label: string; on: boolean }) {
   );
 }
 
-function AsciiActivity() {
-  const [frame, setFrame] = useState(0);
-  useEffect(() => {
-    const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let timer: ReturnType<typeof setInterval> | undefined;
-    const update = () => {
-      if (timer) clearInterval(timer);
-      if (!motion.matches) timer = setInterval(() => setFrame(value => (value + 1) % 4), 180);
-      else setFrame(0);
-    };
-    update();
-    motion.addEventListener("change", update);
-    return () => { if (timer) clearInterval(timer); motion.removeEventListener("change", update); };
-  }, []);
-  return <span aria-hidden className="inline-block w-[7ch] font-mono">{["[>   ]", "[=>  ]", "[==> ]", "[ ==>]"][frame]}</span>;
-}
 
-function LoadingLines() {
-  return (
-    <div className="space-y-3" aria-hidden>
-      <div className="h-3 w-3/4 animate-pulse bg-foreground/[0.06]" />
-      <div className="h-3 w-1/2 animate-pulse bg-foreground/[0.06]" />
-      <div className="h-3 w-2/3 animate-pulse bg-foreground/[0.06]" />
-    </div>
-  );
+function FieldReveal({ children, loading }: { children: ReactNode; loading: boolean }) {
+  return <div className="min-h-[2.5rem]"><TerminalReveal loading={loading} loadingLoop={loading}>{children}</TerminalReveal></div>;
 }
 
 function Panel({
-  eyebrow,
-  title,
-  meta,
-  state,
-  error,
-  children,
-  className = "",
+  eyebrow, title, meta, state, error, children, className = "", loading = false, ready,
 }: {
-  eyebrow: string;
-  title?: string;
-  meta?: string | null;
-  state: ModuleState;
-  error?: string | null;
-  children: ReactNode;
-  className?: string;
+  eyebrow: string; title?: string; meta?: string | null; state: ModuleState; error?: string | null; children: ReactNode; className?: string; loading?: boolean; ready: boolean;
 }) {
-  const loading = state === "loading";
-  return (
-    <section className={`border border-border bg-background/40 ${className}`}>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-5 py-3">
-        <div className="flex min-w-0 items-baseline gap-3">
-          <p className={`${MONO} text-[11px] ${TRACK} text-muted-foreground`}>{eyebrow}</p>
-          {title ? <h2 className="truncate text-sm font-medium tracking-tight text-foreground/90">{title}</h2> : null}
-        </div>
-        <div className="flex shrink-0 items-center gap-3">
-          {meta ? (
-            <span className={`${MONO} text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60`}>{meta}</span>
-          ) : null}
-          <span className="flex items-center gap-1.5">
-            <Dot state={state} />
-            <span
-              className={`${MONO} text-[10px] ${TRACK} ${
-                state === "ok"
-                  ? "text-emerald-400/80"
-                  : state === "error"
-                    ? "text-rose-400/90"
-                    : "text-muted-foreground/60"
-              }`}
-            >
-              {stateWord(state)}
-            </span>
-          </span>
-        </div>
-      </div>
-      <div className="px-5 py-5">
-        {loading ? (
-          <div role="status"><p className={`${MONO} mb-3 text-xs text-muted-foreground`}><AsciiActivity /> Loading</p><LoadingLines /></div>
-        ) : state === "error" ? (
-          <p className={`${MONO} text-xs ${TRACK} text-muted-foreground`}>Unavailable: {error ?? "source error"}</p>
-        ) : (
-          children
-        )}
-      </div>
-    </section>
-  );
+  const isLoading = loading || state === "loading";
+  const content = Children.toArray(children);
+  return <section className={`border border-border bg-background/40 ${className}`}>
+    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-5 py-3"><div className="flex min-w-0 items-baseline gap-3"><p className={`${MONO} text-[11px] ${TRACK} text-muted-foreground`}>{eyebrow}</p>{title ? <h2 className="truncate text-sm font-medium tracking-tight text-foreground/90">{title}</h2> : null}</div><div className="flex shrink-0 items-center gap-3">{meta ? <span className={`${MONO} text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60`}>{meta}</span> : null}<span className="flex items-center gap-1.5"><Dot state={state} /><span className={`${MONO} text-[10px] ${TRACK} ${state === "ok" ? "text-emerald-400/80" : state === "error" ? "text-rose-400/90" : "text-muted-foreground/60"}`}>{stateWord(state)}</span></span></div></div>
+    <div className="px-5 py-5">
+      {!ready && state === "loading" ? <div role="status" aria-label={`Loading ${eyebrow} data`} className="space-y-3">{content.map((child, index) => <FieldReveal key={index} loading>{child}</FieldReveal>)}</div>
+        : !ready && state === "error" ? <p role="status" className={`${MONO} text-xs ${TRACK} text-muted-foreground`}>Unavailable: {error ?? "source error"}</p>
+        : <>{error && ready ? <p role="status" className={`${MONO} mb-4 border border-amber-400/30 px-3 py-2 text-xs text-amber-300`}>Refresh unavailable ({error}); showing last available data.</p> : null}{isLoading && ready ? <p role="status" className={`${MONO} mb-4 text-xs text-muted-foreground`}>Updating; showing last available data.</p> : null}{content}</>}
+    </div>
+  </section>;
 }
 
 type BoardCell = {
@@ -268,17 +209,16 @@ function validFinancePayload(value: unknown): value is FinancePayload {
     p.nordea.accounts.every(a => typeof a.name === "string" && typeof a.balance === "number" && typeof a.source === "string");
 }
 
-async function fetchFinanceReport(token: string): Promise<FinancePayload> {
-  const response = await fetch(FINANCE_ENDPOINT, { cache: "no-store", headers: { Authorization: `Bearer ${token}` } });
-  if (!response.ok) throw new Error(`HTTP ${response.status}`);
-  const payload: unknown = await response.json();
-  if (!validFinancePayload(payload)) throw new Error("Unexpected finance report format");
-  return payload;
+async function fetchFinanceReport(token: string, signal?: AbortSignal): Promise<FinancePayload> {
+  const result = await fetchJsonWithRetry(FINANCE_ENDPOINT, { cache: "no-store", headers: { Authorization: `Bearer ${token}` }, signal });
+  if (!result.response.ok) throw new Error(`HTTP ${result.response.status}`);
+  if (!validFinancePayload(result.body)) throw new Error("Unexpected finance report format");
+  return result.body;
 }
 
-async function refreshFinance(token: string): Promise<FinancePayload> {
+async function refreshFinance(token: string, signal?: AbortSignal): Promise<FinancePayload> {
   const response = await fetch(FINANCE_ENDPOINT.replace("/report", "/refresh"), {
-    method: "POST", cache: "no-store", headers: { Authorization: `Bearer ${token}` },
+    method: "POST", cache: "no-store", headers: { Authorization: `Bearer ${token}` }, signal,
   });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const payload: unknown = await response.json();
@@ -286,16 +226,29 @@ async function refreshFinance(token: string): Promise<FinancePayload> {
   return payload;
 }
 
-function CronSidebar({ data, error }: { data: CronPayload | null; error: string | null }) {
+function AdminDetailDialog({ detail, opener, onClose }: { detail: Record<string, unknown>; opener: HTMLElement | null; onClose: () => void }) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  useEffect(() => { const dialog = dialogRef.current; if (!dialog) return; return activateDialog({ dialog, opener, body: document.body, onClose }); }, [opener, onClose]);
+  const title = String(detail.name ?? detail.title ?? detail.symbol ?? "Details");
+  return <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-3 sm:items-center sm:p-6" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="admin-detail-title" className="max-h-[85vh] w-full max-w-2xl overflow-y-auto border border-border bg-background p-6 shadow-2xl sm:p-8">
+      <div className="flex items-start justify-between gap-6"><h2 id="admin-detail-title" className="text-xl font-medium">{title}</h2><button type="button" data-dialog-close data-dialog-focusable aria-label="Close details" onClick={onClose} className="border border-border px-3 py-2 text-sm">Close</button></div>
+      <dl className="mt-6 grid gap-4 sm:grid-cols-2">{Object.entries(detail).filter(([, value]) => value !== null && value !== undefined && typeof value !== "object").map(([key, value]) => <div key={key} className="border-b border-border pb-3"><dt className={`${MONO} text-[10px] uppercase text-muted-foreground`}>{key.replace(/[A-Z]/g, letter => ` ${letter.toLowerCase()}`)}</dt><dd className="mt-1 break-words text-sm">{String(value)}</dd></div>)}</dl>
+      {detail.detailsWithheld ? <p className="mt-5 text-sm text-muted-foreground">Additional details are withheld for safety.</p> : null}
+    </div>
+  </div>;
+}
+
+
+function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; error: string | null; openDetail: (detail: Record<string, unknown>, opener: HTMLElement) => void }) {
   const [copied, setCopied] = useState<string | null>(null);
   const [showPaused, setShowPaused] = useState(false);
-  const [expanded, setExpanded] = useState<string[]>([]);
   const visible = (data?.jobs ?? []).filter(job => job.enabled || showPaused);
   async function copy(ref: string) { try { await navigator.clipboard.writeText(ref); setCopied(ref); window.setTimeout(() => setCopied(null), 1600); } catch { setCopied("unavailable"); } }
   return <aside className="border border-border bg-background/40 p-5 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto" aria-label="Scheduled jobs">
     <header className="flex items-baseline justify-between border-b border-border pb-3"><div><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>Scheduler</p><h2 className="mt-1 text-sm font-medium">Cron status</h2></div><span className={`${MONO} text-[10px] text-muted-foreground`}>{data ? fmtTime(data.generatedAt) : "--:--"}</span></header>
-    {error ? <p role="status" className={`${MONO} mt-3 text-xs text-rose-300`}>Status unavailable: {error}</p> : null}
-    {!data && !error ? <div className="mt-4"><LoadingLines/><p className={`${MONO} mt-3 text-xs text-muted-foreground`}><AsciiActivity /> Checking schedules</p></div> : null}
+    {error ? <p role="status" className={`${MONO} mt-3 text-xs text-rose-300`}>Status unavailable: {error}{data ? " · showing previous data" : ""}</p> : null}
+    {!data && !error ? <div className="mt-4" role="status"><p className={`${MONO} mb-3 text-xs text-muted-foreground`}>Loading</p><TerminalReveal loading><div className="space-y-3"><p className="h-3 w-3/4 bg-foreground/[0.06]">Loading scheduled jobs</p><p className="h-3 w-1/2 bg-foreground/[0.06]">Waiting for schedule status</p><div className="h-24 w-full border border-border bg-foreground/[0.06]" /></div></TerminalReveal></div> : null}
     {data ? <>
       <div className="mt-3 space-y-3">{visible.map(job => {
         const overdue = job.enabled && job.nextRun && new Date(job.nextRun).getTime() < Date.now() && job.status !== "running";
@@ -304,7 +257,7 @@ function CronSidebar({ data, error }: { data: CronPayload | null; error: string 
         const unknown = !["ok","success","succeeded","idle","paused","disabled","running","overdue","error","failed","failure"].includes(job.status.toLowerCase());
         const label = !job.enabled ? "PAUSED" : running ? "RUNNING" : failed ? "FAILED" : overdue ? "OVERDUE" : unknown ? `UNKNOWN · ${job.status}` : job.status.toUpperCase();
         const tone = failed ? "text-rose-300" : overdue || unknown ? "text-amber-300" : running ? "text-sky-300" : "text-muted-foreground";
-        return <article key={job.id} className="border-b border-border pb-3 last:border-0"><div className="flex items-start justify-between gap-2"><p className="text-sm">{job.name}</p><span className={`${MONO} shrink-0 text-[9px] ${tone}`}>{label}</span></div><p className={`${MONO} mt-1 text-[10px] text-muted-foreground`}>{job.kind} · {job.nextRun ? `next ${fmtTime(job.nextRun)}` : "next unknown"}</p>{job.lastRun ? <p className={`${MONO} mt-1 text-[10px] text-muted-foreground`}>Last run {fmtTime(job.lastRun)}</p> : null}<p className="mt-2 text-xs text-foreground/80">{job.summary}</p>{job.kind === "information" && job.details ? <><button type="button" aria-expanded={expanded.includes(job.id)} onClick={()=>setExpanded(v=>v.includes(job.id)?v.filter(x=>x!==job.id):[...v,job.id])} className={`${MONO} mt-2 text-[10px] text-muted-foreground underline`}>{expanded.includes(job.id)?"Hide details":"Details"}</button>{expanded.includes(job.id)?<p className={`${MONO} mt-2 whitespace-pre-wrap break-words text-[10px] text-muted-foreground`}>{job.details}</p>:null}</> : null}{job.reference ? <button type="button" onClick={()=>void copy(job.reference!)} className={`${MONO} mt-2 block max-w-full break-all text-left text-[10px] text-muted-foreground underline`}>{copied === job.reference ? "Copied" : copied === "unavailable" ? "Clipboard unavailable" : `${job.referenceType ?? "reference"}: ${job.reference}`}</button> : null}</article>;
+        return <div key={job.id} className="border-b border-border pb-3 last:border-0"><button type="button" data-dialog-focusable onClick={event => openDetail(cronJobDetail(job), event.currentTarget)} className="block w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><span className="flex items-start justify-between gap-2"><span className="text-sm">{job.name}</span><span className={`${MONO} shrink-0 text-[9px] ${tone}`}>{label}</span></span><span className={`${MONO} mt-1 block text-[10px] text-muted-foreground`}>{job.kind} · {job.nextRun ? `next ${fmtTime(job.nextRun)}` : "next unknown"}</span>{job.lastRun ? <span className={`${MONO} mt-1 block text-[10px] text-muted-foreground`}>Last run {fmtTime(job.lastRun)}</span> : null}<span className="mt-2 block text-xs text-foreground/80">{job.summary}</span></button>{job.reference ? <button type="button" data-dialog-focusable onClick={() => void copy(job.reference!)} className={`${MONO} mt-2 block max-w-full break-all text-left text-[10px] text-muted-foreground underline`}>{copied === job.reference ? "Copied" : copied === "unavailable" ? "Clipboard unavailable" : `${job.referenceType ?? "reference"}: ${job.reference}`}</button> : null}</div>;
       })}</div>
       {data.limitations.length ? <ul className={`${MONO} mt-3 space-y-1 text-[10px] text-muted-foreground`}>{data.limitations.map((x,i)=><li key={i}>{x}</li>)}</ul> : null}
       <button type="button" onClick={()=>setShowPaused(v=>!v)} className={`${MONO} mt-3 text-[10px] text-muted-foreground underline`}>{showPaused?"Collapse paused jobs":"Show paused jobs"}</button>
@@ -315,14 +268,12 @@ function CronSidebar({ data, error }: { data: CronPayload | null; error: string 
 function FinancePanel({ finance, error, refreshing }: { finance: FinancePayload | null; error: string | null; refreshing: boolean }) {
   const state: ModuleState = finance ? "ok" : error ? "error" : "loading";
   return (
-    <Panel eyebrow="Finance" title="Daily follow-up" state={state} error={error} meta={finance ? `report ${fmtTime(finance.generatedAt)}` : "private link"} className="lg:col-span-5">
-      {error && finance ? <p role="status" className={`${MONO} mb-4 border border-amber-400/30 px-3 py-2 text-xs text-amber-300`}>Refresh unavailable ({error}); showing last available report.</p> : null}
-      {refreshing ? <p role="status" className={`${MONO} mb-4 text-xs text-muted-foreground`}><AsciiActivity />Updating finance data…</p> : null}
+    <Panel eyebrow="Finance" title="Daily follow-up" state={state} error={error} meta={finance ? `report ${fmtTime(finance.generatedAt)}` : "private link"} className="lg:col-span-5" ready={Boolean(finance)} loading={refreshing && Boolean(finance)}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {[{ label: "Nordea", item: finance ? { total: finance.nordea.balance, source: finance.nordea.status, updated: finance.nordea.lastSync } : null }, { label: "Saxo", item: finance ? { total: finance.saxo.total, source: "Manual statement snapshot", updated: finance.saxo.asOf } : null }].map(({ label, item }) => <div key={label} className="min-h-[7rem] border border-border px-4 py-4"><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>{label}</p>{item ? <><p className="mt-3 text-lg tabular-nums">{item.total.toLocaleString("en-GB", { style: "currency", currency: finance!.currency })}</p><p className="mt-1 text-sm">{item.source}</p><p className={`${MONO} mt-2 text-[11px] text-muted-foreground`}>Source date: {item.updated ?? "unknown"}</p></> : <p className="mt-3 h-7 w-2/3 text-lg tabular-nums" aria-hidden="true">&nbsp;</p>}</div>)}
+      </div>
+      <p className={`${MONO} mt-4 min-h-5 text-xs text-muted-foreground`}>Supported subtotal (partial assets): {finance ? `${finance.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency })}. This is not net worth.` : <span aria-hidden="true">&nbsp;</span>}</p>
       {finance ? <>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[{label:"Nordea",total:finance.nordea.balance,source:finance.nordea.status,updated:finance.nordea.lastSync},{label:"Saxo",total:finance.saxo.total,source:"Manual statement snapshot",updated:finance.saxo.asOf}].map(item=><div key={item.label} className="border border-border px-4 py-4"><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>{item.label}</p><p className="mt-3 text-lg tabular-nums">{item.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency })}</p><p className="mt-1 text-sm">{item.source}</p><p className={`${MONO} mt-2 text-[11px] text-muted-foreground`}>Source date: {item.updated ?? "unknown"}</p></div>)}
-        </div>
-        <p className={`${MONO} mt-4 text-xs text-muted-foreground`}>Supported subtotal (partial assets): {finance.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency })}. This is not net worth.</p>
         {finance.estimate ? <div className="mt-4 border border-border px-4 py-3"><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>Estimated known assets · historical assumptions · as of {finance.estimate.asOf}</p><p className="mt-2 text-lg tabular-nums">{finance.estimate.total.toLocaleString("en-GB", { style: "currency", currency: finance.estimate.currency })}</p><p className={`${MONO} mt-1 text-xs text-muted-foreground`}>Includes assumed additional savings of {finance.estimate.additionalSavings.toLocaleString("en-GB", { style: "currency", currency: finance.estimate.currency })}; not net worth.</p><ul className={`${MONO} mt-2 space-y-1 text-[11px] text-muted-foreground`}>{finance.estimate.assumptions.map((x,i)=><li key={i}>{x}</li>)}</ul></div> : null}
         {finance.syncHealth ? <p className={`${MONO} mt-3 text-xs text-muted-foreground`}>Bank sync: {finance.syncHealth.status} · last success {finance.syncHealth.lastSuccess ? fmtTime(finance.syncHealth.lastSuccess) : "unknown"}{finance.syncHealth.lastAttempt && finance.syncHealth.status !== "ok" ? ` · last attempt ${fmtTime(finance.syncHealth.lastAttempt)}` : ""}</p> : null}
         <ul className={`${MONO} mt-3 space-y-1 text-[11px] text-muted-foreground`}>{finance.limitations.map((x,i)=><li key={i}>{x}</li>)}</ul>
@@ -342,13 +293,24 @@ export default function AdminDashboard() {
   const [refreshing, setRefreshing] = useState(false);
   const [clock, setClock] = useState("");
   const [lastSync, setLastSync] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
+  const [selectedDetail, setSelectedDetail] = useState<Record<string, unknown> | null>(null);
+  const [detailOpener, setDetailOpener] = useState<HTMLElement | null>(null);
+  const openDetail = useCallback((detail: Record<string, unknown>, opener: HTMLElement) => { setDetailOpener(opener); setSelectedDetail(detail); }, []);
+  const closeDetail = useCallback(() => setSelectedDetail(null), []);
   const hydrated = useRef(false);
+  const requests = useRef(createRequestCoordinator());
 
   const [weather, setWeather] = useState<WeatherPayload | null>(null);
   const [stocks, setStocks] = useState<StockPayload | null>(null);
   const [github, setGithub] = useState<GithubPayload | null>(null);
   const [radar, setRadar] = useState<RadarPayload | null>(null);
+  const [weatherRefreshError, setWeatherRefreshError] = useState<string | null>(null);
+  const [stocksRefreshError, setStocksRefreshError] = useState<string | null>(null);
+  const [githubRefreshError, setGithubRefreshError] = useState<string | null>(null);
+  const [radarRefreshError, setRadarRefreshError] = useState<string | null>(null);
   const [reports, setReports] = useState<AdminReport[] | null>(null);
+  const [reportsError, setReportsError] = useState<string | null>(null);
   const [finance, setFinance] = useState<FinancePayload | null>(null);
   const [financeError, setFinanceError] = useState<string | null>(null);
   const [financeRefreshError, setFinanceRefreshError] = useState<string | null>(null);
@@ -358,12 +320,12 @@ export default function AdminDashboard() {
   const hasSession = Boolean(session);
 
   const api = useCallback(
-    async (path: string): Promise<any | null> => {
+    async (path: string, signal: AbortSignal): Promise<any | null> => {
       if (!session) return null;
       try {
-        const res = await fetch(path, { headers: { Authorization: `Bearer ${session.access_token}` } });
-        if (!res.ok) return null;
-        return res.json();
+        const result = await fetchJsonWithRetry(path, { signal, headers: { Authorization: `Bearer ${session.access_token}` } });
+        const body = result.body as { status?: unknown } | null;
+        return result.response.ok && body?.status === "ok" ? result.body : null;
       } catch {
         return null;
       }
@@ -371,43 +333,42 @@ export default function AdminDashboard() {
     [session],
   );
 
-  const loadAll = useCallback(async () => {
+  const loadAll = useCallback(async (request = requests.current.begin()) => {
+    const { id, signal } = request;
     const sb = browserSupabase();
     const [w, s, g, r] = await Promise.all([
-      api("/api/admin/weather"),
-      api("/api/admin/stocks"),
-      api("/api/admin/github"),
-      api("/api/admin/radar"),
+      api("/api/admin/weather", signal),
+      api("/api/admin/stocks", signal),
+      api("/api/admin/github", signal),
+      api("/api/admin/radar", signal),
     ]);
-    setWeather(w);
-    setStocks(s);
-    setGithub(g);
-    setRadar(r);
+    if (!requests.current.isCurrent(id)) return false;
+    setWeather(previous => retainSuccessfulPayload(previous, w)); setWeatherRefreshError(payloadRefreshError(w));
+    setStocks(previous => retainSuccessfulPayload(previous, s)); setStocksRefreshError(payloadRefreshError(s));
+    setGithub(previous => retainSuccessfulPayload(previous, g)); setGithubRefreshError(payloadRefreshError(g));
+    setRadar(previous => retainSuccessfulPayload(previous, r)); setRadarRefreshError(payloadRefreshError(r));
     if (session?.access_token) {
       const headers = { Authorization: `Bearer ${session.access_token}` };
-      const cronRequest = fetch(CRON_ENDPOINT, { cache: "no-store", headers }).then(async response => { if (!response.ok) throw new Error(`HTTP ${response.status}`); return response.json() as Promise<CronPayload>; }).then(value => { if (!value || typeof value.generatedAt !== "string" || !Array.isArray(value.jobs) || !Array.isArray(value.limitations) || !value.limitations.every(x => typeof x === "string") || !value.jobs.every(job => job && typeof job.id === "string" && typeof job.name === "string" && typeof job.status === "string" && typeof job.enabled === "boolean" && ["maintenance", "information"].includes(job.kind) && typeof job.summary === "string" && [job.lastRun, job.nextRun, job.reference, job.details].every(x => x === null || typeof x === "string") && [null, "session", "run", "job"].includes(job.referenceType))) throw new Error("Unexpected cron status format"); setCron(value); setCronError(null); }).catch(error => setCronError(error instanceof Error ? error.message : "Cron status unavailable"));
-      const financeRequest = fetchFinanceReport(session.access_token).then(report => { setFinance(report); setFinanceError(null); }).catch(error => { setFinanceError(error instanceof Error ? error.message : "Finance endpoint unavailable"); });
+      const cronRequest = fetchJsonWithRetry(CRON_ENDPOINT, { cache: "no-store", headers, signal }).then(({ response, body }) => { if (!requests.current.isCurrent(id)) return; if (!response.ok) throw new Error(`HTTP ${response.status}`); const value = body as CronPayload; if (!value || typeof value.generatedAt !== "string" || !Array.isArray(value.jobs) || !Array.isArray(value.limitations) || !value.limitations.every(x => typeof x === "string") || !value.jobs.every(job => job && typeof job.id === "string" && typeof job.name === "string" && typeof job.status === "string" && typeof job.enabled === "boolean" && ["maintenance", "information"].includes(job.kind) && typeof job.summary === "string" && [job.lastRun, job.nextRun, job.reference, job.details].every(x => x === null || typeof x === "string") && [null, "session", "run", "job"].includes(job.referenceType))) throw new Error("Unexpected cron status format"); setCron(value); setCronError(null); }).catch(error => { if (requests.current.isCurrent(id)) setCronError(error instanceof Error ? error.message : "Cron status unavailable"); });
+      const financeRequest = fetchFinanceReport(session.access_token, signal).then(report => { if (requests.current.isCurrent(id)) { setFinance(report); setFinanceError(null); } }).catch(error => { if (requests.current.isCurrent(id)) setFinanceError(error instanceof Error ? error.message : "Finance endpoint unavailable"); });
       await Promise.all([cronRequest, financeRequest]);
     }
-    if (sb) {
-      sb.from("admin_reports")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .limit(120)
-        .then(({ data, error }) => {
-          if (!error && Array.isArray(data)) {
-            setReports(
-              (data as AdminReport[]).map((r) => ({
-                ...r,
-                details: r.details && typeof r.details === "object" ? r.details : {},
-              })),
-            );
-          } else {
-            setReports([]);
-          }
-        });
+    if (sb && requests.current.isCurrent(id)) {
+      try {
+        const { data, error } = await sb.from("admin_reports").select("*").order("created_at", { ascending: false }).limit(120);
+        if (!requests.current.isCurrent(id)) return false;
+        const result = reportReadResult(reports, { data: !error && Array.isArray(data) ? (data as AdminReport[]).map(r => ({ ...r, details: r.details && typeof r.details === "object" ? r.details : {} })) : null, error });
+        setReports(result.reports);
+        setReportsError(result.error);
+      } catch {
+        if (!requests.current.isCurrent(id)) return false;
+        const result = reportReadResult(reports, { data: null, error: true });
+        setReports(result.reports);
+        setReportsError(result.error);
+      }
     }
-  }, [api, session?.access_token]);
+    return requests.current.isCurrent(id);
+  }, [api, session?.access_token, reports]);
 
   // Session lifecycle.
   useEffect(() => {
@@ -432,6 +393,7 @@ export default function AdminDashboard() {
     });
     return () => {
       mounted = false;
+      requests.current.cancel();
       sub.subscription.unsubscribe();
     };
   }, []);
@@ -448,22 +410,23 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!hasSession || hydrated.current) return;
     hydrated.current = true;
-    void loadAll().then(() => setLastSync(cphNow()));
+    void loadAll().then(current => { if (current) setLastSync(cphNow()); }).catch(() => undefined);
   }, [hasSession, loadAll]);
 
   const refresh = async () => {
     if (refreshing) return;
+    const { id, signal } = requests.current.begin();
     setRefreshing(true);
-    setWeather(null);
-    setStocks(null);
-    setGithub(null);
-    if (session?.access_token) {
-      try { const report = await refreshFinance(session.access_token); setFinance(report); setFinanceError(null); setFinanceRefreshError(null); }
-      catch (error) { setFinanceRefreshError(error instanceof Error ? error.message : "Finance refresh failed"); }
+    try {
+      if (session?.access_token) {
+        try { const report = await refreshFinance(session.access_token, signal); if (requests.current.isCurrent(id)) { setFinance(report); setFinanceError(null); setFinanceRefreshError(null); } }
+        catch (error) { if (requests.current.isCurrent(id)) setFinanceRefreshError(error instanceof Error ? error.message : "Finance refresh failed"); }
+      }
+      const current = await loadAll({ id, signal });
+      if (current) setLastSync(cphNow());
+    } finally {
+      setRefreshing(false);
     }
-    await loadAll();
-    setRefreshing(false);
-    setLastSync(cphNow());
   };
 
   const signIn = async () => {
@@ -496,9 +459,11 @@ export default function AdminDashboard() {
   };
 
   const signOut = async () => {
+    requests.current.cancel();
+    hydrated.current = false;
+    setRefreshing(false);
     const sb = browserSupabase();
     await sb?.auth.signOut();
-    hydrated.current = false;
   };
 
   if (phase === "boot") {
@@ -598,11 +563,11 @@ export default function AdminDashboard() {
   const latestNight = (reports ?? [])[0]?.night;
   const tonight = (reports ?? []).filter((r) => !latestNight || r.night === latestNight);
 
-  const ws = statusState(weather);
-  const ss = statusState(stocks);
-  const gs = statusState(github);
-  const rs = statusState(radar);
-  const os: ModuleState = reports === null ? "loading" : "ok";
+  const ws = weatherRefreshError ? "error" : statusState(weather);
+  const ss = stocksRefreshError ? "error" : statusState(stocks);
+  const gs = githubRefreshError ? "error" : statusState(github);
+  const rs = radarRefreshError ? "error" : statusState(radar);
+  const os: ModuleState = reportsError ? "error" : reports === null ? "loading" : "ok";
 
   const stocksList = ss === "ok" ? stocks!.stocks : [];
   const topMover = stocksList.length
@@ -615,7 +580,7 @@ export default function AdminDashboard() {
       code: "RDR",
       state: rs,
       value: rs === "ok" ? `${radar!.items.length} items` : rs === "error" ? "feed fault" : "syncing",
-      sub: "llm-radar, 2x daily",
+      sub: "llm-radar, daily",
     },
     {
       code: "MKT",
@@ -697,9 +662,11 @@ export default function AdminDashboard() {
           eyebrow="Radar"
           title="Signal feed"
           state={rs}
-          error={radar?.message}
-          meta={radar?.generated ? `updated ${fmtTime(radar.generated)}` : "compiled 2x daily"}
+          error={radarRefreshError ?? radar?.message}
+          meta={radar?.generated ? `updated ${fmtTime(radar.generated)}` : "compiled daily"}
           className="lg:col-span-5"
+          loading={refreshing && Boolean(radar)}
+          ready={Boolean(radar)}
         >
           <ul>
             {(radar && radar.status === "ok" ? radar.items : []).map((item, i) => (
@@ -744,9 +711,11 @@ export default function AdminDashboard() {
           eyebrow="Market"
           title="Watchlist"
           state={ss}
-          error={stocks?.message}
+          error={stocksRefreshError ?? stocks?.message}
           meta={stocks?.asOf ? `as of ${fmtTime(stocks.asOf)}` : "stooq"}
           className="lg:col-span-3"
+          loading={refreshing && Boolean(stocks)}
+          ready={Boolean(stocks)}
         >
           <div
             className={`${MONO} mb-2 flex items-baseline justify-between text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50`}
@@ -756,82 +725,39 @@ export default function AdminDashboard() {
             <span>Last / Chg</span>
           </div>
           <ul>
-            {(stocks && stocks.status === "ok" ? stocks.stocks : []).map((s) => {
+            {(stocks && stocks.status === "ok" ? (showAll ? stocks.stocks : stocks.stocks.slice(0, 6)) : []).map((s) => {
               const up = s.changePct >= 0;
               const isTop = topMover?.symbol === s.symbol;
               return (
-                <li key={s.symbol} className="flex items-center gap-4 border-b border-border py-3 last:border-b-0">
-                  <div className="min-w-0 flex-1">
-                    <p className={`${MONO} text-xs uppercase tracking-[0.1em]`}>
-                      {s.symbol}
-                      {isTop ? (
-                        <span
-                          className={`${MONO} ml-2 border border-border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.18em] text-muted-foreground/80`}
-                        >
-                          Top
-                        </span>
-                      ) : null}
-                    </p>
-                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.name}</p>
-                  </div>
-                  <Sparkline values={s.closes} up={up} />
-                  <div className="w-32 shrink-0 text-right">
-                    <span className="text-sm tabular-nums">
-                      {s.price.toFixed(2)}
-                      <span className={`${MONO} ml-1 text-[11px] text-muted-foreground/70`}>{s.currency}</span>
-                    </span>
-                    <span className="ml-2 align-middle">{changeCell(s.changePct)}</span>
-                  </div>
+                <li key={s.symbol} className="border-b border-border last:border-b-0">
+                  <button type="button" data-dialog-focusable onClick={event => openDetail({ ...s, title: `${s.symbol} — ${s.name}` }, event.currentTarget)} className="flex w-full items-center gap-4 py-3 text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+                    <div className="min-w-0 flex-1"><p className={`${MONO} text-xs uppercase tracking-[0.1em]`}>{s.symbol}{isTop ? <span className={`${MONO} ml-2 border border-border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.18em] text-muted-foreground/80`}>Top</span> : null}</p><p className="mt-0.5 truncate text-xs text-muted-foreground">{s.name}</p></div><Sparkline values={s.closes} up={up} />
+                    <div className="w-32 shrink-0 text-right"><span className="text-sm tabular-nums">{s.price.toFixed(2)}<span className={`${MONO} ml-1 text-[11px] text-muted-foreground/70`}>{s.currency}</span></span><span className="ml-2 align-middle">{changeCell(s.changePct)}</span></div>
+                  </button>
                 </li>
               );
             })}
           </ul>
+          {stocks && stocks.stocks.length > 6 ? <button type="button" onClick={() => setShowAll(v => !v)} className={`${MONO} mt-3 text-[10px] text-muted-foreground underline`}>{showAll ? "Show fewer" : `Show all ${stocks.stocks.length} symbols`}</button> : null}
         </Panel>
 
         <Panel
           eyebrow="Env"
           title="Copenhagen"
           state={ws}
-          error={weather?.message}
+          error={weatherRefreshError ?? weather?.message}
           meta={weather?.updated ? `as of ${fmtTime(weather.updated)}` : "wttr.in"}
           className="lg:col-span-2"
+          loading={refreshing && Boolean(weather)}
+          ready={Boolean(weather)}
         >
           {weather && weather.status === "ok" && weather.current ? (
-          <>
-          <p className="text-5xl font-light tabular-nums tracking-tight">
-            {weather!.current!.temp.toFixed(0)}
-            <span className="ml-1 text-2xl text-muted-foreground">°C</span>
-          </p>
-          <p className="mt-1 text-sm text-muted-foreground">{weather!.current!.desc}</p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Chip label="Bike" on={weather!.current!.bike} />
-            <Chip label="Waterproof" on={weather!.current!.waterproof} />
-          </div>
-          {weather!.today ? (
-            <dl className={`${MONO} mt-6 space-y-1.5 text-xs uppercase tracking-[0.14em]`}>
-              <div className="flex justify-between gap-6">
-                <dt className="text-muted-foreground/60">Range</dt>
-                <dd className="tabular-nums">
-                  {weather!.today!.mint.toFixed(0)}° – {weather!.today!.max.toFixed(0)}°
-                </dd>
-              </div>
-              <div className="flex justify-between gap-6">
-                <dt className="text-muted-foreground/60">Wind</dt>
-                <dd className="tabular-nums">{weather!.current!.wind.toFixed(0)} km/h</dd>
-              </div>
-              <div className="flex justify-between gap-6">
-                <dt className="text-muted-foreground/60">UV</dt>
-                <dd className="tabular-nums">{weather!.today!.uv.toFixed(0)}</dd>
-              </div>
-              <div className="flex justify-between gap-6">
-                <dt className="text-muted-foreground/60">Sun</dt>
-                <dd className="tabular-nums">
-                  {weather!.today!.sunrise} – {weather!.today!.sunset}
-                </dd>
-              </div>
-            </dl>
-          ) : null}
-          </>
+            <>
+              <button type="button" data-dialog-focusable onClick={event => openDetail({ title: "Copenhagen weather", "Feels like": weather.current!.feels, Wind: weather.current!.wind, Rain: weather.current!.precip, Range: `${weather.today?.mint ?? "--"}–${weather.today?.max ?? "--"}°C`, UV: weather.today?.uv ?? "unknown", Sun: `${weather.today?.sunrise ?? "unknown"}–${weather.today?.sunset ?? "unknown"}`, Description: weather.current!.desc, Temperature: `${weather.current!.temp}°C`, Bike: weather.current!.bike ? "OK" : "NO", Waterproof: weather.current!.waterproof ? "OK" : "NO" }, event.currentTarget)} className="block min-h-[7rem] w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+                <p className="text-5xl font-light tabular-nums tracking-tight">{weather.current.temp.toFixed(0)}<span className="ml-1 text-2xl text-muted-foreground">°C</span></p>
+                <p className="mt-1 text-sm text-muted-foreground">{weather.current.desc}</p><div className="mt-4 flex flex-wrap gap-2"><Chip label="Bike" on={weather.current.bike} /><Chip label="Waterproof" on={weather.current.waterproof} /></div>
+              </button>
+            </>
           ) : null}
         </Panel>
 
@@ -839,9 +765,11 @@ export default function AdminDashboard() {
           eyebrow="GitHub"
           title="Last 24 hours"
           state={gs}
-          error={github?.message}
+          error={githubRefreshError ?? github?.message}
           meta={`${github?.commits.length ?? "--"} commits`}
           className="lg:col-span-5"
+          loading={refreshing && Boolean(github)}
+          ready={Boolean(github)}
         >
           {github && github.status === "ok" ? (
           <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
@@ -925,8 +853,10 @@ export default function AdminDashboard() {
           eyebrow="Overnight"
           title={latestNight ? `Night of ${nightLabel}` : "No reports yet"}
           state={os}
+          error={reportsError}
           meta={reports === null ? null : `${tonight.length} reports tonight`}
           className="lg:col-span-5"
+          ready={reports !== null}
         >
           {tonight.length === 0 ? (
             <p className="text-sm text-muted-foreground">Nothing ran yet. Reports land automatically from the overnight jobs.</p>
@@ -963,7 +893,7 @@ export default function AdminDashboard() {
           )}
         </Panel>
         </div>
-        <div className="order-1 lg:order-2 lg:col-span-3"><CronSidebar data={cron} error={cronError} /></div>
+        <div className="order-1 lg:order-2 lg:col-span-3"><CronSidebar data={cron} error={cronError} openDetail={openDetail} /></div>
       </div>
 
       <p
@@ -971,6 +901,7 @@ export default function AdminDashboard() {
       >
         Sources: llm-radar · stooq · wttr.in · github · supabase — refreshed on sign-in and on demand
       </p>
+      {selectedDetail ? <AdminDetailDialog detail={selectedDetail} opener={detailOpener} onClose={closeDetail} /> : null}
     </div>
   );
 }

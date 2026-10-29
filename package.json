@@ -10,6 +10,7 @@
     "test:search": "node --test tests/search.test.mjs",
     "test:radar": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test lib/radar/publication.test.mjs",
     "test:radar:admin-fallback": "NODE_OPTIONS=--conditions=react-server tsx --test lib/radar/admin-fallback.test.mjs",
+    "test:radar:publisher": "NODE_OPTIONS=--conditions=react-server tsx --test lib/radar/publisher.test.mjs",
     "test:bitcoin": "node --test tests/bitcoin.test.mjs",
     "test:sitemap": "node --test tests/sitemap.test.mjs",
     "test:game": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test lib/game/*.test.mjs",

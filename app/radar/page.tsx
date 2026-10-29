@@ -1,10 +1,12 @@
 import { ArrowUpRight } from "lucide-react";
 import PageHero from "@/components/PageHero";
 import { SITE_URL } from "@/lib/content";
+import { getRadarEdition, type RadarEdition } from "@/lib/radar/publication";
+
+type RadarItem = RadarEdition["items"][number];
 
 export const revalidate = 1800;
 
-const DATA_URL = "https://raw.githubusercontent.com/lucasfth/loki-radar/main/public.json?v=2";
 const DESCRIPTION =
   "A daily, machine-curated list of tech news, releases and repos I care about. Collected from feeds, Reddit, GitHub and Hacker News, ranked and summarised by a local LLM.";
 
@@ -26,18 +28,6 @@ export const metadata = {
   },
 };
 
-type RadarItem = {
-  title: string;
-  url: string;
-  source: string;
-  summary: string;
-  tag: string;
-  score: number;
-  kind: string;
-  ts: number;
-};
-type RadarData = { generated: string; count_scanned: number; items: RadarItem[] };
-
 const TAGS: Record<string, string> = {
   "local-llm": "Local LLM",
   agents: "Agents",
@@ -51,12 +41,9 @@ const TAGS: Record<string, string> = {
   other: "Other",
 };
 
-async function getRadar(): Promise<RadarData | null> {
+async function getRadar(): Promise<RadarEdition | null> {
   try {
-    const res = await fetch(DATA_URL, { next: { revalidate: 1800 } });
-    if (!res.ok) return null;
-    const data = (await res.json()) as RadarData;
-    return Array.isArray(data.items) ? data : null;
+    return await getRadarEdition();
   } catch {
     return null;
   }

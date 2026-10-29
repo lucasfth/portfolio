@@ -8,6 +8,8 @@
     "prebuild": "node scripts/generateRSS.js",
     "start": "next start",
     "test:search": "node --test tests/search.test.mjs",
+    "test:radar": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test lib/radar/publication.test.mjs",
+    "test:radar:admin-fallback": "NODE_OPTIONS=--conditions=react-server tsx --test lib/radar/admin-fallback.test.mjs",
     "test:bitcoin": "node --test tests/bitcoin.test.mjs",
     "test:sitemap": "node --test tests/sitemap.test.mjs",
     "test:game": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test lib/game/*.test.mjs",
@@ -55,7 +57,9 @@
     "linkedom": "^0.18.13",
     "supabase": "^2.122.0",
     "tailwindcss": "^4.3.3",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "server-only": "^0.0.1",
+    "tsx": "^4.23.15"
   },
   "overrides": {
     "fflate": "0.7.5",

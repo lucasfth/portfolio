@@ -149,7 +149,7 @@ export const fetchGithub = createGithubCache(() => collectGithub({
 export async function fetchRadar() {
   try {
     const data = await cached("radar", 1800_000, getRadarEdition);
-    const items: any[] = data.items;
+    const items: any[] = Array.isArray(data?.items) ? data.items : [];
     const top = items
       .filter((i) => typeof i?.url === "string" && i.url.startsWith("http"))
       .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))

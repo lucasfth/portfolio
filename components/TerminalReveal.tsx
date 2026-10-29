@@ -5,7 +5,7 @@ import { createAsciiReveal, presets } from "ascii-reveal/core";
 import { usePathname } from "next/navigation";
 
 /** Enhance real server-rendered content; never hide it while loading the effect. */
-function useTerminalReveal(scope: React.RefObject<HTMLElement | null>, titlesOnly = false, enabled = true, loading = false, loadingLoop = false) {
+function useTerminalReveal(scope: React.RefObject<HTMLElement | null>, titlesOnly = false, enabled = true, loading = false, loadingLoop = false, revision = "") {
   const pathname = usePathname();
   useLayoutEffect(() => {
     if ((!enabled && !loading) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -54,7 +54,7 @@ function useTerminalReveal(scope: React.RefObject<HTMLElement | null>, titlesOnl
     }
     void start();
     return () => { cancelled = true; observer?.disconnect(); controllers.forEach(controller => controller.destroy()); };
-  }, [pathname, scope, titlesOnly, enabled, loading, loadingLoop]);
+  }, [pathname, scope, titlesOnly, enabled, loading, loadingLoop, revision]);
 }
 
 export function TitleReveals() {
@@ -63,8 +63,8 @@ export function TitleReveals() {
   return null;
 }
 
-export default function TerminalReveal({ children, enabled = true, loading = false, loadingLoop = false }: { children: ReactNode; enabled?: boolean; loading?: boolean; loadingLoop?: boolean }) {
+export default function TerminalReveal({ children, enabled = true, loading = false, loadingLoop = false, revision = "" }: { children: ReactNode; enabled?: boolean; loading?: boolean; loadingLoop?: boolean; revision?: string }) {
   const scope = useRef<HTMLDivElement>(null);
-  useTerminalReveal(scope, false, enabled, loading, loadingLoop);
+  useTerminalReveal(scope, false, enabled, loading, loadingLoop, revision);
   return <div ref={scope} className="terminal-reveal">{children}</div>;
 }

@@ -23,17 +23,19 @@ function SessionRows({ sessions, now }: { sessions: FleetSession[]; now: number 
     return <li key={session.sessionId} className="py-3 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-baseline justify-between gap-2"><h4 className="break-words text-sm font-medium [overflow-wrap:anywhere]">{session.label}</h4><span className="font-mono text-xs uppercase text-muted-foreground">{freshness}</span></div>
       <p className="mt-1 font-mono text-xs text-muted-foreground">Pi · {session.sessionId.slice(0, 8)} · <span className="text-foreground"><span aria-hidden="true" className={`mr-1.5 inline-block size-2 rounded-full ${qualified ? "bg-muted-foreground" : stateTone(session)}`} />{qualified ? "Last reported: " : ""}{stateText(session)}</span>{session.state === "working" && session.toolsInFlight ? ` · ${session.toolsInFlight} tool calls in flight at source observation` : null}</p>
+      <details className="mt-2"><summary className="cursor-pointer text-xs text-muted-foreground">Observation timestamps</summary>
       <dl className="mt-2 space-y-1 text-xs text-muted-foreground">
         <div><dt className="inline">Working since{qualified ? " (last reported)" : ""}: </dt><dd className="inline">{timestamp(session.workingSince ?? null)}</dd></div>
         <div><dt className="inline">Source observed: </dt><dd className="inline">{timestamp(session.observedAt)}</dd></div>
         <div><dt className="inline">Backend received: </dt><dd className="inline">{timestamp(session.receivedAt)}</dd></div>
         <div><dt className="inline">Latest completed tool reported: </dt><dd className="inline">{timestamp(session.lastToolCompletedAt)}</dd></div>
       </dl>
+      </details>
     </li>;
   })}</ul>;
 }
 export function FleetView({ data, error, now }: { data: FleetSnapshot | null; error: boolean; now: number }) {
-  return <section aria-labelledby="fleet-heading" className="mb-14 border border-border bg-background/40">
+  return <section id="admin-fleet" aria-labelledby="fleet-heading" className="admin-panel border border-border bg-card">
     <header className="flex flex-wrap items-baseline justify-between gap-3 border-b border-border px-5 py-3">
       <div><p className="font-mono text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Personal fleet · read only</p><h2 id="fleet-heading" className="mt-1 text-sm font-medium">Hugi / Pi sessions</h2></div>
       <p className="font-mono text-xs text-muted-foreground">30-second polling · Copenhagen time</p>
@@ -42,7 +44,7 @@ export function FleetView({ data, error, now }: { data: FleetSnapshot | null; er
       {error ? <p role="status" className="text-sm">Fleet source unavailable. {data ? "Showing last received values; freshness continues to age below." : "No fleet observation available."}</p> : null}
       {!data && !error ? <p role="status" className="text-sm text-muted-foreground">Checking fleet source…</p> : null}
       {data ? <><p className="font-mono text-xs text-muted-foreground">Backend read: {timestamp(data.readAt)}</p>
-        <div className="grid gap-5 lg:grid-cols-2">{data.hosts.map(host => {
+        <div className="grid gap-3">{data.hosts.map(host => {
           const age = host.lastReceivedAt ? now - Date.parse(host.lastReceivedAt) : null;
           const status = age === null ? "Never seen" : age < -30_000 ? "Clock skew" : age > 120_000 ? "Stale" : "Recent receipt";
           const active = host.sessions.filter(s => s.state !== "ended").sort((a, b) => Number(b.state === "working") - Number(a.state === "working"));
@@ -56,7 +58,9 @@ export function FleetView({ data, error, now }: { data: FleetSnapshot | null; er
           </article>;
         })}</div></> : null}
       <p className="text-xs leading-relaxed text-muted-foreground">Native Pi reports state and process heartbeats, not task progress or success. A completed tool can have failed. Stale means reports are old, not that work is stalled. Ended means a reporter sent an end marker; abrupt exits may remain stale. Quiet sessions are not inferred complete.</p>
+      <details><summary className="cursor-pointer text-xs text-muted-foreground">Reporting provenance and retention</summary>
       <p className="text-xs leading-relaxed text-muted-foreground">Name a session explicitly with /fleet-name. Automatic session names currently contain prompt excerpts and are not exported. Labels are operator-approved; prompts, paths, names and tool content are not collected. Older reporters lack activity detail. Ended rows are retained for 24 hours, other sessions for seven days; at most 64 latest sessions per host.</p>
+      </details>
     </div>
   </section>;
 }

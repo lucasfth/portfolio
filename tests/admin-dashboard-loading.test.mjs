@@ -6,18 +6,18 @@ const source = readFileSync("components/AdminDashboard.tsx", "utf8");
 const revealSource = readFileSync("components/TerminalReveal.tsx", "utf8");
 
 test("unloaded data fields use the shared ASCII shimmer until data is ready", () => {
-  assert.match(source, /!ready && state === "loading"[\s\S]*?content\.map\(\(child, index\)[\s\S]*?<FieldReveal key=\{index\} loading>/);
-  assert.match(source, /function FieldReveal[\s\S]*?<TerminalReveal loading=\{loading\} loadingLoop=\{loading\}>\{children\}<\/TerminalReveal>/);
+  assert.match(source, /!ready && state === "loading"[\s\S]*?loadingFields\.map\(text => <AdminField key=\{text\} text=\{text\} loading/);
+  assert.match(readFileSync("components/AdminField.tsx", "utf8"), /<TerminalReveal key=\{text\}[\s\S]*?loading=\{loading\} loadingLoop=\{loading\}/);
   assert.match(revealSource, /if \(!titlesOnly && loading && loadingLoop\)[\s\S]*?createAsciiReveal\(root, \{ preset: \{ \.\.\.presets\.terminal, tick: 120 \}[\s\S]*?controller\.shimmer\(true\)/);
   assert.match(revealSource, /window\.matchMedia\("\(prefers-reduced-motion: reduce\)"\)\.matches/);
-  assert.match(source, /isLoading && ready[\s\S]*?Updating; showing last available data\.[\s\S]*?\{content\}</);
+  assert.match(source, /isLoading && ready[\s\S]*?Updating; showing last available data\.[\s\S]*?\{children\}</);
   assert.doesNotMatch(source, /isLoading && ready[\s\S]*?<FieldReveal/);
   assert.match(source, /setWeather\(previous => retainSuccessfulPayload\(previous, w\)\)/);
   assert.match(source, /state === "error"[\s\S]*?Unavailable: \{error \?\? "source error"\}/);
 });
 
 test("weather panel includes feels-like, wind, rain, range, UV, and sun data", () => {
-  const weather = source.slice(source.indexOf('eyebrow="Env"'), source.indexOf('eyebrow="GitHub"'));
+  const weather = source.slice(source.indexOf('eyebrow="Env"'));
   for (const field of ["Feels like", "Wind", "Rain", "Range", "UV", "Sun"]) assert.ok(weather.includes(field), `missing ${field}`);
 });
 

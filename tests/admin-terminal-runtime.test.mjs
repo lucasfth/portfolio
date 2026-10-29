@@ -9,19 +9,29 @@ import swc from 'next/dist/build/swc/index.js';
 
 function load(name,overrides){const file=process.cwd()+`/components/${name}.tsx`;const code=swc.transformSync(readFileSync(file,'utf8'),{filename:file,jsc:{parser:{syntax:'typescript',tsx:true},transform:{react:{runtime:'automatic'}},target:'es2022'},module:{type:'commonjs'}}).code;const mod=new Module(file);mod.filename=file;const req=createRequire(file);mod.require=id=>id in overrides?overrides[id]:req(id);mod._compile(code,file);return mod.exports.default;}
 
-async function fixture(run) {
+async function fixture(run, installed = false) {
  const {window,document}=parseHTML('<html><body><div id="root"></div></body></html>');
- const keys=['window','document','ResizeObserver','IntersectionObserver','IS_REACT_ACT_ENVIRONMENT'];const previous=Object.fromEntries(keys.map(k=>[k,globalThis[k]]));
+ const keys=['window','document','ResizeObserver','IntersectionObserver','IS_REACT_ACT_ENVIRONMENT','getComputedStyle','NodeFilter','requestAnimationFrame','cancelAnimationFrame'];const previous=Object.fromEntries(keys.map(k=>[k,globalThis[k]]));
  Object.assign(globalThis,{window,document,IS_REACT_ACT_ENVIRONMENT:true});
  let width=240,height=40,creates=0,destroys=0,reveals=0;const observed=[];
  const motion=new EventTarget();motion.matches=false;window.matchMedia=()=>motion;window.innerHeight=900;
  const fonts=new EventTarget();fonts.ready=new Promise(()=>{});Object.defineProperty(document,'fonts',{value:fonts});
- window.HTMLElement.prototype.getBoundingClientRect=()=>({width,height,top:10,bottom:10+height});
+ window.HTMLElement.prototype.getBoundingClientRect=()=>({x:0,y:0,left:0,right:width,width,height,top:0,bottom:height});
  window.HTMLCanvasElement.prototype.getContext=()=>({});
  globalThis.ResizeObserver=class{constructor(fn){this.fn=fn;observed.push(this)}observe(node){this.node=node;assert.ok(node.isConnected)}disconnect(){this.closed=true}};
  globalThis.IntersectionObserver=class{observe(){}unobserve(){}disconnect(){}};
  const core={presets:{terminal:{}},createAsciiReveal:()=>{creates++;return {destroy(){destroys++},shimmer(){},async reveal(){reveals++}}}};
- const Terminal=load('TerminalReveal',{'next/navigation':{usePathname:()=>'/admin'},'ascii-reveal/core':core});
+ let coreBoundary=core;
+ if(installed){
+   const native=createRequire(import.meta.url);const actual=native('ascii-reveal/core');
+   globalThis.NodeFilter={SHOW_TEXT:4,FILTER_REJECT:2,FILTER_ACCEPT:1};
+   globalThis.getComputedStyle=()=>({position:'relative',color:'rgb(100,100,100)',backgroundColor:'rgb(255,255,255)',visibility:'visible',display:'block',overflowX:'clip',overflowY:'clip',paddingLeft:'0',paddingRight:'0',paddingTop:'0',paddingBottom:'0',fontStyle:'normal',fontWeight:'400',fontSize:'14px',fontFamily:'monospace',textTransform:'none',getPropertyValue:()=>''});
+   document.createRange=()=>({selectNodeContents(){},setStart(){},setEnd(){},getBoundingClientRect:()=>({x:0,y:0,left:0,top:0,width,height,right:width,bottom:height}),detach(){}});
+   globalThis.requestAnimationFrame=()=>1;globalThis.cancelAnimationFrame=()=>{};
+   Object.defineProperties(window.HTMLElement.prototype,{clientWidth:{configurable:true,get:()=>width},clientHeight:{configurable:true,get:()=>height}});
+   coreBoundary={...actual,createAsciiReveal(...args){creates++;const controller=actual.createAsciiReveal(...args);const destroy=controller.destroy.bind(controller);controller.destroy=()=>{destroys++;destroy()};return controller;}};
+ }
+ const Terminal=load('TerminalReveal',{'next/navigation':{usePathname:()=>'/admin'},'ascii-reveal/core':coreBoundary});
  const Field=load('AdminField',{'@/components/TerminalReveal':{__esModule:true,default:Terminal}});
  const root=createRoot(document.querySelector('#root'));
  const render=loading=>act(async()=>root.render(React.createElement(Field,{text:'A stable text field',loading})));
@@ -54,3 +64,12 @@ test('failed canvas skips loading enhancement, retaining named readable source f
  assert.notEqual(document.querySelector('.admin-field-text').getAttribute('aria-hidden'),'true');
  assert.doesNotMatch(readFileSync('app/globals.css','utf8'),/\.admin-field\[data-loading="true"\] \.admin-field-text\s*\{\s*visibility:\s*hidden/);
 }));
+
+for (const transition of [false, true]) test(`installed ASCII package: null canvas leaves ${transition ? 'loading-to-loaded' : 'initial loaded'} text readable`,()=>fixture(async({window,document,render})=>{
+ window.HTMLCanvasElement.prototype.getContext=()=>null;
+ if(transition)await render(true);
+ await render(false);
+ assert.equal(document.querySelector('.admin-field-text').textContent,'A stable text field');
+ assert.equal(Boolean(document.querySelector('[data-ar-t]')),false,'failed enhancement must not retain transparent text claim');
+ assert.equal(Boolean(document.querySelector('.ar-overlay')),false,'unsupported enhancement must not strand an overlay');
+},true));

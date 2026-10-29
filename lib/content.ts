@@ -31,6 +31,8 @@ export interface BlogPost extends ThemeImageSources {
   keywords?: string[];
   date: string; // ISO yyyy-mm-dd
   image?: string;
+  imageWidth?: number;
+  imageHeight?: number;
   /** Markdown body, frontmatter stripped. */
   body: string;
 }
@@ -204,6 +206,8 @@ export function getBlogPosts(): BlogPost[] {
       image: (data.image as string) || extractHeaderImage(content),
       imageLight: data.imageLight as string | undefined,
       imageDark: data.imageDark as string | undefined,
+      imageWidth: Number.isFinite(data.imageWidth) && data.imageWidth > 0 ? data.imageWidth : undefined,
+      imageHeight: Number.isFinite(data.imageHeight) && data.imageHeight > 0 ? data.imageHeight : undefined,
       body: cleanBody(content),
     } satisfies BlogPost;
   }).filter((p): p is BlogPost => p !== null);

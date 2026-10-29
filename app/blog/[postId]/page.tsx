@@ -18,9 +18,10 @@ export async function generateMetadata({
   const post = getBlogPost(postId);
   if (!post) return { title: "Post not found" };
 
-  const ogImageUrl = `${SITE_URL}/api/og?title=${encodeURIComponent(
-    post.title
-  )}&subtitle=${encodeURIComponent("Lucas Hanson Blog")}`;
+  const heroImage = post.image || post.imageDark || post.imageLight;
+  const ogImageUrl = heroImage
+    ? new URL(heroImage, SITE_URL).href
+    : `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&subtitle=${encodeURIComponent("Lucas Hanson Blog")}`;
 
   return {
     title: post.title,
@@ -95,7 +96,9 @@ export default async function BlogPost({
             {post.title}
           </h1>
           {(post.image || post.imageLight || post.imageDark) && (
-            <div data-terminal-media className="relative mt-10 aspect-[16/9] w-full overflow-hidden rounded-[var(--media-radius)] border border-border">
+            <div data-terminal-media
+              style={post.imageWidth && post.imageHeight ? { aspectRatio: `${post.imageWidth} / ${post.imageHeight}` } : undefined}
+              className="relative mt-10 aspect-[16/9] w-full overflow-hidden rounded-[var(--media-radius)] border border-border">
               <ThemeImage
                 image={post.image} imageLight={post.imageLight} imageDark={post.imageDark}
                 alt={post.title}

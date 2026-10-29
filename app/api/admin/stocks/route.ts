@@ -5,7 +5,7 @@ import { fetchStocks } from "@/lib/admin/sources";
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  if (!adminUser || !(await adminUser(req))) {
+  if (!(await adminUser(req))) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   const payload = await fetchStocks();

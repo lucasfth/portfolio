@@ -22,7 +22,8 @@ export async function writeRadarEdition(
   env: NodeJS.ProcessEnv = process.env,
   clientFactory: ClientFactory = createClient as unknown as ClientFactory,
 ): Promise<void> {
-  const db = clientFactory(env.SUPABASE_URL!, env.RADAR_SUPABASE_SERVICE_ROLE_KEY!, {
+  const serviceKey = env.RADAR_SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_SECRET_KEY;
+  const db = clientFactory(env.SUPABASE_URL!, serviceKey!, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   const { error } = await db.rpc("publish_radar_edition", { p_edition: edition }).abortSignal(AbortSignal.timeout(5000));
@@ -36,7 +37,8 @@ export async function publishRadarRequest(
 ): Promise<Response> {
   const response = (status: number, body: Record<string, unknown>) =>
     Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
-  if (!env.RADAR_PUBLISH_TOKEN || !env.SUPABASE_URL || !env.RADAR_SUPABASE_SERVICE_ROLE_KEY) return response(503, { error: "Radar publisher unavailable" });
+  const serviceKey = env.RADAR_SUPABASE_SERVICE_ROLE_KEY ?? env.SUPABASE_SECRET_KEY;
+  if (!env.RADAR_PUBLISH_TOKEN || !env.SUPABASE_URL || !serviceKey) return response(503, { error: "Radar publisher unavailable" });
   if (!authorized(request.headers.get("authorization"), env.RADAR_PUBLISH_TOKEN)) return response(401, { error: "unauthorized" });
 
   try {

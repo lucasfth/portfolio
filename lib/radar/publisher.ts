@@ -3,8 +3,6 @@ import { createClient } from "@supabase/supabase-js";
 import "server-only";
 import { isRadarEdition, type RadarEdition } from "./publication";
 
-
-
 function authorized(header: string | null, expected: string | undefined): boolean {
   if (!expected || !/^[\x21-\x7e]{32,256}$/.test(expected) || !header || !/^Bearer [\x21-\x7e]{32,256}$/.test(header)) return false;
   const digest = (value: string) => createHash("sha256").update(value).digest();
@@ -24,7 +22,7 @@ export async function writeRadarEdition(
   env: NodeJS.ProcessEnv = process.env,
   clientFactory: ClientFactory = createClient as unknown as ClientFactory,
 ): Promise<void> {
-  const db = clientFactory(env.SUPABASE_URL!, env.SUPABASE_SECRET_KEY!, {
+  const db = clientFactory(env.SUPABASE_URL!, env.RADAR_SUPABASE_SERVICE_ROLE_KEY!, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });
   const { error } = await db.rpc("publish_radar_edition", { p_edition: edition }).abortSignal(AbortSignal.timeout(5000));
@@ -35,10 +33,10 @@ export async function publishRadarRequest(
   request: Pick<Request, "headers" | "body">,
   env: NodeJS.ProcessEnv = process.env,
   publish?: (edition: RadarEdition) => Promise<unknown>,
- ): Promise<Response> {
+): Promise<Response> {
   const response = (status: number, body: Record<string, unknown>) =>
     Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
-  if (!env.RADAR_PUBLISH_TOKEN || !env.SUPABASE_URL || !env.SUPABASE_SECRET_KEY) return response(503, { error: "Radar publisher unavailable" });
+  if (!env.RADAR_PUBLISH_TOKEN || !env.SUPABASE_URL || !env.RADAR_SUPABASE_SERVICE_ROLE_KEY) return response(503, { error: "Radar publisher unavailable" });
   if (!authorized(request.headers.get("authorization"), env.RADAR_PUBLISH_TOKEN)) return response(401, { error: "unauthorized" });
 
   try {

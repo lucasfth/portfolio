@@ -1,6 +1,6 @@
 BEGIN;
 
--- The public API roles cannot publish; only the server-side service role can.
+-- Public API roles and the retired custom writer capability cannot publish.
 DO $$
 BEGIN
   IF has_function_privilege('anon', 'public.publish_radar_edition(jsonb)', 'EXECUTE')

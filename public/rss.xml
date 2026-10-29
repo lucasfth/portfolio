@@ -6,12 +6,19 @@
         <link>https://lucashanson.dk/blog</link>
         <atom:link href="https://lucashanson.dk/rss.xml" rel="self" type="application/rss+xml"/>
         <language>en-us</language>
-        <lastBuildDate>Mon, 26 Oct 2026 15:30:26 GMT</lastBuildDate>
-        <pubDate>Mon, 26 Oct 2026 15:30:26 GMT</pubDate>
+        <lastBuildDate>Thu, 29 Oct 2026 13:00:09 GMT</lastBuildDate>
+        <pubDate>Thu, 29 Oct 2026 13:00:09 GMT</pubDate>
         <managingEditor>contact@lucashanson.dk (Lucas Hanson)</managingEditor>
         <webMaster>contact@lucashanson.dk (Lucas Hanson)</webMaster>
 
         
+        <item>
+          <title>I made a Nokia 6300 the ears of my company&apos;s AI agent</title>
+          <description>A 2021 KaiOS phone becomes a voice terminal for my company&apos;s AI: stock OS, two small apps, one loopback bridge, and a token that can only talk to that bridge.</description>
+          <link>https://lucashanson.dk/blog/nokia-klaus-voice-terminal</link>
+          <guid isPermaLink="true">https://lucashanson.dk/blog/nokia-klaus-voice-terminal</guid>
+          <pubDate>Thu, 29 Oct 2026 00:00:00 GMT</pubDate>
+        </item>
         <item>
           <title>I made my agents&apos; memory checkable</title>
           <description>Four problems, four fixes: blind search, no undo, silent staleness, and unguarded writes. What each change does, and what it does not prove.</description>

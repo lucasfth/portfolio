@@ -53,5 +53,5 @@ test('field-only overlay is contained, wraps long tokens and leaves reduced-moti
   const css = readFileSync('app/globals.css', 'utf8');
   assert.match(css, /\.admin-field\s*\{[^}]*position:\s*relative[^}]*overflow:\s*clip[^}]*overflow-wrap:\s*anywhere/);
   assert.match(css, /\.admin-field \.terminal-reveal\s*\{[^}]*position:\s*relative/);
-  assert.match(css, /prefers-reduced-motion: reduce[\s\S]*\.admin-field\[data-loading="true"\] \.admin-field-text\s*\{\s*visibility:\s*visible/);
+  assert.match(css, /prefers-reduced-motion: reduce[\s\S]*\.admin-field\[data-loading="true"\]:has\(\.ar-overlay canvas\) \.admin-field-text\s*\{\s*visibility:\s*visible/);
 });

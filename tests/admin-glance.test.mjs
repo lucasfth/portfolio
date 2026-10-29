@@ -33,3 +33,27 @@ test('responsive board uses portfolio tokens, bounded columns and visible keyboa
   assert.match(css, /\.admin-dashboard :is\(button, a, summary, input\):focus-visible/);
   assert.match(css, /\.admin-panel\s*\{[^}]*border-radius:\s*var\(--media-radius\)/);
 });
+
+test('status strip wraps headers and bounds two full value lines without losing destination details', () => {
+  const css = readFileSync('app/globals.css', 'utf8');
+  assert.match(dashboard, /flex flex-wrap items-center justify-between gap-x-2 gap-y-1/);
+  assert.match(dashboard, /admin-board-value mt-2 text-sm leading-5/);
+  assert.match(css, /\.admin-board-value\s*\{\s*max-height: 2\.5rem; overflow: clip/);
+  assert.match(css, /\.admin-board-sub[^}]*-webkit-line-clamp: 2/);
+  assert.match(dashboard, /FAULT marks unavailable or incomplete sources, or failed jobs/);
+  assert.match(dashboard, /openDetail\(\{ title: "Copenhagen weather"[^\n]*Description: weather\.current!\.desc/);
+});
+
+test('finance retained-data refresh faults agree between strip and panel', () => {
+  const panel = dashboard.slice(dashboard.indexOf('function FinancePanel('), dashboard.indexOf('export default'));
+  assert.match(panel, /const state: ModuleState = error \? "error" : finance \? "ok" : "loading"/);
+  assert.match(dashboard, /code: "Finance"[^\n]*state: financeError \|\| financeRefreshError \? "error"/);
+  assert.match(dashboard, /Refresh unavailable \(\{error\}\); showing last available data/);
+});
+
+test('Latte admin text and focus use existing contrast-safe tokens', () => {
+  const css = readFileSync('app/globals.css', 'utf8');
+  assert.match(css, /prefers-color-scheme: light[\s\S]*\.admin-dashboard :is\(\.text-muted-foreground[^}]*color: var\(--color-subtext\)/);
+  assert.match(css, /\.admin-dashboard :is\(\.text-foreground[^}]*color: var\(--color-foreground\)/);
+  assert.match(css, /\.admin-dashboard :is\(button, a, summary, input\):focus-visible \{ outline-color: var\(--color-accent\)/);
+});

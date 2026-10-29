@@ -32,19 +32,21 @@ Repeat updates use the config repository's normal pull/setup/next-launch workflo
 
 ## UI semantics
 
-Operator label heading and stable short reference; automatic prompt-derived names are not collected. Source workingSince and toolsInFlight distinguish **Responding / Running tools** only for enriched working observations; old wire says legacy working. State text is explicit, never color-only. Working sessions sort first stably; ended rows use a closed native details/summary disclosure, keyboard accessible without custom controls. Stale/clock-skew states read **Last reported:** in neutral text independently of the last state. Source observed/backend receipt/latest tool complete remain distinct. Freshness uses both source/receipt (120 seconds), never HTTP read time. Unavailable reads/token refresh retain previous values with explicit warning. Completed tools can fail; heartbeat is not progress or success. No percentages, terminal controls or remote actions.
+Operator label heading and stable short reference; automatic prompt-derived names are not collected. Source workingSince and toolsInFlight distinguish **Responding / Running tools** only for enriched working observations; old wire says legacy working. State text is explicit, never color-only. Working sessions sort first stably; ended rows use a closed native details/summary disclosure, keyboard accessible without custom controls. Stale/clock-skew states read **Last reported:** with a neutral swatch, not a live activity color. Source observed/backend receipt/latest tool complete remain distinct. Freshness uses both source/receipt (120 seconds), never HTTP read time. Unavailable reads/token refresh retain previous values with explicit warning. Completed tools can fail; heartbeat is not progress or success. No percentages, terminal controls or remote actions.
 
-Palette inspiration: Config `configs/pi/extensions/presentation.ts`, `composerColors()` lower-right input activity targets (inspected at `602cfd72e8cc5acb8632cd4fae3aee5bf0155985`). Reuse existing Portfolio `app/globals.css` tokens; no new palette or global token changes:
+Palette inspiration: Config `configs/pi/extensions/presentation.ts`, `composerColors()` lower-right input activity targets (inspected at `602cfd72e8cc5acb8632cd4fae3aee5bf0155985`). Exact colors are **small decorative swatches, never small-text foregrounds**. Swatches are empty `aria-hidden` spans; explicit labels carry meaning independently. Component-scoped utilities reuse existing `app/globals.css` tokens without modifying globals:
 
-| Explicit label | Existing token / utility | Mocha (dark) | Latte (light) |
+| Swatch beside explicit label | Existing token / utility | Mocha (dark) | Latte (light) |
 | --- | --- | --- | --- |
-| Responding / Working (legacy observation) | `--color-accent` / `text-accent` | `#89b4fa` | `#1e66f5` |
-| Running tools | `--syntax-peach` / `text-(--syntax-peach)` | `#fab387` | `#fe640b` |
-| Error | `--syntax-red` / `text-(--syntax-red)` | `#f38ba8` | `#d20f39` |
-| Unknown / Blocked | `--color-amber-400` / `text-amber-400` | `#f9e2af` | `#df8e1d` |
-| Idle / Ended / Done (reported) / stale or clock-skew state | `--color-muted-foreground` / `text-muted-foreground` | `#a6adc8` | `#6c6f85` |
+| Responding / Working (legacy observation) | `--color-accent` / `bg-accent` | `#89b4fa` | `#1e66f5` |
+| Running tools | `--syntax-peach` / `bg-(--syntax-peach)` | `#fab387` | `#fe640b` |
+| Error | `--syntax-red` / `bg-(--syntax-red)` | `#f38ba8` | `#d20f39` |
+| Unknown / Blocked | `--color-amber-400` / `bg-amber-400` | `#f9e2af` | `#df8e1d` |
+| Idle / Ended / Done (reported) / stale or clock-skew state | `--color-muted-foreground` / `bg-muted-foreground` | `#a6adc8` | `#6c6f85` |
 
-Blue/peach/red exactly match Hugi model/tool/error targets. `--syntax-red` is intentional: admin `--color-rose-400` matches Mocha red but switches to Latte maroon (`#e64553`), not Hugi's Latte red. Unknown/Blocked reuse the existing amber caution tone, not evidence of Hugi waiting/retry. Hugi idle restores a session-ID-derived identity color; no fixed idle target exists, so fleet Idle/Ended remain neutral rather than inventing activity/success. No compaction/retry state is inferred. The compiled UI test resolves rendered utilities through real Tailwind/PostCSS CSS to both appearance token values, including neutral stale/clock-skew labels; this is not browser-computed-style or pixel acceptance.
+Blue/peach/red exactly match Hugi model/tool/error targets. `--syntax-red` is intentional: admin `--color-rose-400` matches Mocha red but switches to Latte maroon (`#e64553`), not Hugi's Latte red. Unknown/Blocked reuse the existing amber caution tone, not evidence of Hugi waiting/retry. Hugi idle restores a session-ID-derived identity color; no fixed idle target exists, so fleet Idle/Ended remain neutral rather than inventing activity/success. No compaction/retry state is inferred.
+
+All status label text, including neutral/qualified labels, uses existing `text-foreground` (`#cdd6f4` Mocha / `#4c4f69` Latte). Numeric WCAG sRGB contrast against page/card is 11.341/12.139 in Mocha and 7.062/6.566 in Latte, all ≥4.5. Exact Hugi accents are not required to carry readable glyphs or meaning. Surrounding metadata styles are unchanged. The compiled UI test resolves actual rendered text/swatch utilities through real Tailwind/PostCSS CSS (and optionally shipping built CSS), checks exact theme values and numeric contrast for each state and fresh/stale/clock-skew case. This is not browser-computed-style or pixel acceptance.
 
 ## Local checks
 

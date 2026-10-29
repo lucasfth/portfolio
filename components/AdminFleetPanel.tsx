@@ -5,12 +5,12 @@ import { sessionFreshness, validateFleet, type FleetSnapshot, type FleetSession 
 function timestamp(value: string | null) {
   return value ? new Date(value).toLocaleString("en-GB", { timeZone: "Europe/Copenhagen", day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false }) : "Not observed";
 }
-// Hugi composer activity targets; existing tokens switch Mocha/Latte with appearance.
+// Exact Hugi activity targets are decorative only; status text uses readable foreground.
 // Idle/ended stay neutral: Hugi's idle border is a per-session identity, not a state.
 function stateTone(session: FleetSession) {
-  return session.state === "error" ? "text-(--syntax-red)"
-    : session.state === "unknown" || session.state === "blocked" ? "text-amber-400"
-    : session.state === "working" ? (session.toolsInFlight ? "text-(--syntax-peach)" : "text-accent") : "text-muted-foreground";
+  return session.state === "error" ? "bg-(--syntax-red)"
+    : session.state === "unknown" || session.state === "blocked" ? "bg-amber-400"
+    : session.state === "working" ? (session.toolsInFlight ? "bg-(--syntax-peach)" : "bg-accent") : "bg-muted-foreground";
 }
 function stateText(session: FleetSession) {
   if (session.state === "working") return session.workingSince ? (session.toolsInFlight ? "Running tools" : "Responding") : "Working (legacy observation)";
@@ -22,7 +22,7 @@ function SessionRows({ sessions, now }: { sessions: FleetSession[]; now: number 
     const qualified = freshness === "stale" || freshness === "clock-skew";
     return <li key={session.sessionId} className="py-3 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-baseline justify-between gap-2"><h4 className="break-words text-sm font-medium [overflow-wrap:anywhere]">{session.label}</h4><span className="font-mono text-xs uppercase text-muted-foreground">{freshness}</span></div>
-      <p className="mt-1 font-mono text-xs text-muted-foreground">Pi · {session.sessionId.slice(0, 8)} · <span className={qualified ? "text-muted-foreground" : stateTone(session)}>{qualified ? "Last reported: " : ""}{stateText(session)}</span>{session.state === "working" && session.toolsInFlight ? ` · ${session.toolsInFlight} tool calls in flight at source observation` : null}</p>
+      <p className="mt-1 font-mono text-xs text-muted-foreground">Pi · {session.sessionId.slice(0, 8)} · <span className="text-foreground"><span aria-hidden="true" className={`mr-1.5 inline-block size-2 rounded-full ${qualified ? "bg-muted-foreground" : stateTone(session)}`} />{qualified ? "Last reported: " : ""}{stateText(session)}</span>{session.state === "working" && session.toolsInFlight ? ` · ${session.toolsInFlight} tool calls in flight at source observation` : null}</p>
       <dl className="mt-2 space-y-1 text-xs text-muted-foreground">
         <div><dt className="inline">Working since{qualified ? " (last reported)" : ""}: </dt><dd className="inline">{timestamp(session.workingSince ?? null)}</dd></div>
         <div><dt className="inline">Source observed: </dt><dd className="inline">{timestamp(session.observedAt)}</dd></div>

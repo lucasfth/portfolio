@@ -108,10 +108,10 @@ class PublisherModeTests(unittest.TestCase):
             }
             result = subprocess.run(["bash", "-c", run_sh], env=env, text=True, capture_output=True, timeout=10)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("Invalid Radar publisher URL", result.stderr)
+            self.assertIn("Radar publisher env file is missing", result.stderr)
             self.assertNotIn("should-not-run", result.stderr)
 
-    def test_inherited_wrong_url_rejected_without_env_file(self):
+    def test_supabase_missing_env_file_rejects_valid_inherited_credentials(self):
         run_sh = Path(__file__).with_name("run.sh").read_text()
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
@@ -119,17 +119,87 @@ class PublisherModeTests(unittest.TestCase):
             stub_bin = home / "bin"
             stub_bin.mkdir()
             uv = stub_bin / "uv"
-            uv.write_text('#!/bin/sh\necho should-not-run >&2\nexit 8\n')
+            uv.write_text('#!/bin/sh\necho should-not-run >&2\nexit 0\n')
             uv.chmod(0o755)
+            token = "t" * 64
             env = {
-                **os.environ, "HOME": str(home), "PATH": f"{stub_bin}:/usr/bin:/bin",
+                "HOME": str(home), "PATH": f"{stub_bin}:/usr/bin:/bin",
                 "RADAR_PUBLICATION_SOURCE": "supabase", "RADAR_LEGACY_GITHUB_PUBLISH": "0",
-                "RADAR_PUBLISH_URL": "https://evil.test", "RADAR_PUBLISH_TOKEN": "t" * 64,
+                "RADAR_PUBLISH_URL": "https://lucashanson.dk/api/radar/publish",
+                "RADAR_PUBLISH_TOKEN": token,
             }
             result = subprocess.run(["bash", "-c", run_sh], env=env, text=True, capture_output=True, timeout=10)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("Invalid Radar publisher URL", result.stderr)
-            self.assertNotIn("should-not-run", result.stderr)
+            self.assertNotIn("should-not-run", result.stdout + result.stderr)
+            self.assertNotIn(token, result.stdout + result.stderr)
+
+    def test_default_github_without_publisher_credentials_reaches_publish_path(self):
+        run_sh = Path(__file__).with_name("run.sh").read_text()
+        for inherited in (False, True):
+            with self.subTest(inherited=inherited), tempfile.TemporaryDirectory() as tmp:
+                home = Path(tmp)
+                radar = home / "loki-radar"
+                (radar / "repo/.git").mkdir(parents=True)
+                (radar / "out").mkdir()
+                (radar / "out/public.json").write_text('{}')
+                (radar / "README.md").write_text('Radar')
+                config = home / ".config/loki-radar"
+                config.mkdir(parents=True)
+                (config / "gh_token").write_text('github-test-token')
+                stub_bin = home / "bin"
+                stub_bin.mkdir()
+                uv = stub_bin / "uv"
+                uv.write_text(
+                    '#!/bin/sh\n'
+                    '[ "${RADAR_PUBLICATION_SOURCE:-github}" = github ] || exit 8\n'
+                    '[ "${RADAR_PUBLISH_URL+x}" != x ] || exit 9\n'
+                    '[ "${RADAR_PUBLISH_TOKEN+x}" != x ] || exit 10\n'
+                    '[ "$GH_TOKEN" = github-test-token ] || exit 11\n'
+                    '[ "$*" = "run -q radar.py" ] || exit 12\n'
+                    'echo uv-github\n'
+                )
+                uv.chmod(0o755)
+                git = stub_bin / "git"
+                git.write_text('#!/bin/sh\n[ "$1" != push ] || echo github-publish\nexit 0\n')
+                git.chmod(0o755)
+                env = {"HOME": str(home), "PATH": f"{stub_bin}:/usr/bin:/bin"}
+                if inherited:
+                    env.update(RADAR_PUBLISH_URL="https://evil.test", RADAR_PUBLISH_TOKEN="t" * 64)
+                    (config / "radar-publisher.env").write_text('malformed-must-not-load\n')
+                result = subprocess.run(["bash", "-c", run_sh], env=env, text=True, capture_output=True, timeout=10)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn("uv-github", result.stdout)
+                self.assertIn("github-publish", result.stdout)
+                self.assertNotIn("t" * 64, result.stdout + result.stderr)
+
+    def test_inherited_wrong_url_rejected_without_env_file(self):
+        run_sh = Path(__file__).with_name("run.sh").read_text()
+        for has_file in (False, True):
+            with self.subTest(has_file=has_file), tempfile.TemporaryDirectory() as tmp:
+                home = Path(tmp)
+                (home / "loki-radar").mkdir()
+                if has_file:
+                    config = home / ".config/loki-radar"
+                    config.mkdir(parents=True)
+                    (config / "radar-publisher.env").write_text(
+                        "RADAR_PUBLISH_URL=https://lucashanson.dk/api/radar/publish\n"
+                        "RADAR_PUBLISH_TOKEN=" + "t" * 64 + "\n"
+                    )
+                stub_bin = home / "bin"
+                stub_bin.mkdir()
+                uv = stub_bin / "uv"
+                uv.write_text('#!/bin/sh\necho should-not-run >&2\nexit 8\n')
+                uv.chmod(0o755)
+                env = {
+                    "HOME": str(home), "PATH": f"{stub_bin}:/usr/bin:/bin",
+                    "RADAR_PUBLICATION_SOURCE": "supabase", "RADAR_LEGACY_GITHUB_PUBLISH": "0",
+                    "RADAR_PUBLISH_URL": "https://evil.test", "RADAR_PUBLISH_TOKEN": "t" * 64,
+                }
+                result = subprocess.run(["bash", "-c", run_sh], env=env, text=True, capture_output=True, timeout=10)
+                self.assertNotEqual(result.returncode, 0)
+                message = "Invalid Radar publisher URL" if has_file else "Radar publisher env file is missing"
+                self.assertIn(message, result.stderr)
+                self.assertNotIn("should-not-run", result.stderr)
     def test_github_mode_reads_token_before_uv(self):
         run_sh = Path(__file__).with_name("run.sh").read_text()
         self.assertIn('export GH_TOKEN="$(cat "$HOME/.config/loki-radar/gh_token")"', run_sh)
@@ -140,6 +210,12 @@ class PublisherModeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)
             (home / "loki-radar").mkdir()
+            config = home / ".config/loki-radar"
+            config.mkdir(parents=True)
+            (config / "radar-publisher.env").write_text(
+                "RADAR_PUBLISH_URL=https://lucashanson.dk/api/radar/publish\n"
+                "RADAR_PUBLISH_TOKEN=" + "t" * 64 + "\n"
+            )
             stub_bin = home / "bin"
             stub_bin.mkdir()
             uv = stub_bin / "uv"

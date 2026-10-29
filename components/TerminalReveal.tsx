@@ -1,14 +1,21 @@
 "use client";
 
-import { useLayoutEffect, useRef, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { createAsciiReveal, presets } from "ascii-reveal/core";
 import { usePathname } from "next/navigation";
 
 /** Enhance real server-rendered content; never hide it while loading the effect. */
 function useTerminalReveal(scope: React.RefObject<HTMLElement | null>, titlesOnly = false, enabled = true, loading = false, loadingLoop = false, revision = "") {
   const pathname = usePathname();
+  const [reducedMotion, setReducedMotion] = useState(() => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   useLayoutEffect(() => {
-    if ((!enabled && !loading) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const changed = () => setReducedMotion(query.matches);
+    changed(); query.addEventListener?.("change", changed);
+    return () => query.removeEventListener?.("change", changed);
+  }, []);
+  useLayoutEffect(() => {
+    if ((!enabled && !loading) || reducedMotion) return;
     let cancelled = false;
     const controllers: { destroy(): void; shimmer(on: boolean): void; reveal(): Promise<void> }[] = [];
     let observer: IntersectionObserver | undefined;
@@ -17,6 +24,8 @@ function useTerminalReveal(scope: React.RefObject<HTMLElement | null>, titlesOnl
         const root = titlesOnly ? document.getElementById("main-content") : scope.current;
         if (cancelled || !root) return;
         if (!titlesOnly && loading && loadingLoop) {
+          // The enhancement is optional; absent canvas must leave named source text readable.
+          if (!document.createElement("canvas").getContext("2d")) return;
           const controller = createAsciiReveal(root, { preset: { ...presets.terminal, tick: 120 }, origin: "top-left", speed: 2, duration: "cinematic" });
           controllers.push(controller);
           controller.shimmer(true);
@@ -54,7 +63,7 @@ function useTerminalReveal(scope: React.RefObject<HTMLElement | null>, titlesOnl
     }
     void start();
     return () => { cancelled = true; observer?.disconnect(); controllers.forEach(controller => controller.destroy()); };
-  }, [pathname, scope, titlesOnly, enabled, loading, loadingLoop, revision]);
+  }, [pathname, scope, titlesOnly, enabled, loading, loadingLoop, revision, reducedMotion]);
 }
 
 export function TitleReveals() {

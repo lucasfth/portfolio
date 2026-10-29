@@ -28,8 +28,8 @@ export default function AdminField({ text, loading = false }: { text: string; lo
     return () => { alive = false; observer?.disconnect(); document.fonts?.removeEventListener("loadingdone", fontsChanged); };
   }, [text]);
   return <div ref={field} className="admin-field" data-loading={loading} style={{ minHeight: size.height || undefined }}>
-    <TerminalReveal key={text} revision={`${size.width}:${size.height}:${fontRevision}`} loading={loading} loadingLoop={loading}>
-      <span className="admin-field-text" aria-hidden={loading || undefined}>{text || "No data"}</span>
+    <TerminalReveal key={text} revision={loading ? `${size.width}:${size.height}:${fontRevision}` : ""} loading={loading} loadingLoop={loading}>
+      <span className="admin-field-text">{text || "No data"}</span>
     </TerminalReveal>
   </div>;
 }

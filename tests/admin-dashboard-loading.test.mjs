@@ -17,7 +17,8 @@ test("unloaded data fields use the shared ASCII shimmer until data is ready", ()
 });
 
 test("weather panel includes feels-like, wind, rain, range, UV, and sun data", () => {
-  const weather = source.slice(source.indexOf('eyebrow="Env"'));
+  const envStart = source.indexOf('eyebrow="Env"');
+  const weather = source.slice(envStart, source.indexOf('</Panel>', envStart));
   for (const field of ["Feels like", "Wind", "Rain", "Range", "UV", "Sun"]) assert.ok(weather.includes(field), `missing ${field}`);
 });
 

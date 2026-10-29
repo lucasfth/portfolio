@@ -173,7 +173,7 @@ function Board({ cells }: { cells: BoardCell[] }) {
     <div className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-7">
       {cells.map((c) => (
         <a key={c.code} href={c.href} className="min-w-0 bg-card px-3 py-3 hover:bg-muted/30">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
             <span className={`${MONO} text-[10px] ${TRACK} text-muted-foreground/70`}>{c.code}</span>
             <span className="flex items-center gap-1.5">
               <Dot state={c.state} />
@@ -182,8 +182,8 @@ function Board({ cells }: { cells: BoardCell[] }) {
               </span>
             </span>
           </div>
-          <div className="mt-2 text-sm tabular-nums text-foreground"><AdminField text={c.value} loading={c.state === "loading"} /></div>
-          <p className={`${MONO} mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60`}>{c.sub}</p>
+          <div className="admin-board-value mt-2 text-sm leading-5 tabular-nums text-foreground"><AdminField text={c.value} loading={c.state === "loading"} /></div>
+          <p className={`admin-board-sub ${MONO} mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60`}>{c.sub}</p>
         </a>
       ))}
     </div>
@@ -256,7 +256,7 @@ function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; er
 }
 
 function FinancePanel({ finance, error, refreshing }: { finance: FinancePayload | null; error: string | null; refreshing: boolean }) {
-  const state: ModuleState = finance ? "ok" : error ? "error" : "loading";
+  const state: ModuleState = error ? "error" : finance ? "ok" : "loading";
   return (
     <Panel eyebrow="Finance" title="Daily follow-up" state={state} error={error} meta={finance ? `report ${fmtTime(finance.generatedAt)}` : "private link"} loadingFields={["Nordea balance and source date", "Saxo statement and source date", "Supported subtotal (partial assets)"]} ready={Boolean(finance)} loading={refreshing && Boolean(finance)}>
       <div className="grid gap-3">
@@ -644,7 +644,7 @@ export default function AdminDashboard() {
       </div>
 
       <div className="mb-5"><Board cells={cells} /></div>
-      <p className="mb-5 text-xs text-muted-foreground">FAULT marks unavailable or incomplete sources. Open a figure for its data and notices. Sync is the last refresh attempt, not proof every source succeeded.</p>
+      <p className="mb-5 text-xs text-muted-foreground">FAULT marks unavailable or incomplete sources, or failed jobs. Open a figure for its data and notices. Sync is the last refresh attempt, not proof every source succeeded.</p>
       <div className="admin-columns">
         <div className="admin-main">
           {session?.access_token ? <AdminFleetPanel key={session.user.id} token={session.access_token} /> : null}

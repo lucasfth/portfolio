@@ -55,10 +55,11 @@
 .admin-field { position: relative; min-width: 0; overflow: clip; overflow-wrap: anywhere; line-height: inherit; }
 .admin-field .terminal-reveal { position: relative; isolation: isolate; }
 .admin-field-text { display: block; }
-.admin-field[data-loading="true"] .admin-field-text { visibility: hidden; }
+/* Hide only while a canvas actually exists; failed/absent enhancement stays readable. */
+.admin-field[data-loading="true"]:has(.ar-overlay canvas) .admin-field-text { visibility: hidden; }
 .admin-field .ar-overlay { position: absolute; inset: 0; overflow: clip; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) {
-.admin-field[data-loading="true"] .admin-field-text { visibility: visible; }
+.admin-field[data-loading="true"] .admin-field-text, .admin-field[data-loading="true"]:has(.ar-overlay canvas) .admin-field-text { visibility: visible; }
 .admin-dashboard .animate-spin, .admin-dashboard .animate-pulse { animation: none; }
 }
 
@@ -71,6 +72,13 @@
 .admin-dashboard :is(h1, h2, h3, h4) { font-family: var(--font-heading); }
 .admin-dashboard .text-muted-foreground\/50, .admin-dashboard .text-muted-foreground\/60, .admin-dashboard .text-muted-foreground\/70, .admin-dashboard .text-muted-foreground\/80, .admin-dashboard .text-muted-foreground\/90 { color: var(--color-muted-foreground); }
 .admin-quote svg { max-width: 64px; }
+.admin-board-value { max-height: 2.5rem; overflow: clip; }
+.admin-board-sub { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+@media (prefers-color-scheme: light) {
+.admin-dashboard :is(.text-muted-foreground, .text-muted-foreground\/50, .text-muted-foreground\/60, .text-muted-foreground\/70, .text-muted-foreground\/80, .text-muted-foreground\/90) { color: var(--color-subtext); }
+.admin-dashboard :is(.text-foreground\/80, .text-emerald-400\/90, .text-rose-400\/90, .text-rose-300) { color: var(--color-foreground); }
+.admin-dashboard :is(button, a, summary, input):focus-visible { outline-color: var(--color-accent); }
+}
 @media (min-width: 1000px) {
 .admin-columns { grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); }
 .admin-schedule { grid-column: 1 / -1; }

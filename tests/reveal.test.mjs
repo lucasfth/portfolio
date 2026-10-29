@@ -38,7 +38,8 @@ test('additional motion stays opt-in and limited', () => {
 test('project and blog covers opt in without animating article bodies', () => {
   for (const path of ['components/ProjectCard.tsx', 'app/blog/[postId]/page.tsx', 'app/projects/[projectId]/page.tsx']) {
     const source = readFileSync(path, 'utf8');
-    assert.match(source, /<div data-terminal-media className="relative/);
+    // Cover attributes may span lines; require the opt-in and relative class on the same div.
+    assert.match(source, /<div\s+data-terminal-media\s+[^>]*className="relative/);
     assert.doesNotMatch(source, /<article[^>]*data-terminal-media/);
   }
   assert.doesNotMatch(readFileSync('app/projects/page.tsx', 'utf8'), /<Reveal/);

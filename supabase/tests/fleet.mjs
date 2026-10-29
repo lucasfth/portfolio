@@ -80,3 +80,16 @@ test('parallel database callers cannot overwrite newer sequence or exceed rate b
  const outcomes=await Promise.all([run({...p,sequence:20}),run({...p,sequence:21}),run({...p,sequence:22})]);
  assert.equal(outcomes.filter(x=>x==='accepted').length,1);assert.equal(outcomes.filter(x=>x==='limited').length,2);
 });
+
+test('additive activity SQL matches TS and preserves legacy producer/restart semantics',()=>{
+ reset();const p=report();const enriched={...p,workingSince:p.startedAt,toolsInFlight:2};
+ assert.equal(send(enriched),'accepted');
+ let data=validateFleet(JSON.parse(sql('set role service_role; select public.fleet_snapshot();')));
+ assert.equal(data.hosts[0].sessions[0].toolsInFlight,2);
+ for(const change of [{workingSince:null},{toolsInFlight:0},{workingSince:null,toolsInFlight:0},{workingSince:p.startedAt,toolsInFlight:-1},{workingSince:p.startedAt,toolsInFlight:257},{workingSince:p.startedAt,toolsInFlight:0.5},{workingSince:p.startedAt,toolsInFlight:'1'},{workingSince:new Date(Date.parse(p.observedAt)+1).toISOString(),toolsInFlight:0},{workingSince:new Date(Date.parse(p.startedAt)-1).toISOString(),toolsInFlight:0},{state:'idle',workingSince:p.startedAt,toolsInFlight:0},{state:'ended',workingSince:null,toolsInFlight:1},{title:'PRIVATE_PROMPT'}])assert.throws(()=>send({...p,sequence:1,...change}),JSON.stringify(change));
+ assert.equal(send({...p,sequence:1,state:'idle',workingSince:null,toolsInFlight:0}),'accepted');
+ assert.equal(send({...p,sequence:2}),'accepted','old Mac wire remains accepted after enriched row');
+ data=validateFleet(JSON.parse(sql('set role service_role; select public.fleet_snapshot();')));
+ assert.equal(Object.hasOwn(data.hosts[0].sessions[0],'workingSince'),false,'old sender never inherits invented activity');
+ assert.equal(send({...enriched,sequence:1}),'stale');
+});

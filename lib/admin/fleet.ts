@@ -5,6 +5,7 @@ export type FleetReport = {
   schemaVersion: 1; hostId: HostId; sessionId: string; label: string;
   state: typeof STATES[number]; observedAt: string; lastToolCompletedAt: string | null;
   startedAt: string; sequence: number;
+  workingSince?: string | null; toolsInFlight?: number;
 };
 export type FleetSession = FleetReport & { receivedAt: string };
 export type FleetHost = { id: HostId; lastReceivedAt: string | null; sessions: FleetSession[] };
@@ -21,17 +22,27 @@ export function fleetTimestamp(value: unknown): value is string {
 export function safeLabel(value: unknown): value is string {
   return typeof value === "string" && value.length > 0 && value.length <= 80 && value === value.trim() && /^[A-Za-z0-9 ._-]+$/.test(value);
 }
+function reportShape(value: unknown, received = false): Record<string, unknown> {
+  const enriched = !!value && typeof value === "object" && (Object.hasOwn(value, "workingSince") || Object.hasOwn(value, "toolsInFlight"));
+  return exact(value, [...REPORT_KEYS, ...(enriched ? ["workingSince", "toolsInFlight"] : []), ...(received ? ["receivedAt"] : [])]);
+}
 function fields(p: Record<string, unknown>): void {
   if (p.schemaVersion !== 1 || !HOST_IDS.includes(p.hostId as HostId) || typeof p.sessionId !== "string" || !/^[a-f0-9]{32}$/.test(p.sessionId) || !safeLabel(p.label) || !STATES.includes(p.state as FleetReport["state"]) || !Number.isSafeInteger(p.sequence) || (p.sequence as number) < 0 || !fleetTimestamp(p.observedAt) || !fleetTimestamp(p.startedAt) || p.startedAt > p.observedAt || (p.lastToolCompletedAt !== null && (!fleetTimestamp(p.lastToolCompletedAt) || p.lastToolCompletedAt > p.observedAt))) throw new Error("Invalid fleet data");
+  if (Object.hasOwn(p, "workingSince")) {
+    if (!Number.isInteger(p.toolsInFlight) || (p.toolsInFlight as number) < 0 || (p.toolsInFlight as number) > 256) throw new Error("Invalid fleet data");
+    if (p.state === "working") {
+      if (!fleetTimestamp(p.workingSince) || p.workingSince < (p.startedAt as string) || p.workingSince > (p.observedAt as string)) throw new Error("Invalid fleet data");
+    } else if (p.workingSince !== null || p.toolsInFlight !== 0) throw new Error("Invalid fleet data");
+  }
 }
 export function validateReport(value: unknown, now = Date.now()): FleetReport {
-  const p = exact(value, REPORT_KEYS); fields(p);
+  const p = reportShape(value); fields(p);
   const observed = Date.parse(p.observedAt as string);
   if (observed < now - 300_000 || observed > now + 30_000 || Date.parse(p.startedAt as string) < now - 366 * 86_400_000) throw new Error("Invalid fleet data");
   return value as FleetReport;
 }
 export function validateSession(value: unknown): FleetSession {
-  const p = exact(value, [...REPORT_KEYS, "receivedAt"]); fields(p);
+  const p = reportShape(value, true); fields(p);
   if (!fleetTimestamp(p.receivedAt)) throw new Error("Invalid fleet data");
   return value as FleetSession;
 }

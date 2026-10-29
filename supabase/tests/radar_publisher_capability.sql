@@ -1,6 +1,6 @@
-begin;
+BEGIN;
 
--- Only the server-side Supabase service role can call this write RPC.
+-- The public API roles cannot publish; only the server-side service role can.
 DO $$
 BEGIN
   IF has_function_privilege('anon', 'public.publish_radar_edition(jsonb)', 'EXECUTE')
@@ -12,6 +12,7 @@ BEGIN
 END;
 $$;
 
+SET LOCAL ROLE service_role;
 SELECT public.publish_radar_edition(
   '{"generated":"2026-10-28T04:11:24+00:00","count_scanned":1,"items":[{"title":"Example","url":"https://example.com","source":"Example","summary":"Public item","tag":"agents","score":7,"kind":"article","ts":1}]}'::jsonb
 );

@@ -8,3 +8,4 @@ export function payloadRefreshError(candidate: { status?: string } | null): stri
 export function panelPayloadResult<T extends { status?: string }>(previous: T | null, candidate: T | null): { payload: T | null; error: string | null };
 export function reportReadResult<T>(previous: T[] | null, result: { data: unknown; error: unknown }): { reports: T[] | null; error: string | null };
 export function toggleExpanded(value: boolean): boolean;
+export function githubRefreshErrorFor(candidate: { status?: string; message?: unknown } | null): string | null;

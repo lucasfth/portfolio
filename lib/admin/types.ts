@@ -70,6 +70,9 @@ export type GithubPull = {
   title: string;
   state: string;
   url: string;
+  author: string;
+  assignees: string[];
+  reviewers: string[];
 };
 
 export type GithubIssue = {
@@ -80,9 +83,30 @@ export type GithubIssue = {
   url: string;
 };
 
+export type GithubRepository = {
+  name: string;
+  id: string;
+  pullsComplete: boolean;
+  activityComplete: boolean;
+  commits: GithubCommit[];
+  openPulls: GithubPull[];
+  issues: GithubIssue[];
+};
+
+export type GithubGroup = {
+  owner: string;
+  personal: boolean;
+  repositoriesComplete: boolean;
+  repositories: GithubRepository[];
+  limitations: string[];
+};
+
 export type GithubPayload = {
   status: "ok" | "error";
   message?: string;
+  coverage: "complete" | "partial" | "unavailable";
+  limitations?: string[];
+  groups: GithubGroup[];
   windowHours: number;
   commits: GithubCommit[];
   openPulls: GithubPull[];

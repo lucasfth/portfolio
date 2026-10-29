@@ -17,8 +17,9 @@ import type {
   WeatherPayload,
 } from "@/lib/admin/types";
 import TerminalReveal from "@/components/TerminalReveal";
+import AdminGithub from "@/components/AdminGithub";
 import { fetchJsonWithRetry } from "@/lib/admin/fetch-json-with-retry.mjs";
-import { createRequestCoordinator, payloadRefreshError, reportReadResult, retainSuccessfulPayload } from "@/lib/admin/dashboard-state.mjs";
+import { createRequestCoordinator, githubRefreshErrorFor, payloadRefreshError, reportReadResult, retainSuccessfulPayload } from "@/lib/admin/dashboard-state.mjs";
 import { activateDialog, cronJobDetail } from "@/lib/admin/detail-dialog.mjs";
 
 type SessionShape = {
@@ -326,6 +327,8 @@ export default function AdminDashboard() {
       try {
         const result = await fetchJsonWithRetry(path, { signal, headers: { Authorization: `Bearer ${session.access_token}` } });
         const body = result.body as { status?: unknown } | null;
+        // Keep GitHub error metadata separate from the retained successful payload.
+        if (path === "/api/admin/github" && result.response.ok && body?.status === "error") return result.body;
         return result.response.ok && body?.status === "ok" ? result.body : null;
       } catch {
         return null;
@@ -346,7 +349,7 @@ export default function AdminDashboard() {
     if (!requests.current.isCurrent(id)) return false;
     setWeather(previous => retainSuccessfulPayload(previous, w)); setWeatherRefreshError(payloadRefreshError(w));
     setStocks(previous => retainSuccessfulPayload(previous, s)); setStocksRefreshError(payloadRefreshError(s));
-    setGithub(previous => retainSuccessfulPayload(previous, g)); setGithubRefreshError(payloadRefreshError(g));
+    setGithub(previous => retainSuccessfulPayload(previous, g)); setGithubRefreshError(githubRefreshErrorFor(g));
     setRadar(previous => retainSuccessfulPayload(previous, r)); setRadarRefreshError(payloadRefreshError(r));
     if (session?.access_token) {
       const headers = { Authorization: `Bearer ${session.access_token}` };
@@ -605,8 +608,8 @@ export default function AdminDashboard() {
       code: "GHT",
       state: gs,
       value:
-        gs === "ok" ? `${github!.commits.length}c · ${github!.openPulls.length}pr` : gs === "error" ? "gh fault" : "syncing",
-      sub: "github, last 24h",
+        gs === "ok" ? `${github!.coverage === "complete" ? "" : "at least "}${github!.openPulls.length} PRs for lucasfth` : gs === "error" ? "gh fault" : "syncing",
+      sub: "github, current open PRs",
     },
     {
       code: "OVT",
@@ -766,89 +769,16 @@ export default function AdminDashboard() {
 
         <Panel
           eyebrow="GitHub"
-          title="Last 24 hours"
+          title="Repositories and activity"
           state={gs}
-          error={githubRefreshError ?? github?.message}
-          meta={`${github?.commits.length ?? "--"} commits`}
+          error={githubRefreshError ?? (github?.status === "error" ? github.message : undefined)}
+          meta={github ? `${github.coverage === "complete" ? "" : "at least "}${github.openPulls.length} PRs for lucasfth` : "-- PRs"}
           className="lg:col-span-5"
           loading={refreshing && Boolean(github)}
-          ready={Boolean(github)}
+          ready={github?.status === "ok"}
         >
           {github && github.status === "ok" ? (
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
-            <div>
-              <p className={`${MONO} mb-3 text-[11px] ${TRACK} text-muted-foreground`}>Commits</p>
-              {github!.commits.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Quiet day.</p>
-              ) : (
-                <ul>
-                  {github!.commits.slice(0, 10).map((c) => (
-                    <li key={c.repo + c.sha} className="border-b border-border last:border-b-0">
-                      <a
-                        href={c.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block py-2.5 transition-colors hover:bg-foreground/[0.03]"
-                      >
-                        <span className="block truncate text-sm">{c.message}</span>
-                        <span className={`${MONO} text-[11px] text-muted-foreground/70`}>
-                          {c.repo} · {c.author}
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div>
-              <p className={`${MONO} mb-3 text-[11px] ${TRACK} text-muted-foreground`}>Open pull requests</p>
-              {github!.openPulls.length === 0 ? (
-                <p className="text-sm text-muted-foreground">None open.</p>
-              ) : (
-                <ul>
-                  {github!.openPulls.map((p) => (
-                    <li key={p.repo + p.number} className="border-b border-border last:border-b-0">
-                      <a
-                        href={p.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block py-2.5 transition-colors hover:bg-foreground/[0.03]"
-                      >
-                        <span className="block truncate text-sm">{p.title}</span>
-                        <span className={`${MONO} text-[11px] text-muted-foreground/70`}>
-                          {p.repo} · #{p.number}
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-            <div>
-              <p className={`${MONO} mb-3 text-[11px] ${TRACK} text-muted-foreground`}>Issues touched</p>
-              {github!.issues.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nothing new.</p>
-              ) : (
-                <ul>
-                  {github!.issues.map((i) => (
-                    <li key={i.repo + i.number} className="border-b border-border last:border-b-0">
-                      <a
-                        href={i.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block py-2.5 transition-colors hover:bg-foreground/[0.03]"
-                      >
-                        <span className="block truncate text-sm">{i.title}</span>
-                        <span className={`${MONO} text-[11px] text-muted-foreground/70`}>
-                          {i.repo} · #{i.number} · {i.state}
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
+            <AdminGithub payload={github} />
           ) : null}
         </Panel>
 

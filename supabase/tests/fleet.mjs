@@ -3,7 +3,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { safeLabel, validateFleet } from '../../lib/admin/fleet.ts';
+import { safeLabel, validateFleet, validateReport } from '../../lib/admin/fleet.ts';
+import { reportResponse } from '../../lib/admin/fleet-receiver.ts';
 const url=process.env.FLEET_TEST_DATABASE_URL;
 if(!url)throw Error('Set FLEET_TEST_DATABASE_URL to an isolated migrated test database');
 const psql=process.env.FLEET_TEST_PSQL || 'psql';
@@ -92,4 +93,56 @@ test('additive activity SQL matches TS and preserves legacy producer/restart sem
  data=validateFleet(JSON.parse(sql('set role service_role; select public.fleet_snapshot();')));
  assert.equal(Object.hasOwn(data.hosts[0].sessions[0],'workingSince'),false,'old sender never inherits invented activity');
  assert.equal(send({...enriched,sequence:1}),'stale');
+});
+
+test('canonical timestamps reject SQL normalization in every field without poisoning the reader or HTTP storage',async()=>{
+ // Frozen clock is transactional and rolled back on this explicitly isolated DB only.
+ // This exercises observedAt at midnight inside its real window, not a masked stale-clock rejection.
+ const now=Date.parse('2026-03-01T00:00:00.000Z');
+ const canonical='2026-03-01T00:00:00.000Z';
+ const token='synthetic-canonical-timestamp-token-0000';
+ const base=report({observedAt:canonical,startedAt:'2026-02-28T00:00:00.000Z',workingSince:canonical,toolsInFlight:0});
+ for(const field of ['workingSince','observedAt','startedAt','lastToolCompletedAt']){
+  for(const value of ['2026-02-28T24:00:00.000Z','2026-02-28T23:59:60.000Z','2026-02-30T00:00:00.000Z']){
+   const invalid={...base,[field]:value};
+   assert.throws(()=>validateReport(invalid,now),`${field} ${value}: TS`);
+   let writes=0;
+   const response=await reportResponse(new Request('http://127.0.0.1/api/admin/fleet/report',{method:'POST',headers:{authorization:'Bearer '+token,'content-type':'application/json'},body:JSON.stringify(invalid)}),{gimle:token},async()=>{writes++;return 'accepted'},now);
+   assert.equal(response.status,400,`${field} ${value}: HTTP`);assert.equal(writes,0);
+   const result=JSON.parse(sql(`begin;
+    create or replace function pg_catalog.clock_timestamp() returns timestamptz language sql volatile as 'select ''${canonical}''::timestamptz';
+    set local timezone = 'Pacific/Honolulu';
+    truncate public.fleet_sessions;
+    update public.fleet_hosts set last_received_at=null,attempts=0,window_started_at=clock_timestamp();
+    do $seed$ begin
+      if public.fleet_report(${literal(JSON.stringify({...base,sessionId:'b'.repeat(32)}))}::jsonb) <> 'accepted' then raise exception 'Seed rejected'; end if;
+    end $seed$;
+    create temp table canonical_result(rejected boolean, code text, message text);
+    create temp table canonical_before as select public.fleet_snapshot() as snapshot;
+    do $probe$ begin
+      perform public.fleet_report(${literal(JSON.stringify(invalid))}::jsonb);
+      insert into canonical_result values(false,null,null);
+    exception when others then insert into canonical_result values(true,SQLSTATE,SQLERRM); end $probe$;
+    select jsonb_build_object('rejected',(select rejected from canonical_result),
+      'code',(select code from canonical_result),'message',(select message from canonical_result),
+      'before',(select snapshot from canonical_before),
+      'invalidRows',(select count(*) from public.fleet_sessions where session_id='${base.sessionId}'),
+      'snapshot',public.fleet_snapshot());
+    rollback;`));
+   console.log(JSON.stringify({field,value,sqlRejected:result.rejected,code:result.code,invalidRows:result.invalidRows,http:response.status,writes}));
+   assert.equal(result.rejected,true,`${field} ${value}: SQL must reject normalization`);
+   if(value.includes('-30T'))assert.equal(result.code,'22008','day overflow rejected by PostgreSQL date parsing');
+   else {assert.equal(result.code,'P0001');assert.equal(result.message,'Invalid fleet report');}
+   assert.deepEqual(result.snapshot,result.before,'reader snapshot unchanged');
+   // A separate valid row survives; invalid session stays absent and the aggregate reader remains valid.
+   const snapshot=validateFleet(result.snapshot);
+   const sessions=snapshot.hosts.find(h=>h.id==='gimle').sessions;
+   assert.equal(result.invalidRows,0);assert.equal(sessions.length,1);assert.equal(sessions[0].sessionId,'b'.repeat(32));
+  }
+ }
+ // Old nine-field Mac wire still passes the inherited gates, without invented activity.
+ reset();const legacy=report({hostId:'macbook'});
+ assert.deepEqual(validateReport(legacy),legacy);assert.equal(send(legacy),'accepted');
+ const mac=validateFleet(JSON.parse(sql('set role service_role; select public.fleet_snapshot();'))).hosts.find(h=>h.id==='macbook').sessions[0];
+ assert.equal(Object.hasOwn(mac,'workingSince'),false);
 });

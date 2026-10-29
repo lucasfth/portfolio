@@ -31,6 +31,12 @@ begin
   v_started := (p_report->>'startedAt')::timestamptz;
   v_observed := (p_report->>'observedAt')::timestamptz;
   v_tool := (p_report->>'lastToolCompletedAt')::timestamptz;
+  -- Match fleetTimestamp's canonical UTC spelling; PostgreSQL otherwise normalizes 24:00/second 60.
+  -- These base-field gates are inherited from the replaced RPC; reject, never rewrite source JSON.
+  if to_char(v_started at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') <> p_report->>'startedAt'
+     or to_char(v_observed at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') <> p_report->>'observedAt'
+     or (v_tool is not null and to_char(v_tool at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') <> p_report->>'lastToolCompletedAt')
+  then raise exception 'Invalid fleet report'; end if;
   v_sequence := (p_report->>'sequence')::bigint;
   -- Optional v1 evidence is paired, bounded and valid only for the observed state.
   if p_report ? 'workingSince' then
@@ -41,7 +47,8 @@ begin
       if jsonb_typeof(p_report->'workingSince') is distinct from 'string'
          or p_report->>'workingSince' !~ '^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$'
          then raise exception 'Invalid fleet report'; end if;
-      if (p_report->>'workingSince')::timestamptz < v_started or (p_report->>'workingSince')::timestamptz > v_observed
+      if to_char((p_report->>'workingSince')::timestamptz at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"') <> p_report->>'workingSince'
+         or (p_report->>'workingSince')::timestamptz < v_started or (p_report->>'workingSince')::timestamptz > v_observed
          then raise exception 'Invalid fleet report'; end if;
     elsif p_report->'workingSince' is distinct from 'null'::jsonb or (p_report->>'toolsInFlight')::numeric <> 0
       then raise exception 'Invalid fleet report'; end if;

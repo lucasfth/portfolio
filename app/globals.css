@@ -51,6 +51,35 @@
    Overlay glyphs must paint with their own animated color. */
 .ar-overlay > span { -webkit-text-fill-color: currentColor; }
 
+/* Admin text fields own their geometry; never animate heterogeneous panels. */
+.admin-field { position: relative; min-width: 0; overflow: clip; overflow-wrap: anywhere; line-height: inherit; }
+.admin-field .terminal-reveal { position: relative; isolation: isolate; }
+.admin-field-text { display: block; }
+.admin-field[data-loading="true"] .admin-field-text { visibility: hidden; }
+.admin-field .ar-overlay { position: absolute; inset: 0; overflow: clip; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+.admin-field[data-loading="true"] .admin-field-text { visibility: visible; }
+.admin-dashboard .animate-spin, .admin-dashboard .animate-pulse { animation: none; }
+}
+
+.admin-columns { display: grid; grid-template-columns: minmax(0, 1fr); gap: 20px; align-items: start; }
+.admin-main, .admin-context, .admin-schedule { display: grid; gap: 20px; min-width: 0; }
+.admin-panel { border-radius: var(--media-radius); background: var(--color-card); border: 1px solid var(--color-border); min-width: 0; scroll-margin-top: 100px; overflow-wrap: anywhere; }
+.admin-panel-header { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px; padding: 16px; border-bottom: 1px solid var(--color-border); }
+.admin-panel-body { padding: 16px; }
+.admin-dashboard :is(button, a, summary, input):focus-visible { outline: 2px solid var(--color-ring); outline-offset: 4px; }
+.admin-dashboard :is(h1, h2, h3, h4) { font-family: var(--font-heading); }
+.admin-dashboard .text-muted-foreground\/50, .admin-dashboard .text-muted-foreground\/60, .admin-dashboard .text-muted-foreground\/70, .admin-dashboard .text-muted-foreground\/80, .admin-dashboard .text-muted-foreground\/90 { color: var(--color-muted-foreground); }
+.admin-quote svg { max-width: 64px; }
+@media (min-width: 1000px) {
+.admin-columns { grid-template-columns: minmax(0, 1.7fr) minmax(280px, 1fr); }
+.admin-schedule { grid-column: 1 / -1; }
+}
+@media (min-width: 1380px) {
+.admin-columns { grid-template-columns: minmax(0, 1.8fr) minmax(280px, 1fr) minmax(250px, .9fr); }
+.admin-schedule { grid-column: auto; }
+}
+
 /* Theme: exact Catppuccin Mocha by default, exact Latte in light appearance. */
 @theme {
   /* Typography */

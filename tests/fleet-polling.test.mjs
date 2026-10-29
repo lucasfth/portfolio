@@ -77,7 +77,7 @@ function dashboard() {
   const app = component('AdminDashboard', {
     '@/lib/admin/browser': { browserSupabase: () => sb },
     '@/components/AdminFleetPanel': Fleet,
-    '@/components/TerminalReveal': () => null,
+    '@/components/AdminField': () => null,
     '@/components/AdminGithub': () => null,
     '@/lib/admin/fetch-json-with-retry.mjs': { fetchJsonWithRetry: async () => ({ response: { ok: false }, body: null }) },
     '@/lib/admin/dashboard-state.mjs': createRequire(import.meta.url)('../lib/admin/dashboard-state.mjs'),

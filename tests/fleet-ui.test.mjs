@@ -41,7 +41,7 @@ test('compiled fleet activity is event-backed, stable active-first, semantic and
   assert.ok(markup.indexOf('Active session')<markup.indexOf('Ended session'));
   assert.ok(markup.indexOf('Active session')<markup.indexOf('Responding session'),'stable same-priority order');
   assert.ok(markup.includes('Working since'));assert.ok(markup.includes('Responding'));
-  const disclosure=document.querySelector('details');assert.ok(disclosure);assert.equal(disclosure.hasAttribute('open'),false);assert.match(disclosure.querySelector('summary').textContent,/Ended sessions.*1/);
+  const disclosure=[...document.querySelectorAll('details')].find(node=>/Ended sessions/.test(node.querySelector('summary').textContent));assert.ok(disclosure);assert.equal(disclosure.hasAttribute('open'),false);assert.match(disclosure.querySelector('summary').textContent,/Ended sessions.*1/);
   assert.ok(document.querySelector('[aria-hidden="true"].bg-accent'));assert.ok(document.querySelector('[aria-hidden="true"].bg-\\(--syntax-peach\\)'));
   const stale=renderFleet(model,true,Date.parse(at)+121000);
   assert.ok(stale.includes('Last reported: Running tools'));assert.ok(stale.includes('stale'));assert.ok(stale.includes('Showing last received values'));

@@ -5,7 +5,7 @@
 // (radar, stocks, weather, GitHub) fetch through /api/admin/* with the user
 // session; the overnight panel reads admin_reports directly with RLS.
 
-import { Children, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ArrowUpRight, LogOut, RefreshCw } from "lucide-react";
 import { browserSupabase } from "@/lib/admin/browser";
 import AdminFleetPanel from "@/components/AdminFleetPanel";
@@ -16,7 +16,7 @@ import type {
   StockPayload,
   WeatherPayload,
 } from "@/lib/admin/types";
-import TerminalReveal from "@/components/TerminalReveal";
+import AdminField from "@/components/AdminField";
 import AdminGithub from "@/components/AdminGithub";
 import { fetchJsonWithRetry } from "@/lib/admin/fetch-json-with-retry.mjs";
 import { createRequestCoordinator, githubRefreshErrorFor, payloadRefreshError, reportReadResult, retainSuccessfulPayload } from "@/lib/admin/dashboard-state.mjs";
@@ -143,23 +143,19 @@ function Chip({ label, on }: { label: string; on: boolean }) {
 }
 
 
-function FieldReveal({ children, loading }: { children: ReactNode; loading: boolean }) {
-  return <div className="min-h-[2.5rem]"><TerminalReveal loading={loading} loadingLoop={loading}>{children}</TerminalReveal></div>;
-}
-
 function Panel({
   eyebrow, title, meta, state, error, children, className = "", loading = false, ready,
+  loadingFields = ["Waiting for source data"],
 }: {
-  eyebrow: string; title?: string; meta?: string | null; state: ModuleState; error?: string | null; children: ReactNode; className?: string; loading?: boolean; ready: boolean;
+  eyebrow: string; title?: string; meta?: string | null; state: ModuleState; error?: string | null; children: ReactNode; className?: string; loading?: boolean; ready: boolean; loadingFields?: string[];
 }) {
   const isLoading = loading || state === "loading";
-  const content = Children.toArray(children);
-  return <section className={`border border-border bg-background/40 ${className}`}>
-    <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b border-border px-5 py-3"><div className="flex min-w-0 items-baseline gap-3"><p className={`${MONO} text-[11px] ${TRACK} text-muted-foreground`}>{eyebrow}</p>{title ? <h2 className="truncate text-sm font-medium tracking-tight text-foreground/90">{title}</h2> : null}</div><div className="flex shrink-0 items-center gap-3">{meta ? <span className={`${MONO} text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60`}>{meta}</span> : null}<span className="flex items-center gap-1.5"><Dot state={state} /><span className={`${MONO} text-[10px] ${TRACK} ${state === "ok" ? "text-emerald-400/80" : state === "error" ? "text-rose-400/90" : "text-muted-foreground/60"}`}>{stateWord(state)}</span></span></div></div>
-    <div className="px-5 py-5">
-      {!ready && state === "loading" ? <div role="status" aria-label={`Loading ${eyebrow} data`} className="space-y-3">{content.map((child, index) => <FieldReveal key={index} loading>{child}</FieldReveal>)}</div>
-        : !ready && state === "error" ? <p role="status" className={`${MONO} text-xs ${TRACK} text-muted-foreground`}>Unavailable: {error ?? "source error"}</p>
-        : <>{error && ready ? <p role="status" className={`${MONO} mb-4 border border-amber-400/30 px-3 py-2 text-xs text-amber-300`}>Refresh unavailable ({error}); showing last available data.</p> : null}{isLoading && ready ? <p role="status" className={`${MONO} mb-4 text-xs text-muted-foreground`}>Updating; showing last available data.</p> : null}{content}</>}
+  return <section id={`admin-${eyebrow.toLowerCase()}`} className={`admin-panel border border-border bg-card ${className}`}>
+    <div className="admin-panel-header"><div className="min-w-0"><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>{eyebrow}</p>{title ? <h2 className="mt-1 text-base font-medium tracking-tight">{title}</h2> : null}</div><div className="min-w-0 text-right">{meta ? <p className={`${MONO} text-[10px] text-muted-foreground`}>{meta}</p> : null}<span className="mt-1 inline-flex items-center gap-1.5"><Dot state={state} /><span className={`${MONO} text-[10px] text-foreground`}>{stateWord(state)}</span></span></div></div>
+    <div className="admin-panel-body">
+      {!ready && state === "loading" ? <div role="status" aria-label={`Loading ${eyebrow} data`} className="space-y-3 text-sm text-muted-foreground"><span className="sr-only">Loading {eyebrow} data</span>{loadingFields.map(text => <AdminField key={text} text={text} loading />)}</div>
+        : !ready && state === "error" ? <p role="status" className="text-sm text-foreground">Unavailable: {error ?? "source error"}</p>
+        : <>{error && ready ? <p role="status" className="mb-4 border-l-2 border-amber-400 pl-3 text-sm text-foreground">Refresh unavailable ({error}); showing last available data.</p> : null}{isLoading && ready ? <p role="status" className="mb-4 text-xs text-muted-foreground">Updating; showing last available data.</p> : null}{children}</>}
     </div>
   </section>;
 }
@@ -169,33 +165,26 @@ type BoardCell = {
   state: ModuleState;
   value: string;
   sub: string;
+  href: string;
 };
 
 function Board({ cells }: { cells: BoardCell[] }) {
   return (
-    <div className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-7">
       {cells.map((c) => (
-        <div key={c.code} className="bg-background px-4 py-3">
+        <a key={c.code} href={c.href} className="min-w-0 bg-card px-3 py-3 hover:bg-muted/30">
           <div className="flex items-center justify-between">
             <span className={`${MONO} text-[10px] ${TRACK} text-muted-foreground/70`}>{c.code}</span>
             <span className="flex items-center gap-1.5">
               <Dot state={c.state} />
-              <span
-                className={`${MONO} text-[10px] ${TRACK} ${
-                  c.state === "ok"
-                    ? "text-muted-foreground/60"
-                    : c.state === "error"
-                      ? "text-rose-400/90"
-                      : "text-muted-foreground/50"
-                }`}
-              >
+              <span className={`${MONO} text-[10px] ${TRACK} text-foreground`}>
                 {stateWord(c.state)}
               </span>
             </span>
           </div>
-          <p className="mt-2 truncate text-sm tabular-nums text-foreground/90">{c.value}</p>
+          <div className="mt-2 text-sm tabular-nums text-foreground"><AdminField text={c.value} loading={c.state === "loading"} /></div>
           <p className={`${MONO} mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60`}>{c.sub}</p>
-        </div>
+        </a>
       ))}
     </div>
   );
@@ -247,10 +236,10 @@ function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; er
   const [showPaused, setShowPaused] = useState(false);
   const visible = (data?.jobs ?? []).filter(job => job.enabled || showPaused);
   async function copy(ref: string) { try { await navigator.clipboard.writeText(ref); setCopied(ref); window.setTimeout(() => setCopied(null), 1600); } catch { setCopied("unavailable"); } }
-  return <aside className="border border-border bg-background/40 p-5 lg:sticky lg:top-6 lg:max-h-[calc(100vh-3rem)] lg:overflow-y-auto" aria-label="Scheduled jobs">
+  return <aside id="admin-cron" className="admin-panel border border-border bg-card p-4" aria-label="Scheduled jobs">
     <header className="flex items-baseline justify-between border-b border-border pb-3"><div><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>Scheduler</p><h2 className="mt-1 text-sm font-medium">Cron status</h2></div><span className={`${MONO} text-[10px] text-muted-foreground`}>{data ? fmtTime(data.generatedAt) : "--:--"}</span></header>
     {error ? <p role="status" className={`${MONO} mt-3 text-xs text-rose-300`}>Status unavailable: {error}{data ? " · showing previous data" : ""}</p> : null}
-    {!data && !error ? <div className="mt-4" role="status"><p className={`${MONO} mb-3 text-xs text-muted-foreground`}>Loading</p><TerminalReveal loading><div className="space-y-3"><p className="h-3 w-3/4 bg-foreground/[0.06]">Loading scheduled jobs</p><p className="h-3 w-1/2 bg-foreground/[0.06]">Waiting for schedule status</p><div className="h-24 w-full border border-border bg-foreground/[0.06]" /></div></TerminalReveal></div> : null}
+    {!data && !error ? <div className="mt-4 space-y-3 text-sm text-muted-foreground" role="status" aria-label="Loading scheduled jobs"><AdminField text="Loading scheduled jobs" loading /><AdminField text="Waiting for next run times" loading /></div> : null}
     {data ? <>
       <div className="mt-3 space-y-3">{visible.map(job => {
         const overdue = job.enabled && job.nextRun && new Date(job.nextRun).getTime() < Date.now() && job.status !== "running";
@@ -258,8 +247,7 @@ function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; er
         const failed = ["error", "failed", "failure"].includes(job.status.toLowerCase());
         const unknown = !["ok","success","succeeded","idle","paused","disabled","running","overdue","error","failed","failure"].includes(job.status.toLowerCase());
         const label = !job.enabled ? "PAUSED" : running ? "RUNNING" : failed ? "FAILED" : overdue ? "OVERDUE" : unknown ? `UNKNOWN · ${job.status}` : job.status.toUpperCase();
-        const tone = failed ? "text-rose-300" : overdue || unknown ? "text-amber-300" : running ? "text-sky-300" : "text-muted-foreground";
-        return <div key={job.id} className="border-b border-border pb-3 last:border-0"><button type="button" data-dialog-focusable onClick={event => openDetail(cronJobDetail(job), event.currentTarget)} className="block w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><span className="flex items-start justify-between gap-2"><span className="text-sm">{job.name}</span><span className={`${MONO} shrink-0 text-[9px] ${tone}`}>{label}</span></span><span className={`${MONO} mt-1 block text-[10px] text-muted-foreground`}>{job.kind} · {job.nextRun ? `next ${fmtTime(job.nextRun)}` : "next unknown"}</span>{job.lastRun ? <span className={`${MONO} mt-1 block text-[10px] text-muted-foreground`}>Last run {fmtTime(job.lastRun)}</span> : null}<span className="mt-2 block text-xs text-foreground/80">{job.summary}</span></button>{job.reference ? <button type="button" data-dialog-focusable onClick={() => void copy(job.reference!)} className={`${MONO} mt-2 block max-w-full break-all text-left text-[10px] text-muted-foreground underline`}>{copied === job.reference ? "Copied" : copied === "unavailable" ? "Clipboard unavailable" : `${job.referenceType ?? "reference"}: ${job.reference}`}</button> : null}</div>;
+        return <div key={job.id} className="border-b border-border pb-3 last:border-0"><button type="button" data-dialog-focusable onClick={event => openDetail(cronJobDetail(job), event.currentTarget)} className="block w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><span className="flex flex-wrap items-start justify-between gap-2"><span className="min-w-0 text-sm [overflow-wrap:anywhere]">{job.name}</span><span className={`${MONO} text-[10px] text-foreground`}>{label}</span></span><span className={`${MONO} mt-1 block text-[10px] text-muted-foreground`}>{job.kind} · {job.nextRun ? `next ${fmtTime(job.nextRun)}` : "next unknown"}</span>{job.lastRun ? <span className={`${MONO} mt-1 block text-[10px] text-muted-foreground`}>Last run {fmtTime(job.lastRun)}</span> : null}<span className="mt-2 block text-xs text-foreground/80">{job.summary}</span></button>{job.reference ? <button type="button" data-dialog-focusable onClick={() => void copy(job.reference!)} className={`${MONO} mt-2 block max-w-full break-all text-left text-[10px] text-muted-foreground underline`}>{copied === job.reference ? "Copied" : copied === "unavailable" ? "Clipboard unavailable" : `${job.referenceType ?? "reference"}: ${job.reference}`}</button> : null}</div>;
       })}</div>
       {data.limitations.length ? <ul className={`${MONO} mt-3 space-y-1 text-[10px] text-muted-foreground`}>{data.limitations.map((x,i)=><li key={i}>{x}</li>)}</ul> : null}
       <button type="button" onClick={()=>setShowPaused(v=>!v)} className={`${MONO} mt-3 text-[10px] text-muted-foreground underline`}>{showPaused?"Collapse paused jobs":"Show paused jobs"}</button>
@@ -270,9 +258,9 @@ function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; er
 function FinancePanel({ finance, error, refreshing }: { finance: FinancePayload | null; error: string | null; refreshing: boolean }) {
   const state: ModuleState = finance ? "ok" : error ? "error" : "loading";
   return (
-    <Panel eyebrow="Finance" title="Daily follow-up" state={state} error={error} meta={finance ? `report ${fmtTime(finance.generatedAt)}` : "private link"} className="lg:col-span-5" ready={Boolean(finance)} loading={refreshing && Boolean(finance)}>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {[{ label: "Nordea", item: finance ? { total: finance.nordea.balance, source: finance.nordea.status, updated: finance.nordea.lastSync } : null }, { label: "Saxo", item: finance ? { total: finance.saxo.total, source: "Manual statement snapshot", updated: finance.saxo.asOf } : null }].map(({ label, item }) => <div key={label} className="min-h-[7rem] border border-border px-4 py-4"><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>{label}</p>{item ? <><p className="mt-3 text-lg tabular-nums">{item.total.toLocaleString("en-GB", { style: "currency", currency: finance!.currency })}</p><p className="mt-1 text-sm">{item.source}</p><p className={`${MONO} mt-2 text-[11px] text-muted-foreground`}>Source date: {item.updated ?? "unknown"}</p></> : <p className="mt-3 h-7 w-2/3 text-lg tabular-nums" aria-hidden="true">&nbsp;</p>}</div>)}
+    <Panel eyebrow="Finance" title="Daily follow-up" state={state} error={error} meta={finance ? `report ${fmtTime(finance.generatedAt)}` : "private link"} loadingFields={["Nordea balance and source date", "Saxo statement and source date", "Supported subtotal (partial assets)"]} ready={Boolean(finance)} loading={refreshing && Boolean(finance)}>
+      <div className="grid gap-3">
+        {[{ label: "Nordea", item: finance ? { total: finance.nordea.balance, source: finance.nordea.status, updated: finance.nordea.lastSync } : null }, { label: "Saxo", item: finance ? { total: finance.saxo.total, source: "Manual statement snapshot", updated: finance.saxo.asOf } : null }].map(({ label, item }) => <div key={label} className="min-h-[7rem] border border-border px-4 py-4"><p className={`${MONO} text-[10px] ${TRACK} text-muted-foreground`}>{label}</p>{item ? <><div className="mt-3 text-lg tabular-nums"><AdminField text={item.total.toLocaleString("en-GB", { style: "currency", currency: finance!.currency })} /></div><p className="mt-1 text-sm">{item.source}</p><p className={`${MONO} mt-2 text-[11px] text-muted-foreground`}>Source date: {item.updated ?? "unknown"}</p></> : <p className="mt-3 h-7 w-2/3 text-lg tabular-nums" aria-hidden="true">&nbsp;</p>}</div>)}
       </div>
       <p className={`${MONO} mt-4 min-h-5 text-xs text-muted-foreground`}>Supported subtotal (partial assets): {finance ? `${finance.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency })}. This is not net worth.` : <span aria-hidden="true">&nbsp;</span>}</p>
       {finance ? <>
@@ -528,7 +516,7 @@ export default function AdminDashboard() {
             <button
               type="submit"
               disabled={busy}
-              className={`w-full border border-foreground bg-foreground py-3 ${MONO} text-xs uppercase tracking-[0.18em] transition-opacity disabled:opacity-50`}
+              className={`w-full border border-foreground bg-foreground text-background py-3 ${MONO} text-xs uppercase tracking-[0.18em] transition-opacity disabled:opacity-50`}
             >
               {busy ? "Signing in" : "Sign in"}
             </button>
@@ -569,62 +557,65 @@ export default function AdminDashboard() {
 
   const ws = weatherRefreshError ? "error" : statusState(weather);
   const ss = stocksRefreshError ? "error" : statusState(stocks);
-  const gs = githubRefreshError ? "error" : statusState(github);
+  const gs = githubRefreshError || (github && github.coverage !== "complete") ? "error" : statusState(github);
   const rs = radarRefreshError ? "error" : statusState(radar);
   const os: ModuleState = reportsError ? "error" : reports === null ? "loading" : "ok";
 
-  const stocksList = ss === "ok" ? stocks!.stocks : [];
+  const stocksList = stocks?.stocks ?? [];
   const topMover = stocksList.length
     ? stocksList.reduce((a, b) => (Math.abs(b.changePct) >= Math.abs(a.changePct) ? b : a))
     : null;
   const nightLabel = latestNight ? latestNight.slice(5).split("-").reverse().join(" ") : null;
+  const failedCron = cron?.jobs.filter(job => job.enabled && ["error", "failed", "failure"].includes(job.status.toLowerCase())).length ?? 0;
 
   const cells: BoardCell[] = [
+    { code: "Finance", href: "#admin-finance", state: financeError || financeRefreshError ? "error" : finance ? "ok" : "loading", value: finance ? finance.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency, maximumFractionDigits: 0 }) : financeError ? "unavailable" : "syncing", sub: "partial assets, not net worth" },
+    { code: "Cron", href: "#admin-cron", state: cronError || failedCron ? "error" : cron ? "ok" : "loading", value: cron ? `${failedCron} failed jobs` : cronError ? "unavailable" : "syncing", sub: cron ? `source ${fmtTime(cron.generatedAt)}` : "scheduler status" },
     {
-      code: "RDR",
+      code: "Radar", href: "#admin-radar",
       state: rs,
-      value: rs === "ok" ? `${radar!.items.length} items` : rs === "error" ? "feed fault" : "syncing",
+      value: radar ? `${radar.items.length} items` : rs === "error" ? "feed fault" : "syncing",
       sub: "llm-radar, daily",
     },
     {
-      code: "MKT",
+      code: "Market", href: "#admin-market",
       state: ss,
       value:
-        ss === "ok" && topMover
+        topMover
           ? `${topMover.symbol} ${topMover.changePct >= 0 ? "▲" : "▼"} ${Math.abs(topMover.changePct).toFixed(1)}%`
           : ss === "error"
             ? "quote fault"
-            : "syncing",
+            : stocks ? "no quotes" : "syncing",
       sub: stocksList.length ? `${stocksList.length} names tracked` : "names tracked",
     },
     {
-      code: "WX",
+      code: "Weather", href: "#admin-env",
       state: ws,
       value:
-        ws === "ok" ? `${weather!.current!.temp.toFixed(0)}°C ${weather!.current!.desc}` : ws === "error" ? "wx fault" : "syncing",
-      sub: ws === "ok" ? `wind ${weather!.current!.wind.toFixed(0)} km/h · CPH` : "copenhagen",
+        weather?.current ? `${weather.current.temp.toFixed(0)}°C ${weather.current.desc}` : ws === "error" ? "wx fault" : "syncing",
+      sub: weather?.current ? `wind ${weather.current.wind.toFixed(0)} km/h · CPH` : "copenhagen",
     },
     {
-      code: "GHT",
+      code: "GitHub", href: "#admin-github",
       state: gs,
       value:
-        gs === "ok" ? `${github!.coverage === "complete" ? "" : "at least "}${github!.openPulls.length} PRs for lucasfth` : gs === "error" ? "gh fault" : "syncing",
+        github?.status === "ok" ? `${github!.coverage === "complete" ? "" : "at least "}${github!.openPulls.length} PRs for lucasfth` : gs === "error" ? "gh fault" : "syncing",
       sub: "github, current open PRs",
     },
     {
-      code: "OVT",
+      code: "Overnight", href: "#admin-overnight",
       state: os,
-      value: os === "loading" ? "syncing" : nightLabel ?? "standby",
+      value: reports === null ? (reportsError ? "unavailable" : "syncing") : `${tonight.length} reports`,
       sub: os === "ok" ? `${tonight.length} reports` : "",
     },
   ];
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-6 pb-24 pt-32 sm:pt-40">
-      <div className="mb-10 flex flex-wrap items-end justify-between gap-6 border-b border-border pb-6">
+    <div className="admin-dashboard mx-auto w-full max-w-[1600px] px-4 pb-24 pt-32 sm:px-6 sm:pt-40">
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-6 border-b border-border pb-6">
         <div>
           <p className={`${MONO} text-[11px] ${TRACK} text-muted-foreground`}>Admin</p>
-          <h1 className="mt-2 text-3xl font-medium tracking-tight">Overnight</h1>
+          <h1 className="mt-2 text-3xl font-medium tracking-tight">At a glance</h1>
           <p className={`${MONO} mt-2 text-xs uppercase tracking-[0.14em] text-muted-foreground/70`}>
             {cphDate()} · Copenhagen
           </p>
@@ -652,28 +643,80 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="mb-14">
-        <Board cells={cells} />
-      </div>
+      <div className="mb-5"><Board cells={cells} /></div>
+      <p className="mb-5 text-xs text-muted-foreground">FAULT marks unavailable or incomplete sources. Open a figure for its data and notices. Sync is the last refresh attempt, not proof every source succeeded.</p>
+      <div className="admin-columns">
+        <div className="admin-main">
+          {session?.access_token ? <AdminFleetPanel key={session.user.id} token={session.access_token} /> : null}
+        <Panel
+          eyebrow="GitHub"
+          loadingFields={["Loading personal repositories","Waiting for pull requests and coverage"]}
+          title="Repositories and activity"
+          state={gs}
+          error={githubRefreshError ?? (github?.status === "error" ? github.message : undefined)}
+          meta={github ? `${github.coverage === "complete" ? "" : "at least "}${github.openPulls.length} PRs for lucasfth` : "-- PRs"}
+          loading={refreshing && Boolean(github)}
+          ready={github?.status === "ok"}
+        >
+          {github && github.status === "ok" ? (
+            <AdminGithub payload={github} />
+          ) : null}
+        </Panel>
 
-      {session?.access_token ? <AdminFleetPanel key={session.user.id} token={session.access_token} /> : null}
-
-      <div className="mb-14">
-        <FinancePanel finance={finance} error={financeRefreshError ?? financeError} refreshing={refreshing} />
-      </div>
-
-      <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-12">
-        <div className="order-2 space-y-10 lg:order-1 lg:col-span-9">
+        <Panel
+          eyebrow="Overnight"
+          loadingFields={["Loading overnight reports","Waiting for report summaries"]}
+          title={latestNight ? `Night of ${nightLabel}` : "No reports yet"}
+          state={os}
+          error={reportsError}
+          meta={reports === null ? null : `${tonight.length} reports tonight`}
+          ready={reports !== null}
+        >
+          {tonight.length === 0 ? (
+            <p className="text-sm text-muted-foreground">Nothing ran yet. Reports land automatically from the overnight jobs.</p>
+          ) : (
+            <div className="space-y-5">
+              {reportKinds.map(({ kind, label }) => {
+                const rows = reportsByKind.get(kind) ?? [];
+                if (rows.length === 0) return null;
+                return (
+                  <div key={kind}>
+                    <p className={`${MONO} mb-3 flex items-baseline justify-between text-[11px] ${TRACK} text-muted-foreground`}>
+                      <span>{label}</span>
+                      <span className="tabular-nums text-muted-foreground/50">{rows.length}</span>
+                    </p>
+                    {rows.map((r) => (
+                      <details key={r.id} className="border-b border-border py-3 last:border-b-0">
+                        <summary className="cursor-pointer text-sm font-medium"><span>{r.title}</span>{r.summary ? <span className="mt-1 block text-sm font-normal text-muted-foreground">{r.summary}</span> : null}</summary>
+                        <p className="mt-2 font-mono text-xs text-muted-foreground">Reported {new Date(r.created_at).toLocaleString("en-GB", { timeZone: "Europe/Copenhagen" })} · Copenhagen time</p>
+                        {Array.isArray(r.details.lines) && r.details.lines.length > 0 ? (
+                          <ul className="mt-2 space-y-1">
+                            {r.details.lines.slice(0, 12).map((line, idx) => (
+                              <li key={idx} className={`${MONO} text-xs leading-relaxed text-muted-foreground/90`}>
+                                {line}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : null}
+                      </details>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
         <Panel
           eyebrow="Radar"
+          loadingFields={["Loading daily signal titles","Waiting for source and update time"]}
           title="Signal feed"
           state={rs}
           error={radarRefreshError ?? radar?.message}
           meta={radar?.generated ? `updated ${fmtTime(radar.generated)}` : "compiled daily"}
-          className="lg:col-span-5"
           loading={refreshing && Boolean(radar)}
           ready={Boolean(radar)}
         >
+          {radar?.status === "ok" && !radar.items.length ? <p className="text-sm text-muted-foreground">No signals in the latest feed.</p> : null}
           <ul>
             {(radar && radar.status === "ok" ? radar.items : []).map((item, i) => (
               <li key={item.url} className="border-b border-border last:border-b-0">
@@ -686,12 +729,12 @@ export default function AdminDashboard() {
                   <span className={`${MONO} w-6 shrink-0 text-[11px] tabular-nums text-muted-foreground/50`}>
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-[15px] font-medium">{item.title}</span>
-                    <span className={`${MONO} mt-1 block text-[11px] uppercase tracking-[0.14em] text-muted-foreground/70`}>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium"><AdminField text={item.title} /></div>
+                    <p className={`${MONO} mt-1 text-[11px] uppercase tracking-[0.14em] text-muted-foreground`}>
                       {item.source}
-                    </span>
-                  </span>
+                    </p>
+                  </div>
                   <span
                     className={`${MONO} hidden shrink-0 border border-border px-2 py-0.5 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80 sm:inline-block`}
                   >
@@ -713,13 +756,16 @@ export default function AdminDashboard() {
           </a>
         </Panel>
 
+        </div>
+        <div className="admin-context">
+          <FinancePanel finance={finance} error={financeRefreshError ?? financeError} refreshing={refreshing} />
         <Panel
           eyebrow="Market"
+          loadingFields={["Loading watchlist quotes","Waiting for prices and daily changes"]}
           title="Watchlist"
           state={ss}
           error={stocksRefreshError ?? stocks?.message}
           meta={stocks?.asOf ? `as of ${fmtTime(stocks.asOf)}` : "stooq"}
-          className="lg:col-span-3"
           loading={refreshing && Boolean(stocks)}
           ready={Boolean(stocks)}
         >
@@ -736,24 +782,25 @@ export default function AdminDashboard() {
               const isTop = topMover?.symbol === s.symbol;
               return (
                 <li key={s.symbol} className="border-b border-border last:border-b-0">
-                  <button type="button" data-dialog-focusable onClick={event => openDetail({ ...s, title: `${s.symbol} — ${s.name}` }, event.currentTarget)} className="flex w-full items-center gap-4 py-3 text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+                  <button type="button" data-dialog-focusable onClick={event => openDetail({ ...s, title: `${s.symbol} — ${s.name}` }, event.currentTarget)} className="admin-quote flex w-full flex-wrap items-center gap-2 py-3 text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
                     <div className="min-w-0 flex-1"><p className={`${MONO} text-xs uppercase tracking-[0.1em]`}>{s.symbol}{isTop ? <span className={`${MONO} ml-2 border border-border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.18em] text-muted-foreground/80`}>Top</span> : null}</p><p className="mt-0.5 truncate text-xs text-muted-foreground">{s.name}</p></div><Sparkline values={s.closes} up={up} />
-                    <div className="w-32 shrink-0 text-right"><span className="text-sm tabular-nums">{s.price.toFixed(2)}<span className={`${MONO} ml-1 text-[11px] text-muted-foreground/70`}>{s.currency}</span></span><span className="ml-2 align-middle">{changeCell(s.changePct)}</span></div>
+                    <div className="ml-auto text-right"><span className="text-sm tabular-nums">{s.price.toFixed(2)}<span className={`${MONO} ml-1 text-[11px] text-muted-foreground/70`}>{s.currency}</span></span><span className="ml-2 align-middle">{changeCell(s.changePct)}</span></div>
                   </button>
                 </li>
               );
             })}
           </ul>
+          {stocks?.status === "ok" && !stocks.stocks.length ? <p className="text-sm text-muted-foreground">No watchlist quotes available.</p> : null}
           {stocks && stocks.stocks.length > 6 ? <button type="button" onClick={() => setShowAll(v => !v)} className={`${MONO} mt-3 text-[10px] text-muted-foreground underline`}>{showAll ? "Show fewer" : `Show all ${stocks.stocks.length} symbols`}</button> : null}
         </Panel>
 
         <Panel
           eyebrow="Env"
+          loadingFields={["Loading Copenhagen conditions","Waiting for temperature and wind"]}
           title="Copenhagen"
           state={ws}
           error={weatherRefreshError ?? weather?.message}
           meta={weather?.updated ? `as of ${fmtTime(weather.updated)}` : "wttr.in"}
-          className="lg:col-span-2"
           loading={refreshing && Boolean(weather)}
           ready={Boolean(weather)}
         >
@@ -761,72 +808,14 @@ export default function AdminDashboard() {
             <>
               <button type="button" data-dialog-focusable onClick={event => openDetail({ title: "Copenhagen weather", "Feels like": weather.current!.feels, Wind: weather.current!.wind, Rain: weather.current!.precip, Range: `${weather.today?.mint ?? "--"}–${weather.today?.max ?? "--"}°C`, UV: weather.today?.uv ?? "unknown", Sun: `${weather.today?.sunrise ?? "unknown"}–${weather.today?.sunset ?? "unknown"}`, Description: weather.current!.desc, Temperature: `${weather.current!.temp}°C`, Bike: weather.current!.bike ? "OK" : "NO", Waterproof: weather.current!.waterproof ? "OK" : "NO" }, event.currentTarget)} className="block min-h-[7rem] w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
                 <p className="text-5xl font-light tabular-nums tracking-tight">{weather.current.temp.toFixed(0)}<span className="ml-1 text-2xl text-muted-foreground">°C</span></p>
-                <p className="mt-1 text-sm text-muted-foreground">{weather.current.desc}</p><div className="mt-4 flex flex-wrap gap-2"><Chip label="Bike" on={weather.current.bike} /><Chip label="Waterproof" on={weather.current.waterproof} /></div>
+                <div className="mt-1 text-sm text-muted-foreground"><AdminField text={weather.current.desc} /></div><div className="mt-4 flex flex-wrap gap-2"><Chip label="Bike" on={weather.current.bike} /><Chip label="Waterproof" on={weather.current.waterproof} /></div>
               </button>
             </>
           ) : null}
         </Panel>
 
-        <Panel
-          eyebrow="GitHub"
-          title="Repositories and activity"
-          state={gs}
-          error={githubRefreshError ?? (github?.status === "error" ? github.message : undefined)}
-          meta={github ? `${github.coverage === "complete" ? "" : "at least "}${github.openPulls.length} PRs for lucasfth` : "-- PRs"}
-          className="lg:col-span-5"
-          loading={refreshing && Boolean(github)}
-          ready={github?.status === "ok"}
-        >
-          {github && github.status === "ok" ? (
-            <AdminGithub payload={github} />
-          ) : null}
-        </Panel>
-
-        <Panel
-          eyebrow="Overnight"
-          title={latestNight ? `Night of ${nightLabel}` : "No reports yet"}
-          state={os}
-          error={reportsError}
-          meta={reports === null ? null : `${tonight.length} reports tonight`}
-          className="lg:col-span-5"
-          ready={reports !== null}
-        >
-          {tonight.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nothing ran yet. Reports land automatically from the overnight jobs.</p>
-          ) : (
-            <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
-              {reportKinds.map(({ kind, label }) => {
-                const rows = reportsByKind.get(kind) ?? [];
-                if (rows.length === 0) return null;
-                return (
-                  <div key={kind}>
-                    <p className={`${MONO} mb-3 flex items-baseline justify-between text-[11px] ${TRACK} text-muted-foreground`}>
-                      <span>{label}</span>
-                      <span className="tabular-nums text-muted-foreground/50">{rows.length}</span>
-                    </p>
-                    {rows.map((r) => (
-                      <div key={r.id} className="border-b border-border py-3 last:border-b-0">
-                        <p className="text-sm font-medium">{r.title}</p>
-                        {r.summary ? <p className="mt-1 text-sm text-muted-foreground">{r.summary}</p> : null}
-                        {Array.isArray(r.details.lines) && r.details.lines.length > 0 ? (
-                          <ul className="mt-2 space-y-1">
-                            {r.details.lines.slice(0, 12).map((line, idx) => (
-                              <li key={idx} className={`${MONO} text-xs leading-relaxed text-muted-foreground/90`}>
-                                {line}
-                              </li>
-                            ))}
-                          </ul>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Panel>
         </div>
-        <div className="order-1 lg:order-2 lg:col-span-3"><CronSidebar data={cron} error={cronError} openDetail={openDetail} /></div>
+        <div className="admin-schedule"><CronSidebar data={cron} error={cronError} openDetail={openDetail} /></div>
       </div>
 
       <p

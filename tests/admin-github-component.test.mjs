@@ -15,7 +15,7 @@ test('rendered component defaults, section-local All PRs, lower bounds and retai
   const temp = mkdtempSync(join(process.cwd(), '.tmp-github-component-'));
   const oldWindow = globalThis.window, oldDocument = globalThis.document, oldAct = globalThis.IS_REACT_ACT_ENVIRONMENT;
   try {
-    const source = readFileSync('components/AdminGithub.tsx', 'utf8').replace('"@/lib/admin/github.mjs"', '"../lib/admin/github.mjs"').replace('"@/lib/admin/types"', '"../lib/admin/types"');
+    const source = readFileSync('components/AdminGithub.tsx', 'utf8').replace('import AdminField from "@/components/AdminField";', 'const AdminField = ({ text }: { text: string }) => <span>{text}</span>;').replace('"@/lib/admin/github.mjs"', '"../lib/admin/github.mjs"').replace('"@/lib/admin/types"', '"../lib/admin/types"');
     const input = join(temp, 'component.tsx');
     writeFileSync(input, source);
     const compiled = spawnSync('node_modules/.bin/tsc', ['--ignoreConfig', '--outDir', join(temp, 'out'), '--rootDir', process.cwd(), '--target', 'ES2022', '--module', 'ESNext', '--moduleResolution', 'bundler', '--jsx', 'react-jsx', '--skipLibCheck', '--allowJs', input], { encoding: 'utf8' });

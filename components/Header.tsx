@@ -139,11 +139,11 @@ export default function Header() {
         {/* Desktop links */}
         <div className="hidden lg:flex items-center gap-0.5">
           {NAV_ITEMS.map((item) => (
-            <Link key={item.href} href={item.href} className="relative px-2.5 py-2">
+            <Link key={item.href} href={item.href} aria-current={isActive(item.href) ? "page" : undefined} className="relative px-2.5 py-2">
               <span
                 className={cn(
                   "text-xs font-medium uppercase tracking-[0.14em] transition-colors duration-300",
-                  isActive(item.href) ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  isActive(item.href) ? "text-accent" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {item.name}
@@ -151,7 +151,7 @@ export default function Header() {
               {isActive(item.href) && (
                 <motion.span
                   layoutId="nav-underline"
-                  className="absolute inset-x-2.5 -bottom-0.5 h-px bg-foreground"
+                  className="absolute inset-x-2.5 -bottom-0.5 h-px bg-accent"
                   transition={{ type: "spring", stiffness: 380, damping: 32 }}
                 />
               )}
@@ -205,10 +205,11 @@ export default function Header() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive(item.href) ? "page" : undefined}
               className={cn(
                 "block rounded-xl px-4 py-3 text-sm uppercase tracking-[0.14em] transition-colors",
                 isActive(item.href)
-                  ? "bg-foreground/10 text-foreground"
+                  ? "bg-accent/10 text-accent"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >

@@ -170,7 +170,7 @@ type BoardCell = {
 
 function Board({ cells }: { cells: BoardCell[] }) {
   return (
-    <div className="grid grid-cols-2 gap-px border border-border bg-border sm:grid-cols-3 lg:grid-cols-7">
+    <div className="admin-overview" role="group" aria-label="Source overview">
       {cells.map((c) => (
         <a key={c.code} href={c.href} className="min-w-0 bg-card px-3 py-3 hover:bg-muted/30">
           <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
@@ -621,17 +621,19 @@ export default function AdminDashboard() {
           </p>
         </div>
         <div className="flex flex-col items-start gap-3 sm:items-end">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <a href="/stats" className="admin-toolbar-button">Analytics <ArrowUpRight size={14} /></a>
             <button
               onClick={refresh}
               disabled={refreshing}
-              className={`flex items-center gap-2 border border-border px-4 py-2 ${MONO} text-xs uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50`}
+              data-primary
+              className="admin-toolbar-button"
             >
               <RefreshCw size={14} className={refreshing ? "animate-spin" : ""} /> Refresh
             </button>
             <button
               onClick={signOut}
-              className={`flex items-center gap-2 border border-border px-4 py-2 ${MONO} text-xs uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground`}
+              className="admin-toolbar-button"
             >
               <LogOut size={14} /> Sign out
             </button>
@@ -643,6 +645,10 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      <nav aria-label="Dashboard sections" className="admin-section-nav">
+        <a href="#admin-fleet">Agents</a>
+        {cells.map(cell => <a key={cell.href} href={cell.href}>{cell.code}</a>)}
+      </nav>
       <div className="mb-5"><Board cells={cells} /></div>
       <p className="mb-5 text-xs text-muted-foreground">FAULT marks unavailable or incomplete sources, or failed jobs. Open a figure for its data and notices. Sync is the last refresh attempt, not proof every source succeeded.</p>
       <div className="admin-columns">

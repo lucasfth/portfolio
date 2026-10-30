@@ -214,7 +214,7 @@ export default function StatsLive({
             <div
               key={cell.key}
               title={`${cell.label} Copenhagen: ${cell.count} visit${cell.count === 1 ? "" : "s"}`}
-              className="flex-1 rounded-t-[2px] bg-foreground/80"
+              className="flex-1 rounded-t-[2px] bg-accent/80"
               style={{ height: `${Math.max(cell.count === 0 ? 2 : 8, (cell.count / max) * 100)}%` }}
             />
           ))}

@@ -9,7 +9,7 @@ export default function ScrollToTop() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
   const handleScrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0 });
     const mainContent = document.getElementById("main-content");
     if (mainContent) {
       mainContent.focus({ preventScroll: true });

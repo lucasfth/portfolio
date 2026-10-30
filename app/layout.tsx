@@ -3,7 +3,6 @@ import Script from "next/script";
 import Footer from "@/components/Footer";
 import { TitleReveals } from "@/components/TerminalReveal";
 import ScrollToTop from "@/components/ScrollToTop";
-import SmoothScroll from "@/components/SmoothScroll";
 import Header from "@/components/Header";
 import StatsBeacon from "@/components/StatsBeacon";
 import { Space_Mono } from "next/font/google";
@@ -108,16 +107,14 @@ export default function RootLayout({
         <a href="#main-content" className="skip-link">
           Skip to content
         </a>
-        <SmoothScroll>
-          <Header />
-          <main id="main-content" tabIndex={-1}>
-            {children}
-            <TitleReveals />
-          </main>
-          <Footer />
-          <ScrollToTop />
-          <StatsBeacon />
-        </SmoothScroll>
+        <Header />
+        <main id="main-content" tabIndex={-1}>
+          {children}
+          <TitleReveals />
+        </main>
+        <Footer />
+        <ScrollToTop />
+        <StatsBeacon />
       </body>
     </html>
   );

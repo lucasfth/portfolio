@@ -20,7 +20,8 @@ import AdminField from "@/components/AdminField";
 import AdminGithub from "@/components/AdminGithub";
 import { fetchJsonWithRetry } from "@/lib/admin/fetch-json-with-retry.mjs";
 import { createRequestCoordinator, githubRefreshErrorFor, payloadRefreshError, reportReadResult, retainSuccessfulPayload } from "@/lib/admin/dashboard-state.mjs";
-import { activateDialog, cronJobDetail } from "@/lib/admin/detail-dialog.mjs";
+import AdminDetailDialog, { type AdminDetail } from "@/components/AdminDetailDialog";
+import { stockDetail, weatherDetail, financeDetail, scheduledJobDetail } from "@/lib/admin/detail-content.mjs";
 
 type SessionShape = {
   access_token: string;
@@ -217,21 +218,7 @@ async function refreshFinance(token: string, signal?: AbortSignal): Promise<Fina
   return payload;
 }
 
-function AdminDetailDialog({ detail, opener, onClose }: { detail: Record<string, unknown>; opener: HTMLElement | null; onClose: () => void }) {
-  const dialogRef = useRef<HTMLDivElement>(null);
-  useEffect(() => { const dialog = dialogRef.current; if (!dialog) return; return activateDialog({ dialog, opener, body: document.body, onClose }); }, [opener, onClose]);
-  const title = String(detail.name ?? detail.title ?? detail.symbol ?? "Details");
-  return <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70 p-3 sm:items-center sm:p-6" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-    <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="admin-detail-title" className="max-h-[85vh] w-full max-w-2xl overflow-y-auto border border-border bg-background p-6 shadow-2xl sm:p-8">
-      <div className="flex items-start justify-between gap-6"><h2 id="admin-detail-title" className="text-xl font-medium">{title}</h2><button type="button" data-dialog-close data-dialog-focusable aria-label="Close details" onClick={onClose} className="border border-border px-3 py-2 text-sm">Close</button></div>
-      <dl className="mt-6 grid gap-4 sm:grid-cols-2">{Object.entries(detail).filter(([, value]) => value !== null && value !== undefined && typeof value !== "object").map(([key, value]) => <div key={key} className="border-b border-border pb-3"><dt className={`${MONO} text-[10px] uppercase text-muted-foreground`}>{key.replace(/[A-Z]/g, letter => ` ${letter.toLowerCase()}`)}</dt><dd className="mt-1 break-words text-sm">{String(value)}</dd></div>)}</dl>
-      {detail.detailsWithheld ? <p className="mt-5 text-sm text-muted-foreground">Additional details are withheld for safety.</p> : null}
-    </div>
-  </div>;
-}
-
-
-function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; error: string | null; openDetail: (detail: Record<string, unknown>, opener: HTMLElement) => void }) {
+function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; error: string | null; openDetail: (detail: AdminDetail, opener: HTMLElement) => void }) {
   const [copied, setCopied] = useState<string | null>(null);
   const [showPaused, setShowPaused] = useState(false);
   const visible = (data?.jobs ?? []).filter(job => job.enabled || showPaused);
@@ -247,7 +234,7 @@ function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; er
         const failed = ["error", "failed", "failure"].includes(job.status.toLowerCase());
         const unknown = !["ok","success","succeeded","idle","paused","disabled","running","overdue","error","failed","failure"].includes(job.status.toLowerCase());
         const label = !job.enabled ? "PAUSED" : running ? "RUNNING" : failed ? "FAILED" : overdue ? "OVERDUE" : unknown ? `UNKNOWN · ${job.status}` : job.status.toUpperCase();
-        return <div key={job.id} className="border-b border-border pb-3 last:border-0"><button type="button" data-dialog-focusable onClick={event => openDetail(cronJobDetail(job), event.currentTarget)} className="block w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><span className="flex flex-wrap items-start justify-between gap-2"><span className="min-w-0 text-sm [overflow-wrap:anywhere]">{job.name}</span><span className={`${MONO} text-[10px] text-foreground`}>{label}</span></span><span className={`${MONO} mt-1 block text-[10px] text-muted-foreground`}>{job.kind} · {job.nextRun ? `next ${fmtTime(job.nextRun)}` : "next unknown"}</span>{job.lastRun ? <span className={`${MONO} mt-1 block text-[10px] text-muted-foreground`}>Last run {fmtTime(job.lastRun)}</span> : null}<span className="mt-2 block text-xs text-foreground/80">{job.summary}</span></button>{job.reference ? <button type="button" data-dialog-focusable onClick={() => void copy(job.reference!)} className={`${MONO} mt-2 block max-w-full break-all text-left text-[10px] text-muted-foreground underline`}>{copied === job.reference ? "Copied" : copied === "unavailable" ? "Clipboard unavailable" : `${job.referenceType ?? "reference"}: ${job.reference}`}</button> : null}</div>;
+        return <div key={job.id} className="border-b border-border pb-3 last:border-0"><button type="button" data-dialog-focusable onClick={event => openDetail(scheduledJobDetail(job, [...(data?.limitations ?? []), ...(error ? [`Refresh unavailable (${error}); showing last available data.`] : [])]), event.currentTarget)} className="block w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><span className="flex flex-wrap items-start justify-between gap-2"><span className="min-w-0 text-sm [overflow-wrap:anywhere]">{job.name}</span><span className={`${MONO} text-[10px] text-foreground`}>{label}</span></span><span className={`${MONO} mt-1 block text-[10px] text-muted-foreground`}>{job.kind} · {job.nextRun ? `next ${fmtTime(job.nextRun)}` : "next unknown"}</span>{job.lastRun ? <span className={`${MONO} mt-1 block text-[10px] text-muted-foreground`}>Last run {fmtTime(job.lastRun)}</span> : null}<span className="mt-2 block text-xs text-foreground/80">{job.summary}</span></button>{job.reference ? <button type="button" data-dialog-focusable onClick={() => void copy(job.reference!)} className={`${MONO} mt-2 block max-w-full break-all text-left text-[10px] text-muted-foreground underline`}>{copied === job.reference ? "Copied" : copied === "unavailable" ? "Clipboard unavailable" : `${job.referenceType ?? "reference"}: ${job.reference}`}</button> : null}</div>;
       })}</div>
       {data.limitations.length ? <ul className={`${MONO} mt-3 space-y-1 text-[10px] text-muted-foreground`}>{data.limitations.map((x,i)=><li key={i}>{x}</li>)}</ul> : null}
       <button type="button" onClick={()=>setShowPaused(v=>!v)} className={`${MONO} mt-3 text-[10px] text-muted-foreground underline`}>{showPaused?"Collapse paused jobs":"Show paused jobs"}</button>
@@ -255,7 +242,7 @@ function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; er
   </aside>;
 }
 
-function FinancePanel({ finance, error, refreshing }: { finance: FinancePayload | null; error: string | null; refreshing: boolean }) {
+function FinancePanel({ finance, error, refreshing, openDetail }: { finance: FinancePayload | null; error: string | null; refreshing: boolean; openDetail: (detail: AdminDetail, opener: HTMLElement) => void }) {
   const state: ModuleState = error ? "error" : finance ? "ok" : "loading";
   return (
     <Panel eyebrow="Finance" title="Daily follow-up" state={state} error={error} meta={finance ? `report ${fmtTime(finance.generatedAt)}` : "private link"} loadingFields={["Nordea balance and source date", "Saxo statement and source date", "Supported subtotal (partial assets)"]} ready={Boolean(finance)} loading={refreshing && Boolean(finance)}>
@@ -268,6 +255,7 @@ function FinancePanel({ finance, error, refreshing }: { finance: FinancePayload 
         {finance.syncHealth ? <p className={`${MONO} mt-3 text-xs text-muted-foreground`}>Bank sync: {finance.syncHealth.status} · last success {finance.syncHealth.lastSuccess ? fmtTime(finance.syncHealth.lastSuccess) : "unknown"}{finance.syncHealth.lastAttempt && finance.syncHealth.status !== "ok" ? ` · last attempt ${fmtTime(finance.syncHealth.lastAttempt)}` : ""}</p> : null}
         <ul className={`${MONO} mt-3 space-y-1 text-[11px] text-muted-foreground`}>{finance.limitations.map((x,i)=><li key={i}>{x}</li>)}</ul>
       </> : null}
+      {finance ? <button type="button" data-dialog-focusable onClick={event => openDetail(financeDetail(finance, error), event.currentTarget)} className="admin-toolbar-button mt-4">Account breakdown and sources</button> : null}
       <a href={ACTUAL_URL} target="_blank" rel="noopener noreferrer" className={`mt-5 inline-flex items-center gap-2 ${MONO} text-xs uppercase tracking-[0.18em] text-muted-foreground hover:text-foreground`}>Open Actual <ArrowUpRight size={14} /></a>
     </Panel>
   );
@@ -284,9 +272,9 @@ export default function AdminDashboard() {
   const [clock, setClock] = useState("");
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const [selectedDetail, setSelectedDetail] = useState<Record<string, unknown> | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<AdminDetail | null>(null);
   const [detailOpener, setDetailOpener] = useState<HTMLElement | null>(null);
-  const openDetail = useCallback((detail: Record<string, unknown>, opener: HTMLElement) => { setDetailOpener(opener); setSelectedDetail(detail); }, []);
+  const openDetail = useCallback((detail: AdminDetail, opener: HTMLElement) => { setDetailOpener(opener); setSelectedDetail(detail); }, []);
   const closeDetail = useCallback(() => setSelectedDetail(null), []);
   const hydrated = useRef(false);
   const requests = useRef(createRequestCoordinator());
@@ -764,14 +752,14 @@ export default function AdminDashboard() {
 
         </div>
         <div className="admin-context">
-          <FinancePanel finance={finance} error={financeRefreshError ?? financeError} refreshing={refreshing} />
+          <FinancePanel finance={finance} error={financeRefreshError ?? financeError} refreshing={refreshing} openDetail={openDetail} />
         <Panel
           eyebrow="Market"
           loadingFields={["Loading watchlist quotes","Waiting for prices and daily changes"]}
           title="Watchlist"
           state={ss}
           error={stocksRefreshError ?? stocks?.message}
-          meta={stocks?.asOf ? `as of ${fmtTime(stocks.asOf)}` : "stooq"}
+          meta={stocks?.asOf ? `as of ${fmtTime(stocks.asOf)}` : "Yahoo Finance"}
           loading={refreshing && Boolean(stocks)}
           ready={Boolean(stocks)}
         >
@@ -788,7 +776,7 @@ export default function AdminDashboard() {
               const isTop = topMover?.symbol === s.symbol;
               return (
                 <li key={s.symbol} className="border-b border-border last:border-b-0">
-                  <button type="button" data-dialog-focusable onClick={event => openDetail({ ...s, title: `${s.symbol} — ${s.name}` }, event.currentTarget)} className="admin-quote flex w-full flex-wrap items-center gap-2 py-3 text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+                  <button type="button" data-dialog-focusable onClick={event => openDetail(stockDetail(s, stocksRefreshError), event.currentTarget)} className="admin-quote flex w-full flex-wrap items-center gap-2 py-3 text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
                     <div className="min-w-0 flex-1"><p className={`${MONO} text-xs uppercase tracking-[0.1em]`}>{s.symbol}{isTop ? <span className={`${MONO} ml-2 border border-border px-1.5 py-0.5 text-[9px] uppercase tracking-[0.18em] text-muted-foreground/80`}>Top</span> : null}</p><p className="mt-0.5 truncate text-xs text-muted-foreground">{s.name}</p></div><Sparkline values={s.closes} up={up} />
                     <div className="ml-auto text-right"><span className="text-sm tabular-nums">{s.price.toFixed(2)}<span className={`${MONO} ml-1 text-[11px] text-muted-foreground/70`}>{s.currency}</span></span><span className="ml-2 align-middle">{changeCell(s.changePct)}</span></div>
                   </button>
@@ -812,7 +800,7 @@ export default function AdminDashboard() {
         >
           {weather && weather.status === "ok" && weather.current ? (
             <>
-              <button type="button" data-dialog-focusable onClick={event => openDetail({ title: "Copenhagen weather", "Feels like": weather.current!.feels, Wind: weather.current!.wind, Rain: weather.current!.precip, Range: `${weather.today?.mint ?? "--"}–${weather.today?.max ?? "--"}°C`, UV: weather.today?.uv ?? "unknown", Sun: `${weather.today?.sunrise ?? "unknown"}–${weather.today?.sunset ?? "unknown"}`, Description: weather.current!.desc, Temperature: `${weather.current!.temp}°C`, Bike: weather.current!.bike ? "OK" : "NO", Waterproof: weather.current!.waterproof ? "OK" : "NO" }, event.currentTarget)} className="block min-h-[7rem] w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+              <button type="button" data-dialog-focusable onClick={event => openDetail(weatherDetail(weather, weatherRefreshError), event.currentTarget)} className="block min-h-[7rem] w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
                 <p className="text-5xl font-light tabular-nums tracking-tight">{weather.current.temp.toFixed(0)}<span className="ml-1 text-2xl text-muted-foreground">°C</span></p>
                 <div className="mt-1 text-sm text-muted-foreground"><AdminField text={weather.current.desc} /></div><div className="mt-4 flex flex-wrap gap-2"><Chip label="Bike" on={weather.current.bike} /><Chip label="Waterproof" on={weather.current.waterproof} /></div>
               </button>
@@ -827,7 +815,7 @@ export default function AdminDashboard() {
       <p
         className={`${MONO} mt-16 border-t border-border pt-6 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50`}
       >
-        Sources: llm-radar · stooq · wttr.in · github · supabase — refreshed on sign-in and on demand
+        Sources: llm-radar · Yahoo Finance · wttr.in · github · supabase — refreshed on sign-in and on demand
       </p>
       {selectedDetail ? <AdminDetailDialog detail={selectedDetail} opener={detailOpener} onClose={closeDetail} /> : null}
     </div>

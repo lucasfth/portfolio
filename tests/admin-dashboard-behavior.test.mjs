@@ -62,15 +62,15 @@ test("failed initial reports stay null and dashboard renders Overnight unavailab
 });
 
 test("Copenhagen summary opens the shared weather detail dialog", () => {
-  assert.match(source, /openDetail\(\{ title: "Copenhagen weather", "Feels like": weather\.current!\.feels, Wind: weather\.current!\.wind, Rain: weather\.current!\.precip, Range:[\s\S]*?event\.currentTarget\)/);
+  assert.match(source, /openDetail\(weatherDetail\(weather, weatherRefreshError\), event\.currentTarget\)/);
   assert.match(source, /selectedDetail \? <AdminDetailDialog detail=\{selectedDetail\} opener=\{detailOpener\} onClose=\{closeDetail\} \/>/);
-  assert.match(source, /role="dialog" aria-modal="true" aria-labelledby="admin-detail-title"/);
+  assert.match(readFileSync("components/AdminDetailDialog.tsx", "utf8"), /role="dialog" aria-modal="true" aria-labelledby="admin-detail-title"/);
   assert.doesNotMatch(source, /weatherExpanded/);
 });
 
 test("cron reference uses a separate copy button while the job summary opens safe details", () => {
   const cron = source.slice(source.indexOf("function CronSidebar"), source.indexOf("function FinancePanel"));
-  assert.match(cron, /<button type="button" data-dialog-focusable onClick=\{event => openDetail\(cronJobDetail\(job\), event\.currentTarget\)/);
+  assert.match(cron, /<button type="button" data-dialog-focusable onClick=\{event => openDetail\(scheduledJobDetail\(job,/);
   assert.match(cron, /onClick=\{\(\) => void copy\(job\.reference!\)\}/);
   assert.doesNotMatch(cron, /onClick=\{[^}]*copy\([^}]*openDetail|openDetail\([^}]*copy/);
   assert.match(cron, /\$\{job\.referenceType \?\? "reference"\}: \$\{job\.reference\}/);

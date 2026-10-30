@@ -19,7 +19,9 @@ test("unloaded data fields use the shared ASCII shimmer until data is ready", ()
 test("weather panel includes feels-like, wind, rain, range, UV, and sun data", () => {
   const envStart = source.indexOf('eyebrow="Env"');
   const weather = source.slice(envStart, source.indexOf('</Panel>', envStart));
-  for (const field of ["Feels like", "Wind", "Rain", "Range", "UV", "Sun"]) assert.ok(weather.includes(field), `missing ${field}`);
+  assert.match(weather, /openDetail\(weatherDetail\(weather, weatherRefreshError\)/);
+  const details = readFileSync("lib/admin/detail-content.mjs", "utf8");
+  for (const field of ["Feels like", "Wind", "Precipitation", "Low / high", "UV index", "Sunrise", "Sunset"]) assert.ok(details.includes(field), `missing ${field}`);
 });
 
 test("reports initial failure leaves Overnight in an unavailable state", () => {

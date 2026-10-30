@@ -9,7 +9,7 @@ import swc from 'next/dist/build/swc/index.js';
 
 const file = process.cwd() + '/components/ImageMarquee.tsx';
 const items = [{ src: '/a.jpg', alt: 'First photo' }, { src: '/b.jpg', alt: 'Second photo' }];
-function mount(t) {
+function mount(t, props = {}) {
   const frames = new Map(); let nextFrame = 0, cursor = 0, effects = [], tree;
   const hooks = [], refs = [];
   const preference = new EventTarget(); preference.matches = false;
@@ -31,7 +31,7 @@ function mount(t) {
   mod._compile(code, file);
   const viewport = { scrollLeft: 0, clientWidth: 300, scrollWidth: 1600 };
   const track = { children: [{ offsetLeft: 0 }, { offsetLeft: 300 }, { offsetLeft: 600 }, { offsetLeft: 900 }] };
-  function render() { cursor = 0; effects = []; tree = mod.exports.default({ items, label: 'Nature photos' }); refs[0].current = viewport; refs[1].current = track; effects.forEach(fn => fn()); return tree; }
+  function render() { cursor = 0; effects = []; tree = mod.exports.default({ items, label: 'Nature photos', ...props }); refs[0].current = viewport; refs[1].current = track; effects.forEach(fn => fn()); return tree; }
   function find(predicate, node = tree) { if (!node || typeof node !== 'object') return null; if (predicate(node)) return node; for (const child of [node.props?.children].flat(Infinity).filter(Boolean)) { const result = find(predicate, child); if (result) return result; } return null; }
   function frame(time) { const pending = [...frames.values()]; frames.clear(); pending.forEach(fn => fn(time)); }
   const unmount = () => { hooks.forEach(hook => hook?.cleanup?.()); hooks.length = 0; }; t.after(() => { unmount(); restoreGlobals.forEach(restore => restore()); });
@@ -78,4 +78,14 @@ test('native strip has no drag physics, intercepted keys or nested gallery-link 
   assert.match(source, /overflow-x-auto/);
   const home = readFileSync('components/HomeGalleries.tsx', 'utf8');
   assert.doesNotMatch(home, /<Link[\s\S]*<ImageMarquee[\s\S]*<\/Link>/);
+});
+
+test('gallery links use image alt text as their accessible name without redundant stored-data labels', t => {
+  const app = mount(t, { href: '/aperture/nature', items: [{ src: '/a.jpg', alt: '<img src=x onerror=alert(1)>' }] });
+  const { document } = parseHTML(renderToStaticMarkup(app.render()));
+  const link = document.querySelector('a');
+  assert.equal(link.getAttribute('href'), '/aperture/nature');
+  assert.equal(link.hasAttribute('aria-label'), false);
+  assert.equal(link.querySelector('img').getAttribute('alt'), '<img src=x onerror=alert(1)>');
+  assert.equal(document.querySelector('[onerror]'), null);
 });

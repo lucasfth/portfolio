@@ -112,7 +112,7 @@ export default function ImageMarquee({ items: initialItems, deferredItemsUrl, la
             const duplicate = index >= items.length;
             const image = <Image src={item.src} alt={duplicate ? "" : item.alt || "Gallery photograph"} width={400} height={300} draggable={false} className="h-48 w-64 object-cover sm:h-56 sm:w-72" />;
             return <div key={`${item.src}-${index}`} className="shrink-0 overflow-hidden rounded-[var(--media-radius)] border border-border" aria-hidden={duplicate || undefined} inert={duplicate || undefined} data-marquee-copy={duplicate ? "duplicate" : "original"}>
-              {href && !duplicate ? <Link href={href} className="block" aria-label={`Open gallery: ${item.alt || label}`}>{image}</Link> : image}
+              {href && !duplicate ? <Link href={href} className="block">{image}</Link> : image}
             </div>;
           })}
         </div>

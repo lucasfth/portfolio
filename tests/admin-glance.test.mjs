@@ -41,7 +41,7 @@ test('status strip wraps headers and bounds two full value lines without losing 
   assert.match(css, /\.admin-board-value\s*\{\s*max-height: 2\.5rem; overflow: clip/);
   assert.match(css, /\.admin-board-sub[^}]*-webkit-line-clamp: 2/);
   assert.match(dashboard, /FAULT marks unavailable or incomplete sources, or failed jobs/);
-  assert.match(dashboard, /openDetail\(\{ title: "Copenhagen weather"[^\n]*Description: weather\.current!\.desc/);
+  assert.match(dashboard, /openDetail\(weatherDetail\(weather, weatherRefreshError\)/);
 });
 
 test('finance retained-data refresh faults agree between strip and panel', () => {

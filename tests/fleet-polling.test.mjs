@@ -81,7 +81,8 @@ function dashboard() {
     '@/components/AdminGithub': () => null,
     '@/lib/admin/fetch-json-with-retry.mjs': { fetchJsonWithRetry: async () => ({ response: { ok: false }, body: null }) },
     '@/lib/admin/dashboard-state.mjs': createRequire(import.meta.url)('../lib/admin/dashboard-state.mjs'),
-    '@/lib/admin/detail-dialog.mjs': { activateDialog() {}, cronJobDetail: value => value },
+    '@/components/AdminDetailDialog': () => null,
+    '@/lib/admin/detail-content.mjs': createRequire(import.meta.url)('../lib/admin/detail-content.mjs'),
   });
   return { app, render: () => find(app.render(), element => element.type === Fleet), auth(token, id = 'operator-a') { onAuth(token ? 'TOKEN_REFRESHED' : 'SIGNED_OUT', token ? { access_token: token, user: { id, email: initial.user.email } } : null); } };
 }

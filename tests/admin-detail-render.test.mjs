@@ -1,0 +1,32 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { Module, createRequire } from 'node:module';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { parseHTML } from 'linkedom';
+import swc from 'next/dist/build/swc/index.js';
+import { stockDetail, financeDetail } from '../lib/admin/detail-content.mjs';
+const file = process.cwd() + '/components/AdminDetailDialog.tsx';
+const mod = new Module(file); mod.filename = file;
+const require = createRequire(file);
+mod.require = name => name.includes('detail-dialog.mjs') ? { activateDialog() {} } : require(name);
+mod._compile(swc.transformSync(readFileSync(file, 'utf8'), { filename: file, jsc: { parser: { syntax: 'typescript', tsx: true }, transform: { react: { runtime: 'automatic' } } }, module: { type: 'commonjs' } }).code, file);
+const render = detail => parseHTML(renderToStaticMarkup(React.createElement(mod.exports.default, { detail, opener: null, onClose() {} }))).document;
+test('dialog renders labelled chart, ordered numeric history and explicit currency', () => {
+  const doc = render(stockDetail({ symbol: 'TEST', name: 'Test', price: 20, closes: [10, 15, 20], currency: 'DKK' }));
+  assert.equal(doc.querySelector('[role="dialog"]').getAttribute('aria-describedby'), 'admin-detail-description');
+  assert.ok(doc.querySelector('svg[role="img"] polyline'));
+  assert.equal(doc.querySelectorAll('ol li').length, 3);
+  assert.match(doc.textContent || doc.toString(), /20 DKK/);
+  assert.doesNotMatch(doc.toString(), /NaN|Infinity/);
+});
+test('empty history has an honest fallback and arbitrary nested secrets never render', () => {
+  const doc = render(stockDetail({ symbol: 'X', name: 'X', closes: [] }));
+  assert.equal(doc.querySelector('svg'), null);
+  assert.match(doc.toString(), /Not enough history/);
+  const finance = render(financeDetail({ nordea: { accounts: [{ name: '<script>secret</script>', balance: 0, source: 'bank' }] }, saxo: {}, token: 'DO-NOT-RENDER' }));
+  assert.equal(finance.querySelector('script'), null);
+  assert.match(finance.toString(), /&lt;script&gt;/);
+  assert.doesNotMatch(finance.toString(), /DO-NOT-RENDER/);
+});

@@ -57,7 +57,7 @@ function TopList({ heading, rows }: { heading: string; rows: { name: string; cou
           {rows.map((row, index) => (
             <li key={`${row.name}-${index}`} className="min-w-0">
               <div className="flex items-baseline justify-between gap-3 font-mono text-xs">
-                <span className="truncate text-foreground" title={row.name}>
+                <span className="min-w-0 truncate text-foreground" title={row.name}>
                   {index + 1}. {row.name}
                 </span>
                 <span className="shrink-0 text-muted-foreground">{numberFormat.format(row.count)}</span>
@@ -197,7 +197,7 @@ export default function StatsLive({
       </div>
 
       <div>
-        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+        <div className="mb-3 flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between">
           <h2 className="text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground">
             Visits, last {HOURS} hours
           </h2>
@@ -221,7 +221,7 @@ export default function StatsLive({
         </div>
       </div>
 
-      <div className="grid gap-10 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
         <TopList heading="Most visited pages" rows={data.top_paths} />
         <TopList heading="Top referrers" rows={data.top_referrers} />
         <TopList heading="Top areas" rows={data.top_regions} />

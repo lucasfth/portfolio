@@ -1,11 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion, useScroll, useMotionValueEvent } from "motion/react";
 import { Menu, Search, X } from "lucide-react";
 import CommandPalette, { type SearchItem } from "@/components/CommandPalette";
+import KeyboardNavigation from "@/components/KeyboardNavigation";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
@@ -24,6 +25,10 @@ export default function Header() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const openHelp = useCallback(() => { setOpen(false); setSearchOpen(false); setHelpOpen(true); }, []);
+  const closeHelp = useCallback(() => setHelpOpen(false), []);
+  const openSearch = useCallback(() => { setOpen(false); setHelpOpen(false); setSearchOpen(true); }, []);
   useEffect(() => {
     if (!searchOpen || searchStatus === "ready") return;
     let active = true;
@@ -56,14 +61,14 @@ export default function Header() {
   useEffect(() => {
     setOpen(false);
     setSearchOpen(false);
+    setHelpOpen(false);
   }, [pathname]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+      if (!e.defaultPrevented && !e.altKey && !e.isComposing && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen(false);
-        setSearchOpen(true);
+        openSearch();
       }
       if (e.key === "Escape") {
         setOpen(false);
@@ -72,7 +77,7 @@ export default function Header() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [openSearch]);
 
   // Lock body scroll while the mobile menu is open.
   useEffect(() => {
@@ -159,15 +164,17 @@ export default function Header() {
           ))}
           <button
             type="button"
-            onClick={() => setSearchOpen(true)}
+            onClick={openSearch}
             className="ml-1 inline-flex items-center gap-2 rounded-full px-3 py-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
             aria-label="Search the site (⌘K)"
           >
             <Search size={15} aria-hidden="true" />
             <kbd className="font-mono text-[10px]">⌘K</kbd>
           </button>
+          <button type="button" onClick={openHelp} className="keyboard-help-trigger" aria-label="Keyboard shortcuts (?)" aria-haspopup="dialog">?</button>
         </div>
 
+        <button type="button" onClick={openHelp} className="keyboard-help-trigger lg:hidden ml-auto mr-2" aria-label="Keyboard shortcuts (?)" aria-haspopup="dialog">?</button>
         {/* Mobile toggle */}
         <button
           className="lg:hidden grid size-10 place-items-center text-foreground"
@@ -193,10 +200,7 @@ export default function Header() {
         >
           <button
             type="button"
-            onClick={() => {
-              setOpen(false);
-              setSearchOpen(true);
-            }}
+            onClick={openSearch}
             className="block w-full rounded-xl px-4 py-3 text-left text-sm uppercase tracking-[0.14em] text-muted-foreground transition-colors hover:text-foreground"
           >
             Search
@@ -224,6 +228,7 @@ export default function Header() {
         onClose={() => setSearchOpen(false)}
         items={searchItems.filter((item) => item.href !== pathname)}
       />
+      <KeyboardNavigation open={helpOpen} onOpen={openHelp} onClose={closeHelp} onSearch={openSearch} blocked={open || searchOpen} />
     </motion.header>
   );
 }

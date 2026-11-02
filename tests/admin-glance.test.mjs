@@ -4,8 +4,8 @@ import { readFileSync } from 'node:fs';
 
 const dashboard = readFileSync('components/AdminDashboard.tsx', 'utf8');
 
-test('board uses main-first document order, context and dedicated cron with no mobile CSS reordering', () => {
-  assert.match(dashboard, /className="admin-main"[\s\S]*AdminFleetPanel[\s\S]*eyebrow="GitHub"[\s\S]*eyebrow="Overnight"[\s\S]*eyebrow="Radar"[\s\S]*className="admin-context"[\s\S]*FinancePanel[\s\S]*eyebrow="Market"[\s\S]*eyebrow="Env"[\s\S]*CronSidebar/);
+test('approved finance-first layout precedes compact fleet with no mobile CSS reordering', () => {
+  assert.match(dashboard, /<AdminFinanceWorkspace[\s\S]*FinancePanel[\s\S]*className="admin-main"[\s\S]*AdminFleetPanel[\s\S]*eyebrow="GitHub"[\s\S]*eyebrow="Overnight"[\s\S]*eyebrow="Radar"[\s\S]*className="admin-context"[\s\S]*eyebrow="Market"[\s\S]*eyebrow="Env"[\s\S]*CronSidebar/);
   assert.doesNotMatch(dashboard, /order-[12]|Children\.toArray|content\.map\(\(child/);
   assert.match(dashboard, /href: "#admin-github"/);
   assert.match(dashboard, /href: "#admin-cron"/);
@@ -40,7 +40,8 @@ test('status strip wraps headers and bounds two full value lines without losing 
   assert.match(dashboard, /admin-board-value mt-2 text-sm leading-5/);
   assert.match(css, /\.admin-board-value\s*\{\s*max-height: 2\.5rem; overflow: clip/);
   assert.match(css, /\.admin-board-sub[^}]*-webkit-line-clamp: 2/);
-  assert.match(dashboard, /FAULT marks unavailable or incomplete sources, or failed jobs/);
+  assert.match(dashboard, /<details[^>]*>[\s\S]*Source health and section shortcuts[\s\S]*<Board/);
+  assert.match(dashboard, /Unavailable or partial sources retain their last successful data/);
   assert.match(dashboard, /openDetail\(weatherDetail\(weather, weatherRefreshError\)/);
 });
 

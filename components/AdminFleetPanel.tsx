@@ -43,23 +43,26 @@ export function FleetView({ data, error, now }: { data: FleetSnapshot | null; er
     <div className="space-y-5 p-5">
       {error ? <p role="status" className="text-sm">Fleet source unavailable. {data ? "Showing last received values; freshness continues to age below." : "No fleet observation available."}</p> : null}
       {!data && !error ? <p role="status" className="text-sm text-muted-foreground">Checking fleet source…</p> : null}
-      {data ? <><p className="font-mono text-xs text-muted-foreground">Backend read: {timestamp(data.readAt)}</p>
+      {data ? <>
         <div className="grid gap-3">{data.hosts.map(host => {
           const age = host.lastReceivedAt ? now - Date.parse(host.lastReceivedAt) : null;
           const status = age === null ? "Never seen" : age < -30_000 ? "Clock skew" : age > 120_000 ? "Stale" : "Recent receipt";
-          const active = host.sessions.filter(s => s.state !== "ended").sort((a, b) => Number(b.state === "working") - Number(a.state === "working"));
+          const active = host.sessions.filter(s => ["working", "blocked", "error", "unknown"].includes(s.state)).sort((a, b) => Number(b.state === "working") - Number(a.state === "working"));
+          const quiet = host.sessions.filter(s => ["idle", "done"].includes(s.state));
           const ended = host.sessions.filter(s => s.state === "ended");
           return <article key={host.id} className="min-w-0 border border-border p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2"><h3 className="text-sm font-medium">{host.id === "gimle" ? "Gimle" : "Personal MacBook Pro"}</h3><span className="font-mono text-xs uppercase">{status}</span></div>
-            <p className="mt-2 font-mono text-xs text-muted-foreground">Host last receipt: {timestamp(host.lastReceivedAt)}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{active.length} active / needs attention · {quiet.length} quiet · last receipt {timestamp(host.lastReceivedAt)}</p>
             {!host.sessions.length ? <p className="mt-3 text-sm text-muted-foreground">{host.lastReceivedAt ? "No sessions within retention. The host was previously seen." : "No report received. Setup or host availability is not established."}</p> : null}
             <SessionRows sessions={active} now={now} />
+            {quiet.length ? <details className="mt-3 border-t border-border pt-3"><summary className="cursor-pointer font-mono text-xs text-muted-foreground">Quiet sessions ({quiet.length})</summary><SessionRows sessions={quiet} now={now} /></details> : null}
             {ended.length ? <details className="mt-3 border-t border-border pt-3"><summary className="cursor-pointer font-mono text-xs text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">Ended sessions ({ended.length})</summary><SessionRows sessions={ended} now={now} /></details> : null}
           </article>;
         })}</div></> : null}
-      <p className="text-xs leading-relaxed text-muted-foreground">Native Pi reports state and process heartbeats, not task progress or success. A completed tool can have failed. Stale means reports are old, not that work is stalled. Ended means a reporter sent an end marker; abrupt exits may remain stale. Quiet sessions are not inferred complete.</p>
-      <details><summary className="cursor-pointer text-xs text-muted-foreground">Reporting provenance and retention</summary>
-      <p className="text-xs leading-relaxed text-muted-foreground">Name a session explicitly with /fleet-name. Automatic session names currently contain prompt excerpts and are not exported. Labels are operator-approved; prompts, paths, names and tool content are not collected. Older reporters lack activity detail. Ended rows are retained for 24 hours, other sessions for seven days; at most 64 latest sessions per host.</p>
+      <details><summary className="cursor-pointer text-xs text-muted-foreground">Reporting provenance, telemetry and retention</summary>
+      <p className="mt-3 text-xs text-muted-foreground">Backend read: {data ? timestamp(data.readAt) : "Not observed"}</p>
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Native Pi reports state and process heartbeats, not task progress or success. A completed tool can have failed. Stale means reports are old, not that work is stalled. Ended means a reporter sent an end marker; abrupt exits may remain stale. Quiet sessions are not inferred complete.</p>
+      <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Name a session explicitly with /fleet-name. Automatic session names currently contain prompt excerpts and are not exported. Labels are operator-approved; prompts, paths, names and tool content are not collected. Older reporters lack activity detail. Ended rows are retained for 24 hours, other sessions for seven days; at most 64 latest sessions per host.</p>
       </details>
     </div>
   </section>;

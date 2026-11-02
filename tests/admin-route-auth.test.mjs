@@ -14,10 +14,15 @@ async function loadInjectedHandler(routeName) {
   let source = original.replace('import { adminUser } from "@/lib/admin/server";', 'const adminUser = (request: unknown) => (globalThis as any).__adminUser(request);');
   assert.notEqual(source, original, `${routeName}: auth dependency replacement must apply`);
   const afterAuth = source;
-  source = source.replace(/import \{ (fetch\w+) \} from "@\/lib\/admin\/sources";/, (_, name) => `const ${name} = (...args: unknown[]) => (globalThis as any).__adminFetch(...args);`);
+  if (routeName === "fleet") {
+    source = source.replace('import "server-only";', "").replace('import { readFleetSnapshot } from "@/lib/admin/fleet-store";', 'const readFleetSnapshot = () => (globalThis as any).__adminFetch();');
+    source = source.replace('import { fleetResponse } from "@/lib/admin/fleet-response";', readFileSync(join(repo, "lib/admin/fleet-response.ts"), "utf8").replace('import type { FleetSnapshot } from "./fleet.ts";', 'type FleetSnapshot = unknown;'));
+  } else {
+    source = source.replace(/import \{ (fetch\w+) \} from "@\/lib\/admin\/sources";/, (_, name) => `const ${name} = (...args: unknown[]) => (globalThis as any).__adminFetch(...args);`);
+  }
   assert.notEqual(source, afterAuth, `${routeName}: source dependency replacement must apply`);
   const afterFetch = source;
-  source = source.replace('import { NextRequest, NextResponse } from "next/server";', 'import { NextRequest, NextResponse } from "next/server.js";');
+  source = source.replace('from "next/server";', 'from "next/server.js";');
   assert.notEqual(source, afterFetch, `${routeName}: Next import replacement must apply`);
   assert.match(source, /__adminUser/);
   assert.match(source, /__adminFetch/);
@@ -37,7 +42,7 @@ async function loadInjectedHandler(routeName) {
 }
 
 test("actual admin GET handlers reject unauthenticated, malformed, invalid, and non-admin requests before source fetch", async () => {
-  for (const routeName of ["weather", "stocks", "github", "radar"]) {
+  for (const routeName of ["weather", "stocks", "github", "radar", "fleet"]) {
     const { temp, module } = await loadInjectedHandler(routeName);
     try {
       for (const [authorization, verifiedEmail] of [[null,null],["Bearer malformed",null],["Bearer invalid",null],["Bearer valid-non-admin","other@example.com"]]) {

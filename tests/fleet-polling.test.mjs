@@ -37,7 +37,16 @@ function component(name, overrides = {}) {
   };
   const nativeRequire = createRequire(filename);
   const mod = new Module(filename); mod.filename = filename;
-  mod.require = name => name === 'react' ? react : Object.hasOwn(overrides, name) ? overrides[name] : nativeRequire(name);
+  mod.require = name => {
+    if (name === '@/components/AdminFinanceWorkspace') {
+      const file = fileURLToPath(new URL('../components/AdminFinanceWorkspace.tsx', import.meta.url));
+      const child = new Module(file); child.filename = file;
+      child.require = dependency => dependency === '@/lib/admin/finance.mjs' ? nativeRequire('../lib/admin/finance.mjs') : nativeRequire(dependency);
+      child._compile(swc.transformSync(readFileSync(file, 'utf8'), { filename:file, jsc:{parser:{syntax:'typescript',tsx:true},transform:{react:{runtime:'automatic'}}},module:{type:'commonjs'} }).code, file);
+      return child.exports;
+    }
+    return name === 'react' ? react : Object.hasOwn(overrides, name) ? overrides[name] : nativeRequire(name);
+  };
   mod._compile(code, filename);
   return {
     render(props = {}) { cursor = 0; pending = []; const element = mod.exports.default(props); pending.forEach(fn => fn()); return element; },
@@ -64,7 +73,7 @@ function find(element, predicate) {
   for (const child of [element.props?.children].flat(Infinity)) { const found = find(child, predicate); if (found) return found; }
   return null;
 }
-function dashboard() {
+function dashboard(io = {}) {
   const Fleet = () => null; let onAuth;
   const initial = { access_token: 'OLD', user: { id: 'operator-a', email: 'online@lucashanson.dk' } };
   const sb = {
@@ -77,9 +86,10 @@ function dashboard() {
   const app = component('AdminDashboard', {
     '@/lib/admin/browser': { browserSupabase: () => sb },
     '@/components/AdminFleetPanel': Fleet,
+    '@/lib/admin/finance.mjs': createRequire(import.meta.url)('../lib/admin/finance.mjs'),
     '@/components/AdminField': () => null,
     '@/components/AdminGithub': () => null,
-    '@/lib/admin/fetch-json-with-retry.mjs': { fetchJsonWithRetry: async () => ({ response: { ok: false }, body: null }) },
+    '@/lib/admin/fetch-json-with-retry.mjs': { fetchJsonWithRetry: io.fetchJsonWithRetry ?? (async () => ({ response: { ok: false }, body: null })) },
     '@/lib/admin/dashboard-state.mjs': createRequire(import.meta.url)('../lib/admin/dashboard-state.mjs'),
     '@/components/AdminDetailDialog': () => null,
     '@/lib/admin/detail-content.mjs': createRequire(import.meta.url)('../lib/admin/detail-content.mjs'),
@@ -195,4 +205,48 @@ test('same mounted panel preserves data and existing error across token effect r
   env.requests[2].reject(new Error('Still unavailable')); await settle();
   const failed = panel.render({ token: 'NEW' });
   assert.deepEqual(failed.props.data, received); assert.equal(failed.props.error, true);
+});
+
+test('finance sync leaves panel reads alone and aborts on signout and unmount',async t=>{
+ const controllers=[]; const posts=[];
+ t.mock.method(globalThis,'fetch',async(url,options)=>{
+  assert.match(url,/finance\/refresh$/); assert.equal(options.method,'POST');
+  assert.equal(options.headers.Authorization,'Bearer OLD');
+  return new Promise((resolve,reject)=>{posts.push({options,resolve,reject});options.signal.addEventListener('abort',()=>reject(options.signal.reason),{once:true});});
+ });
+ const dash=dashboard({fetchJsonWithRetry:async(_url,options)=>{controllers.push(options.signal);return new Promise(()=>{});}});
+ t.after(()=>dash.app.unmount());
+ dash.app.render();await settle();let element=dash.app.render();
+ const workspace=find(element,node=>node.props?.overview);
+ const sync=find(workspace.props.overview,node=>node.type==='button'&&node.props.children==='Sync accounts');
+ assert.ok(sync);const run=sync.props.onClick();await settle();
+ assert.equal(posts.length,1);assert.ok(controllers.length>=4);
+ assert.equal(controllers.some(signal=>signal.aborted),false,'sync cannot cancel other source reads');
+ // Exercise the auth callback too: expiry/external signout must abort the same request.
+ dash.auth(null);await settle();assert.equal(posts[0].options.signal.aborted,true);
+ await run;dash.app.unmount();
+ const second=dashboard();second.app.render();await settle();element=second.app.render();
+ t.after(()=>second.app.unmount());
+ find(find(element,node=>node.props?.overview).props.overview,node=>node.type==='button'&&node.props.children==='Sync accounts').props.onClick();await settle();
+ second.app.unmount();await settle();assert.equal(posts[1].options.signal.aborted,true);
+});
+
+test('late background finance read cannot overwrite sync, and later manual reads can update it',async t=>{
+ const pending=[];let post;
+ const fixture=total=>({schemaVersion:1,currency:'DKK',generatedAt:at,total,nordea:{balance:total,accounts:[]},saxo:{total:0,investments:0,cash:0,asOf:at},limitations:[]});
+ t.mock.method(globalThis,'fetch',async(url,options)=>{assert.match(url,/finance\/refresh$/);assert.equal(options.method,'POST');return new Promise(resolve=>{post=resolve;});});
+ const dash=dashboard({fetchJsonWithRetry:async(url,options)=>{
+  if(url.endsWith('/finance/report'))return new Promise(resolve=>pending.push({resolve,options}));
+  return {response:{ok:false,status:503},body:null};
+ }}); t.after(()=>dash.app.unmount());
+ const workspace=()=>find(dash.app.render(),node=>node.props?.overview);
+ dash.app.render();await settle();let current=workspace();assert.equal(pending.length,1);
+ const run=find(current.props.overview,node=>node.type==='button'&&node.props.children==='Sync accounts').props.onClick();await settle();
+ post(Response.json(fixture(200)));await settle();await run;assert.equal(workspace().props.finance.total,200);
+ assert.equal(pending[0].options.signal.aborted,false);pending[0].resolve({response:{ok:true},body:fixture(100)});await settle();
+ assert.equal(workspace().props.finance.total,200,'old read cannot overwrite completed sync');
+ const refresh=find(dash.app.render(),node=>node.type==='button'&&node.props['data-primary']!==undefined);assert.ok(refresh);
+ const reading=refresh.props.onClick();await settle();assert.equal(pending.length,2);
+ pending[1].resolve({response:{ok:true},body:fixture(300)});await settle();await reading;
+ assert.equal(workspace().props.finance.total,300,'next read remains eligible');
 });

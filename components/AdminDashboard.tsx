@@ -9,6 +9,8 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ArrowUpRight, LogOut, RefreshCw } from "lucide-react";
 import { browserSupabase } from "@/lib/admin/browser";
 import AdminFleetPanel from "@/components/AdminFleetPanel";
+import AdminFinanceWorkspace from "@/components/AdminFinanceWorkspace";
+import { validFinancePayload, financeFailure, cronFailure, financeExtensions, type FinancePayload } from "@/lib/admin/finance.mjs";
 import type {
   AdminReport,
   GithubPayload,
@@ -28,8 +30,6 @@ type SessionShape = {
   user: { id: string; email?: string | null };
 } | null;
 
-type FinanceAccount = { name: string; balance: number; source: string; lastSync: string | null; bankStatus: string | null };
-type FinancePayload = { schemaVersion: number; currency: string; generatedAt: string; total: number; mixedDates: boolean; simIncluded: boolean; nordea: { balance: number; status: string; accounts: FinanceAccount[]; lastSync: string | null }; saxo: { total: number; investments: number; cash: number; asOf: string; mode: string; liveSync: boolean }; limitations: string[]; estimate?: { total: number; additionalSavings: number; currency: "DKK"; assumptions: string[]; asOf: string }; syncHealth?: { lastAttempt: string | null; lastSuccess: string | null; status: string; reference: string | null } };
 type CronJob = { id: string; name: string; kind: "maintenance" | "information"; enabled: boolean; status: string; lastRun: string | null; nextRun: string | null; reference: string | null; referenceType: "session" | "run" | "job" | null; summary: string; details: string | null };
 type CronPayload = { generatedAt: string; jobs: CronJob[]; limitations: string[] };
 
@@ -171,7 +171,7 @@ type BoardCell = {
 
 function Board({ cells }: { cells: BoardCell[] }) {
   return (
-    <div className="admin-overview" role="group" aria-label="Source overview">
+    <nav aria-label="Dashboard sections"><div className="admin-overview" role="group" aria-label="Source overview">
       {cells.map((c) => (
         <a key={c.code} href={c.href} className="min-w-0 bg-card px-3 py-3 hover:bg-muted/30">
           <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
@@ -187,25 +187,15 @@ function Board({ cells }: { cells: BoardCell[] }) {
           <p className={`admin-board-sub ${MONO} mt-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/60`}>{c.sub}</p>
         </a>
       ))}
-    </div>
+    </div></nav>
   );
-}
-
-function validFinancePayload(value: unknown): value is FinancePayload {
-  if (!value || typeof value !== "object") return false;
-  const p = value as Partial<FinancePayload>;
-  return p.schemaVersion === 1 && p.currency === "DKK" && typeof p.generatedAt === "string" &&
-    typeof p.total === "number" && Boolean(p.nordea && p.saxo && Array.isArray(p.limitations)) &&
-    typeof p.nordea?.balance === "number" && Array.isArray(p.nordea?.accounts) &&
-    typeof p.saxo?.total === "number" && typeof p.saxo?.asOf === "string" &&
-    p.nordea.accounts.every(a => typeof a.name === "string" && typeof a.balance === "number" && typeof a.source === "string");
 }
 
 async function fetchFinanceReport(token: string, signal?: AbortSignal): Promise<FinancePayload> {
   const result = await fetchJsonWithRetry(FINANCE_ENDPOINT, { cache: "no-store", headers: { Authorization: `Bearer ${token}` }, signal });
   if (!result.response.ok) throw new Error(`HTTP ${result.response.status}`);
   if (!validFinancePayload(result.body)) throw new Error("Unexpected finance report format");
-  return result.body;
+  return financeExtensions(result.body);
 }
 
 async function refreshFinance(token: string, signal?: AbortSignal): Promise<FinancePayload> {
@@ -215,7 +205,7 @@ async function refreshFinance(token: string, signal?: AbortSignal): Promise<Fina
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const payload: unknown = await response.json();
   if (!validFinancePayload(payload)) throw new Error("Unexpected finance report format");
-  return payload;
+  return financeExtensions(payload);
 }
 
 function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; error: string | null; openDetail: (detail: AdminDetail, opener: HTMLElement) => void }) {
@@ -243,11 +233,12 @@ function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; er
 }
 
 function FinancePanel({ finance, error, refreshing, openDetail }: { finance: FinancePayload | null; error: string | null; refreshing: boolean; openDetail: (detail: AdminDetail, opener: HTMLElement) => void }) {
+  finance = financeExtensions(finance);
   const state: ModuleState = error ? "error" : finance ? "ok" : "loading";
   return (
-    <Panel eyebrow="Finance" title="Daily follow-up" state={state} error={error} meta={finance ? `report ${fmtTime(finance.generatedAt)}` : "private link"} loadingFields={["Nordea balance and source date", "Saxo statement and source date", "Supported subtotal (partial assets)"]} ready={Boolean(finance)} loading={refreshing && Boolean(finance)}>
-      <div className="grid gap-3">
-        {[{ label: "Nordea", item: finance ? { total: finance.nordea.balance, source: finance.nordea.status, updated: finance.nordea.lastSync } : null }, { label: "Saxo", item: finance ? { total: finance.saxo.total, source: "Manual statement snapshot", updated: finance.saxo.asOf } : null }].map(({ label, item }) => <button key={label} type="button" aria-haspopup="dialog" aria-label={`Open ${label} account details`} disabled={!finance} onClick={event => { if (finance) openDetail(financeDetail(finance, error), event.currentTarget); }} className="min-h-[7rem] border border-border px-4 py-4 text-left transition-colors enabled:hover:border-accent enabled:hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-default"><span className={`block ${MONO} text-[10px] ${TRACK} text-muted-foreground`}>{label}</span>{item ? <><span className="mt-3 block text-lg tabular-nums">{item.total.toLocaleString("en-GB", { style: "currency", currency: finance!.currency })}</span><span className="mt-1 block text-sm">{item.source}</span><span className={`mt-2 block ${MONO} text-[11px] text-muted-foreground`}>Source date: {item.updated ?? "unknown"}</span></> : <span className="mt-3 block h-7 w-2/3 text-lg tabular-nums" aria-hidden="true">&nbsp;</span>}</button>)}
+    <Panel eyebrow="Finance" title="Tracked assets" state={state} error={error} meta={finance ? `report ${fmtTime(finance.generatedAt)}` : "private link"} loadingFields={["Nordea balance and source date", "Saxo statement and source date", "Supported subtotal (partial assets)"]} ready={Boolean(finance)} loading={refreshing && Boolean(finance)}>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {[{ label: "Nordea", item: finance ? { total: finance.nordea.balance, source: finance.nordea.status, updated: finance.nordea.lastSync } : null }, { label: "Saxo", item: finance ? { total: finance.saxo.total, source: finance.saxo.mode === "live_openapi" ? "Saxo LIVE valuation" : "Statement snapshot", updated: finance.saxo.asOf } : null }].map(({ label, item }) => <button key={label} type="button" aria-haspopup="dialog" aria-label={`Open ${label} account details`} disabled={!finance} onClick={event => { if (finance) openDetail(financeDetail(finance, error), event.currentTarget); }} className="min-h-[7rem] border border-border px-4 py-4 text-left transition-colors enabled:hover:border-accent enabled:hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-default"><span className={`block ${MONO} text-[10px] ${TRACK} text-muted-foreground`}>{label}</span>{item ? <><span className="mt-3 block text-lg tabular-nums">{item.total.toLocaleString("en-GB", { style: "currency", currency: finance!.currency })}</span><span className="mt-1 block text-sm">{item.source}</span><span className={`mt-2 block ${MONO} text-[11px] text-muted-foreground`}>Source date: {item.updated ?? "unknown"}</span></> : <span className="mt-3 block h-7 w-2/3 text-lg tabular-nums" aria-hidden="true">&nbsp;</span>}</button>)}
       </div>
       <p className={`${MONO} mt-4 min-h-5 text-xs text-muted-foreground`}>Supported subtotal (partial assets): {finance ? `${finance.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency })}. This is not net worth.` : <span aria-hidden="true">&nbsp;</span>}</p>
       {finance ? <>
@@ -268,6 +259,7 @@ export default function AdminDashboard() {
   const [signInError, setSignInError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [syncingFinance, setSyncingFinance] = useState(false);
   const [clock, setClock] = useState("");
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -277,6 +269,9 @@ export default function AdminDashboard() {
   const closeDetail = useCallback(() => setSelectedDetail(null), []);
   const hydrated = useRef(false);
   const requests = useRef(createRequestCoordinator());
+  const financeSync = useRef<AbortController | null>(null);
+  const operatorId = useRef<string | null>(null);
+  const financeReadGeneration = useRef(0);
 
   const [weather, setWeather] = useState<WeatherPayload | null>(null);
   const [stocks, setStocks] = useState<StockPayload | null>(null);
@@ -315,6 +310,15 @@ export default function AdminDashboard() {
   const loadAll = useCallback(async (request = requests.current.begin()) => {
     const { id, signal } = request;
     const sb = browserSupabase();
+    const privateReads = (async () => {
+    if (session?.access_token) {
+      const headers = { Authorization: `Bearer ${session.access_token}` };
+      const cronRequest = fetchJsonWithRetry(CRON_ENDPOINT, { cache: "no-store", headers, signal }).then(({ response, body }) => { if (!requests.current.isCurrent(id)) return; if (!response.ok) throw new Error(`HTTP ${response.status}`); const value = body as CronPayload; if (!value || typeof value.generatedAt !== "string" || !Array.isArray(value.jobs) || !Array.isArray(value.limitations) || !value.limitations.every(x => typeof x === "string") || !value.jobs.every(job => job && typeof job.id === "string" && typeof job.name === "string" && typeof job.status === "string" && typeof job.enabled === "boolean" && ["maintenance", "information"].includes(job.kind) && typeof job.summary === "string" && [job.lastRun, job.nextRun, job.reference, job.details].every(x => x === null || typeof x === "string") && [null, "session", "run", "job"].includes(job.referenceType))) throw new Error("Unexpected cron status format"); setCron(value); setCronError(null); }).catch(error => { if (requests.current.isCurrent(id)) setCronError(cronFailure(error)); });
+      const financeGeneration = ++financeReadGeneration.current;
+      const financeRequest = fetchFinanceReport(session.access_token, signal).then(report => { if (requests.current.isCurrent(id) && financeReadGeneration.current === financeGeneration) { setFinance(report); setFinanceError(null); } }).catch(error => { if (requests.current.isCurrent(id) && financeReadGeneration.current === financeGeneration) setFinanceError(financeFailure(error)); });
+      await Promise.all([cronRequest, financeRequest]);
+    }
+    })();
     const [w, s, g, r] = await Promise.all([
       api("/api/admin/weather", signal),
       api("/api/admin/stocks", signal),
@@ -326,12 +330,7 @@ export default function AdminDashboard() {
     setStocks(previous => retainSuccessfulPayload(previous, s)); setStocksRefreshError(payloadRefreshError(s));
     setGithub(previous => retainSuccessfulPayload(previous, g)); setGithubRefreshError(githubRefreshErrorFor(g));
     setRadar(previous => retainSuccessfulPayload(previous, r)); setRadarRefreshError(payloadRefreshError(r));
-    if (session?.access_token) {
-      const headers = { Authorization: `Bearer ${session.access_token}` };
-      const cronRequest = fetchJsonWithRetry(CRON_ENDPOINT, { cache: "no-store", headers, signal }).then(({ response, body }) => { if (!requests.current.isCurrent(id)) return; if (!response.ok) throw new Error(`HTTP ${response.status}`); const value = body as CronPayload; if (!value || typeof value.generatedAt !== "string" || !Array.isArray(value.jobs) || !Array.isArray(value.limitations) || !value.limitations.every(x => typeof x === "string") || !value.jobs.every(job => job && typeof job.id === "string" && typeof job.name === "string" && typeof job.status === "string" && typeof job.enabled === "boolean" && ["maintenance", "information"].includes(job.kind) && typeof job.summary === "string" && [job.lastRun, job.nextRun, job.reference, job.details].every(x => x === null || typeof x === "string") && [null, "session", "run", "job"].includes(job.referenceType))) throw new Error("Unexpected cron status format"); setCron(value); setCronError(null); }).catch(error => { if (requests.current.isCurrent(id)) setCronError(error instanceof Error ? error.message : "Cron status unavailable"); });
-      const financeRequest = fetchFinanceReport(session.access_token, signal).then(report => { if (requests.current.isCurrent(id)) { setFinance(report); setFinanceError(null); } }).catch(error => { if (requests.current.isCurrent(id)) setFinanceError(error instanceof Error ? error.message : "Finance endpoint unavailable"); });
-      await Promise.all([cronRequest, financeRequest]);
-    }
+    await privateReads;
     if (sb && requests.current.isCurrent(id)) {
       try {
         const { data, error } = await sb.from("admin_reports").select("*").order("created_at", { ascending: false }).limit(120);
@@ -357,16 +356,30 @@ export default function AdminDashboard() {
       return;
     }
     let mounted = true;
+    const adoptOperator = (id: string | null) => {
+      if (operatorId.current === id) return;
+      operatorId.current = id;
+      requests.current.cancel(); financeSync.current?.abort(); financeSync.current = null;
+      hydrated.current = false; setRefreshing(false); setSyncingFinance(false);
+      setFinance(null); setFinanceError(null); setFinanceRefreshError(null);
+      setCron(null); setCronError(null); setReports(null); setReportsError(null);
+      setWeather(null); setStocks(null); setGithub(null); setRadar(null);
+      setWeatherRefreshError(null); setStocksRefreshError(null); setGithubRefreshError(null); setRadarRefreshError(null);
+      setSelectedDetail(null); setDetailOpener(null); setLastSync(null);
+    };
     sb.auth
       .getSession()
       .then(({ data }) => {
         if (!mounted) return;
         const s = data.session;
+        adoptOperator(s?.user.id ?? null);
         setSession(s ? { access_token: s.access_token, user: { id: s.user.id, email: s.user.email } } : null);
         setPhase(s ? "auth" : "anon");
       })
       .catch(() => mounted && setPhase("cfg"));
     const { data: sub } = sb.auth.onAuthStateChange((_event, s) => {
+      if (!mounted) return;
+      adoptOperator(s?.user.id ?? null);
       setSession(s ? { access_token: s.access_token, user: { id: s.user.id, email: s.user.email } } : null);
       setPhase(s ? "auth" : "anon");
     });
@@ -374,6 +387,8 @@ export default function AdminDashboard() {
       mounted = false;
       requests.current.cancel();
       sub.subscription.unsubscribe();
+      financeSync.current?.abort();
+      financeSync.current = null;
     };
   }, []);
 
@@ -393,19 +408,34 @@ export default function AdminDashboard() {
   }, [hasSession, loadAll]);
 
   const refresh = async () => {
-    if (refreshing) return;
+    if (refreshing || financeSync.current) return;
     const { id, signal } = requests.current.begin();
     setRefreshing(true);
     try {
-      if (session?.access_token) {
-        try { const report = await refreshFinance(session.access_token, signal); if (requests.current.isCurrent(id)) { setFinance(report); setFinanceError(null); setFinanceRefreshError(null); } }
-        catch (error) { if (requests.current.isCurrent(id)) setFinanceRefreshError(error instanceof Error ? error.message : "Finance refresh failed"); }
-      }
       const current = await loadAll({ id, signal });
       if (current) setLastSync(cphNow());
     } finally {
       setRefreshing(false);
     }
+  };
+
+  const syncFinance = async () => {
+    if (financeSync.current || !session?.access_token) return;
+    const operator = session.user.id;
+    const controller = new AbortController();
+    financeSync.current = controller;
+    financeReadGeneration.current++;
+    setSyncingFinance(true);
+    try {
+      const sb = browserSupabase();
+      const current = await sb?.auth.getSession();
+      const token = current?.data.session?.user.id === operator ? current.data.session.access_token : null;
+      if (!token) throw new Error("HTTP 401");
+      const report = await refreshFinance(token, AbortSignal.any([controller.signal, AbortSignal.timeout(245_000)]));
+      if (controller.signal.aborted || operatorId.current !== operator) return;
+      setFinance(report); setFinanceError(null); setFinanceRefreshError(null);
+    } catch (error) { if (!controller.signal.aborted && operatorId.current === operator) setFinanceRefreshError(financeFailure(error)); }
+    finally { if (financeSync.current === controller) { financeSync.current = null; setSyncingFinance(false); } }
   };
 
   const signIn = async () => {
@@ -439,6 +469,7 @@ export default function AdminDashboard() {
 
   const signOut = async () => {
     requests.current.cancel();
+    financeSync.current?.abort();
     hydrated.current = false;
     setRefreshing(false);
     const sb = browserSupabase();
@@ -586,7 +617,7 @@ export default function AdminDashboard() {
       code: "GitHub", href: "#admin-github",
       state: gs,
       value:
-        github?.status === "ok" ? `${github!.coverage === "complete" ? "" : "at least "}${github!.openPulls.length} PRs for lucasfth` : gs === "error" ? "gh fault" : "syncing",
+        github?.status === "ok" ? `${github!.coverage === "complete" ? "" : "at least "}${github!.openPulls.length} PRs for lucasfth` : gs === "error" ? "GitHub unavailable" : "syncing",
       sub: "github, current open PRs",
     },
     {
@@ -602,7 +633,7 @@ export default function AdminDashboard() {
       <div className="mb-6 flex flex-wrap items-end justify-between gap-6 border-b border-border pb-6">
         <div>
           <p className={`${MONO} text-[11px] ${TRACK} text-muted-foreground`}>Admin</p>
-          <h1 className="mt-2 text-3xl font-medium tracking-tight">At a glance</h1>
+          <h1 className="mt-2 text-3xl font-medium tracking-tight">Personal dashboard</h1>
           <p className={`${MONO} mt-2 text-xs uppercase tracking-[0.14em] text-muted-foreground/70`}>
             {cphDate()} · Copenhagen
           </p>
@@ -632,12 +663,8 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <nav aria-label="Dashboard sections" className="admin-section-nav">
-        <a href="#admin-fleet">Agents</a>
-        {cells.map(cell => <a key={cell.href} href={cell.href}>{cell.code}</a>)}
-      </nav>
-      <div className="mb-5"><Board cells={cells} /></div>
-      <p className="mb-5 text-xs text-muted-foreground">FAULT marks unavailable or incomplete sources, or failed jobs. Open a figure for its data and notices. Sync is the last refresh attempt, not proof every source succeeded.</p>
+      <AdminFinanceWorkspace finance={finance} overview={<><FinancePanel finance={finance} error={financeRefreshError ?? financeError} refreshing={refreshing} openDetail={openDetail} /><div className="mt-3 flex flex-wrap items-center gap-4"><button type="button" disabled={syncingFinance} onClick={() => void syncFinance()} className="admin-toolbar-button">{syncingFinance ? "Syncing accounts…" : "Sync accounts"}</button><p className="text-xs text-muted-foreground">Refresh reads saved sources. Sync accounts runs the existing bank/broker pipeline; it can take four minutes.</p></div></>} />
+      <details className="mb-5"><summary className="cursor-pointer py-3 text-sm text-muted-foreground">Source health and section shortcuts</summary><Board cells={cells} /><p className="mt-3 text-xs text-muted-foreground">Unavailable or partial sources retain their last successful data. Sync is the last read attempt, not proof every source succeeded.</p></details>
       <div className="admin-columns">
         <div className="admin-main">
           {session?.access_token ? <AdminFleetPanel key={session.user.id} token={session.access_token} /> : null}
@@ -751,7 +778,6 @@ export default function AdminDashboard() {
 
         </div>
         <div className="admin-context">
-          <FinancePanel finance={finance} error={financeRefreshError ?? financeError} refreshing={refreshing} openDetail={openDetail} />
         <Panel
           eyebrow="Market"
           loadingFields={["Loading watchlist quotes","Waiting for prices and daily changes"]}

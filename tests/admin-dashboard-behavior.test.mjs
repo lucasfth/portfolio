@@ -76,23 +76,12 @@ test("cron reference uses a separate copy button while the job summary opens saf
   assert.match(cron, /\$\{job\.referenceType \?\? "reference"\}: \$\{job\.reference\}/);
 });
 
-test("admin API routes return 401 and skip source fetches for anonymous, invalid, and non-admin sessions", async () => {
+// Behavioral 401 + no-source-read proof is in admin-route-auth.test.mjs,
+// which compiles and calls the shipping GET handlers including fleet.
+test("admin API route guard syntax remains a supplementary source check only", () => {
   for (const routePath of ["weather", "stocks", "github", "radar"]) {
     const routeSource = readFileSync(`app/api/admin/${routePath}/route.ts`, "utf8");
     assert.match(routeSource, /if \(!\(await adminUser\(req\)\)\)/);
     assert.match(routeSource, /status: 401/);
-    const guard = async authorization => {
-      const req = new Request("https://example.test/api/admin/" + routePath, { headers: authorization ? { authorization } : {} });
-      const email = req.headers.get("authorization") === "Bearer valid-admin" ? "online@lucashanson.dk" : null;
-      let fetchCalled = false;
-      const response = email ? new Response(JSON.stringify({ status: "ok" }), { status: 200 }) : new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
-      if (email) fetchCalled = true;
-      return { response, fetchCalled };
-    };
-    for (const authorization of [undefined, "Bearer malformed", "Bearer valid-non-admin"]) {
-      const { response, fetchCalled } = await guard(authorization);
-      assert.equal(response.status, 401, `${routePath} ${authorization ?? "no header"}`);
-      assert.equal(fetchCalled, false, `${routePath} fetch should not run`);
-    }
   }
 });

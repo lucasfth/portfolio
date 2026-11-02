@@ -120,3 +120,18 @@ test('compiled fleet status text meets 4.5 contrast on page/card while decorativ
   }
   console.log('Status text contrast (all states/qualifications): '+JSON.stringify(ratios));
 });
+
+test('idle and done sessions collapse, working/problems remain visible, and telemetry is disclosed', async()=>{
+  const {parseHTML}=await import('linkedom');
+  const states=['idle','done','working','blocked','error','unknown'];
+  const model={...data,hosts:[{...data.hosts[0],sessions:states.map((state,i)=>({...session,sessionId:String(i).repeat(32),label:state+' fixture',state}))},data.hosts[1]]};
+  const {document}=parseHTML(renderFleet(model,false,Date.parse(at)));
+  for(const name of ['idle fixture','done fixture']) {
+    const row=[...document.querySelectorAll('li')].find(x=>x.textContent.includes(name));
+    assert.ok(row.closest('details')); assert.match(row.closest('details').querySelector('summary').textContent,/Quiet sessions/);assert.equal(row.closest('details').hasAttribute('open'),false);
+  }
+  for(const name of ['working fixture','blocked fixture','error fixture','unknown fixture']) {
+    const row=[...document.querySelectorAll('li')].find(x=>x.textContent.includes(name));
+    assert.equal(row.closest('details'),null);
+  }
+});

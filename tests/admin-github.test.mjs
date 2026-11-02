@@ -226,3 +226,13 @@ test('GitHub source errors retain data with separate visible metadata; partial s
   assert.equal(githubRefreshErrorFor({ status: 'error', message: 123 }), 'Request failed');
   assert.equal(githubRefreshErrorFor({ status: 'ok', coverage: 'partial', message: 'Partial coverage.' }), null);
 });
+
+test('401 names deployed server credential recovery, 403 distinguishes permissions, and neither leaks upstream detail',async()=>{
+  for(const status of [401,403]) {
+    const f=fixture({override:path=>{if(path==='/user')throw Object.assign(new Error('PRIVATE DETAIL'),{status});}});
+    const result=await collectGithub(f);
+    assert.equal(result.coverage,'unavailable');
+    assert.match(result.message,status===401?/GITHUB_ADMIN_TOKEN.*deploy|deploy.*GITHUB_ADMIN_TOKEN/:/permission|scope/i);
+    assert.doesNotMatch(result.message,/PRIVATE DETAIL/);
+  }
+});

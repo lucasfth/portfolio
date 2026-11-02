@@ -1,0 +1,17 @@
+export type FinanceAccount = { name: string; balance: number; source: string; lastSync: string | null; bankStatus: string | null };
+export type Holding = { name: string; assetType: string; currency: string; value: number; quantity?: number; allocationPercent?: number };
+export type Snapshot = { asOf: string; total: number; cash: number; investments: number; kind: 'valuation_snapshot' };
+export type DatedValue = {date:string;value:number};
+export type Performance = {status:'available'|'unavailable';method:'provider_time_weighted';currency:'DKK';source:string;series:DatedValue[];accountValues:DatedValue[];cashFlows:DatedValue[];securityTransfers:DatedValue[];limitations:string[];from?:string|null;through?:string|null;returnUnit?:'fraction';cashFlowsComplete?:boolean};
+export type Benchmark = {id:string;name:string;source:string;sourceUrl:string;currency:'DKK';returnType:'total_return';dividendTreatment:string;fxTreatment:string;from:string;through:string;points:{date:string;level:number}[];limitations:string[]};
+export type Peers = {status:'available'|'unavailable';source:string;sourceUrl:string;publishedAt:string;asOf:string;currency:'DKK';unit:'nominal_DKK';statistic:'median';population:string;selectedAge:null;selectedSex:null;ageGroups:{id:string;text:string}[];sexGroups:{id:string;text:string}[];wealthTypes:{id:string;text:string}[];rows:{wealthType:string;age:string;sex:string;year:number;median:number|null}[];comparableToKnownAssets:false;percentile:null;limitations:string[]};
+export type FinancePayload = { schemaVersion: number; currency: string; generatedAt: string; total: number; mixedDates: boolean; simIncluded: boolean; nordea: { balance: number; status: string; accounts: FinanceAccount[]; lastSync: string | null }; saxo: { total: number; investments: number; cash: number; asOf: string; mode: string; liveSync: boolean }; limitations: string[]; estimate?: { total: number; additionalSavings: number; currency: 'DKK'; assumptions: string[]; asOf: string }; syncHealth?: { lastAttempt: string | null; lastSuccess: string | null; status: string; reference: string | null }; investments?: { currency: 'DKK'; asOf: string; holdings: Holding[]; allocation: {assetType: string; value: number; percent: number}[]; history: Snapshot[]; performance: Performance; limitations: string[] }; benchmarks?: {status:'available'|'unavailable';currency:'DKK';requested:string[];series:Benchmark[];limitations:string[]}; peers?: Peers };
+export function validFinancePayload(value: unknown): value is FinancePayload;
+export function supportedHistory(value: unknown): Snapshot[];
+export type ScenarioAssumptions = {start:number;monthly:number;years:number;annualReturn:number;inflation:number;fees:number};
+export function projectScenario(value: ScenarioAssumptions): {year:number;value:number;real:number;added:number}[];
+export function financeFailure(error: unknown): string;
+export function matchedComparison(performance:unknown,benchmark:unknown):{date:string;portfolio:number;benchmark:number}[];
+export function cashflowHistory(performance:unknown):{date:string;value:number;added:number;gain:number}[];
+export function financeExtensions<T extends FinancePayload|null>(value:T):T;
+export function cronFailure(error:unknown):string;

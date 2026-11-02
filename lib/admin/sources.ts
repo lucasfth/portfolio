@@ -47,11 +47,23 @@ const STOCK_WATCHLIST: [symbol: string, name: string][] = [
 ];
 
 export async function fetchWeather() {
+  let category = "transport";
   try {
-    const data = await cached("weather", 60_000, () => getJson("https://wttr.in/Copenhagen?format=j1"));
-    const current = data?.current_condition?.[0];
-    const today = data?.weather?.[0];
-    if (!current || !today) throw new Error("unexpected wttr.in shape");
+    const data = await cached("weather", 60_000, async () => {
+      const response = await fetch("https://wttr.in/Copenhagen?format=j1", {
+        headers: { "User-Agent": "Mozilla/5.0 (lucashanson.dk admin)" },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (!response.ok) { category = "provider-http"; throw new Error("Weather HTTP failure"); }
+      category = "provider-shape";
+      const body = await response.json();
+      const current = body?.current_condition?.[0], today = body?.weather?.[0];
+      const numeric = (value: unknown) => (typeof value === "number" || (typeof value === "string" && value.trim() !== "")) && Number.isFinite(Number(value));
+      if (!current || !today || ![current.temp_C, current.FeelsLikeC, current.windspeedKmph, current.precipMM ?? 0, today.mintempC, today.maxtempC, today.uvIndex ?? 0].every(numeric)) throw new Error("Weather shape failure");
+      return body;
+    });
+    const current = data.current_condition[0];
+    const today = data.weather[0];
     const temp = Number(current.temp_C);
     const wind = Number(current.windspeedKmph);
     const precip = Number(current.precipMM ?? 0);
@@ -81,7 +93,9 @@ export async function fetchWeather() {
       },
     };
   } catch (error) {
-    return { status: "error", message: error instanceof Error ? error.message : "weather fetch failed", current: undefined, today: undefined };
+    if (error instanceof Error && error.name === "TimeoutError") category = "timeout";
+    // Never send provider messages, URLs or response bodies to the client.
+    return { status: "error", category, current: undefined, today: undefined };
   }
 }
 

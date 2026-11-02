@@ -21,9 +21,9 @@ import type {
 import AdminField from "@/components/AdminField";
 import AdminGithub from "@/components/AdminGithub";
 import { fetchJsonWithRetry } from "@/lib/admin/fetch-json-with-retry.mjs";
-import { createRequestCoordinator, githubRefreshErrorFor, payloadRefreshError, reportReadResult, retainSuccessfulPayload } from "@/lib/admin/dashboard-state.mjs";
+import { createRequestCoordinator, githubRefreshErrorFor, weatherFailure, weatherRefreshErrorFor, payloadRefreshError, reportReadResult, retainSuccessfulPayload } from "@/lib/admin/dashboard-state.mjs";
 import AdminDetailDialog, { type AdminDetail } from "@/components/AdminDetailDialog";
-import { stockDetail, weatherDetail, financeDetail, scheduledJobDetail } from "@/lib/admin/detail-content.mjs";
+import { stockDetail, weatherDetail, financeDetail, scheduledJobDetail, saxoSourceStatus } from "@/lib/admin/detail-content.mjs";
 
 type SessionShape = {
   access_token: string;
@@ -235,10 +235,11 @@ function CronSidebar({ data, error, openDetail }: { data: CronPayload | null; er
 function FinancePanel({ finance, error, refreshing, openDetail }: { finance: FinancePayload | null; error: string | null; refreshing: boolean; openDetail: (detail: AdminDetail, opener: HTMLElement) => void }) {
   finance = financeExtensions(finance);
   const state: ModuleState = error ? "error" : finance ? "ok" : "loading";
+  const saxoStatus = finance ? saxoSourceStatus(finance.saxo) : null;
   return (
     <Panel eyebrow="Finance" title="Tracked assets" state={state} error={error} meta={finance ? `report ${fmtTime(finance.generatedAt)}` : "private link"} loadingFields={["Nordea balance and source date", "Saxo statement and source date", "Supported subtotal (partial assets)"]} ready={Boolean(finance)} loading={refreshing && Boolean(finance)}>
       <div className="grid gap-3 sm:grid-cols-2">
-        {[{ label: "Nordea", item: finance ? { total: finance.nordea.balance, source: finance.nordea.status, updated: finance.nordea.lastSync } : null }, { label: "Saxo", item: finance ? { total: finance.saxo.total, source: finance.saxo.mode === "live_openapi" ? "Saxo LIVE valuation" : "Statement snapshot", updated: finance.saxo.asOf } : null }].map(({ label, item }) => <button key={label} type="button" aria-haspopup="dialog" aria-label={`Open ${label} account details`} disabled={!finance} onClick={event => { if (finance) openDetail(financeDetail(finance, error), event.currentTarget); }} className="min-h-[7rem] border border-border px-4 py-4 text-left transition-colors enabled:hover:border-accent enabled:hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-default"><span className={`block ${MONO} text-[10px] ${TRACK} text-muted-foreground`}>{label}</span>{item ? <><span className="mt-3 block text-lg tabular-nums">{item.total.toLocaleString("en-GB", { style: "currency", currency: finance!.currency })}</span><span className="mt-1 block text-sm">{item.source}</span><span className={`mt-2 block ${MONO} text-[11px] text-muted-foreground`}>Source date: {item.updated ?? "unknown"}</span></> : <span className="mt-3 block h-7 w-2/3 text-lg tabular-nums" aria-hidden="true">&nbsp;</span>}</button>)}
+        {[{ label: "Nordea", item: finance ? { total: finance.nordea.balance, source: finance.nordea.status, updated: finance.nordea.lastSync } : null }, { label: "Saxo", item: finance ? { total: finance.saxo.total, source: saxoStatus!.title, updated: finance.saxo.asOf } : null }].map(({ label, item }) => <button key={label} type="button" aria-haspopup="dialog" aria-label={`Open ${label} account details`} disabled={!finance} onClick={event => { if (finance) openDetail(financeDetail(finance, error), event.currentTarget); }} className="min-h-[7rem] border border-border px-4 py-4 text-left transition-colors enabled:hover:border-accent enabled:hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent disabled:cursor-default"><span className={`block ${MONO} text-[10px] ${TRACK} text-muted-foreground`}>{label}</span>{item ? <><span className="mt-3 block text-lg tabular-nums">{item.total.toLocaleString("en-GB", { style: "currency", currency: finance!.currency })}</span><span className="mt-1 block text-sm">{item.source}</span><span className={`mt-2 block ${MONO} text-[11px] text-muted-foreground`}>Source date: {item.updated ?? "unknown"}</span>{label === "Saxo" && saxoStatus ? <>{finance!.saxo.freshness ? <span className="mt-2 block text-xs text-muted-foreground">Source observation: {saxoStatus.observedAt ?? "unknown"}</span> : null}{saxoStatus.notes.map(note=><span key={note} className="mt-2 block text-xs text-muted-foreground">{note}</span>)}</> : null}</> : <span className="mt-3 block h-7 w-2/3 text-lg tabular-nums" aria-hidden="true">&nbsp;</span>}</button>)}
       </div>
       <p className={`${MONO} mt-4 min-h-5 text-xs text-muted-foreground`}>Supported subtotal (partial assets): {finance ? `${finance.total.toLocaleString("en-GB", { style: "currency", currency: finance.currency })}. This is not net worth.` : <span aria-hidden="true">&nbsp;</span>}</p>
       {finance ? <>
@@ -299,8 +300,13 @@ export default function AdminDashboard() {
         const body = result.body as { status?: unknown } | null;
         // Keep GitHub error metadata separate from the retained successful payload.
         if (path === "/api/admin/github" && result.response.ok && body?.status === "error") return result.body;
+        if (path === "/api/admin/weather") {
+          if (!result.response.ok) return weatherFailure([401,403].includes(result.response.status) ? "access-denied" : "request-http");
+          if (body?.status !== "ok") return weatherFailure(body?.status === "error" ? (result.body as WeatherPayload).category : "provider-shape");
+        }
         return result.response.ok && body?.status === "ok" ? result.body : null;
-      } catch {
+      } catch (error) {
+        if (path === "/api/admin/weather") return weatherFailure(error instanceof Error && error.name === "TimeoutError" ? "request-timeout" : error instanceof SyntaxError ? "provider-shape" : "transport");
         return null;
       }
     },
@@ -326,7 +332,7 @@ export default function AdminDashboard() {
       api("/api/admin/radar", signal),
     ]);
     if (!requests.current.isCurrent(id)) return false;
-    setWeather(previous => retainSuccessfulPayload(previous, w)); setWeatherRefreshError(payloadRefreshError(w));
+    setWeather(previous => retainSuccessfulPayload(previous, w)); setWeatherRefreshError(weatherRefreshErrorFor(w));
     setStocks(previous => retainSuccessfulPayload(previous, s)); setStocksRefreshError(payloadRefreshError(s));
     setGithub(previous => retainSuccessfulPayload(previous, g)); setGithubRefreshError(githubRefreshErrorFor(g));
     setRadar(previous => retainSuccessfulPayload(previous, r)); setRadarRefreshError(payloadRefreshError(r));

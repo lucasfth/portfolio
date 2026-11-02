@@ -250,3 +250,32 @@ test('late background finance read cannot overwrite sync, and later manual reads
  pending[1].resolve({response:{ok:true},body:fixture(300)});await settle();await reading;
  assert.equal(workspace().props.finance.total,300,'next read remains eligible');
 });
+
+test('weather refresh callback retains last good data and renders safe categories through failures and recovery',async t=>{
+ let reply={response:{ok:true,status:200},body:{status:'ok',updated:at,current:{desc:'Synthetic clear',temp:8,feels:6,wind:10,precip:0,bike:true,waterproof:false},today:{mint:3,max:9,uv:1,sunrise:'08:00',sunset:'17:00',precipHours:0}}};
+ const dash=dashboard({fetchJsonWithRetry:async url=>{
+  if(url==='/api/admin/weather'){if(reply instanceof Error)throw reply;return reply;}
+  return {response:{ok:false,status:503},body:null};
+ }});t.after(()=>dash.app.unmount());
+ dash.app.render();await settle();
+ const panel=()=>find(dash.app.render(),node=>node.props?.eyebrow==='Env');
+ const refresh=async()=>{await find(dash.app.render(),node=>node.type==='button'&&node.props['data-primary']!==undefined).props.onClick();await settle();};
+ assert.equal(panel().props.error,undefined);
+ await refresh();assert.ok(find(panel(),n=>n.props?.text==='Synthetic clear'),'establish completed initial weather read');
+ for(const [next,expected] of [
+  [{response:{ok:true,status:200},body:{status:'error',category:'timeout',message:'DO-NOT-ECHO https://private.invalid'}},/Weather provider timed out/],
+  [{response:{ok:true,status:200},body:{status:'error',category:'provider-http'}},/Weather provider rejected the request/],
+  [{response:{ok:true,status:200},body:{status:'error',category:'provider-shape'}},/Weather provider returned unreadable data/],
+  [{response:{ok:false,status:401},body:null},/Weather access denied/],
+  [new DOMException('DO-NOT-ECHO','TimeoutError'),/Weather request timed out/],
+  [new TypeError('DO-NOT-ECHO'),/Weather connection failed/],
+  [{response:{ok:true,status:200},body:{status:'error',category:'DO-NOT-ECHO',message:'https://private.invalid'}},/Weather unavailable/],
+ ]) {
+  reply=next;await refresh();const node=panel();assert.match(node.props.error,expected);
+  assert.doesNotMatch(node.props.error,/DO-NOT-ECHO|https?:/);
+  const html=renderToStaticMarkup(node);assert.match(html,/showing last available data/);
+  assert.ok(find(node,n=>n.props?.text==='Synthetic clear'),'last good conditions retained');
+ }
+ reply={response:{ok:true,status:200},body:{status:'ok',updated:at,current:{desc:'Synthetic recovered',temp:9,feels:8,wind:10,precip:0,bike:true,waterproof:false},today:{mint:3,max:9,uv:1,sunrise:'08:00',sunset:'17:00',precipHours:0}}};
+ await refresh();assert.equal(panel().props.error,undefined);assert.ok(find(panel(),n=>n.props?.text==='Synthetic recovered'));
+});

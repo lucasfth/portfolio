@@ -32,6 +32,7 @@ export type WeatherToday = {
 export type WeatherPayload = {
   status: "ok" | "error";
   message?: string;
+  category?: 'timeout' | 'provider-http' | 'provider-shape' | 'transport' | 'access-denied' | 'request-timeout' | 'request-http' | 'unavailable';
   updated?: string;
   current?: WeatherCurrent;
   today?: WeatherToday;

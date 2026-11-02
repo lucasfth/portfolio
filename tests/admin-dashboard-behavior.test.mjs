@@ -42,7 +42,7 @@ test("an older dashboard request resolving last cannot overwrite current payload
 
 test("HTTP-200 error payload retains the last good data and dashboard has stale notice wiring", () => {
   assert.match(source, /return result\.response\.ok && body\?\.status === "ok" \? result\.body : null/);
-  assert.match(source, /setWeather\(previous => retainSuccessfulPayload\(previous, w\)\); setWeatherRefreshError\(payloadRefreshError\(w\)\)/);
+  assert.match(source, /setWeather\(previous => retainSuccessfulPayload\(previous, w\)\); setWeatherRefreshError\(weatherRefreshErrorFor\(w\)\)/);
   assert.match(source, /Refresh unavailable \(\{error\}\); showing last available data\./);
   assert.match(source, /error=\{weatherRefreshError \?\? weather\?\.message\}/);
   const prior = { status: "ok", value: "last good" };

@@ -31,8 +31,8 @@ test("reports initial failure leaves Overnight in an unavailable state", () => {
 });
 
 test("refresh failures remain visible while prior weather/stocks/github/radar payloads are retained", () => {
-  for (const [key, value] of [["Weather", "w"], ["Stocks", "s"], ["Radar", "r"]]) {
-    assert.match(source, new RegExp(`set${key}\\(previous => retainSuccessfulPayload\\(previous, ${value}\\)\\); set${key}RefreshError\\(payloadRefreshError\\(${value}\\)\\)`));
+  for (const [key, value, handler] of [["Weather", "w", "weatherRefreshErrorFor"], ["Stocks", "s", "payloadRefreshError"], ["Radar", "r", "payloadRefreshError"]]) {
+    assert.match(source, new RegExp(`set${key}\\(previous => retainSuccessfulPayload\\(previous, ${value}\\)\\); set${key}RefreshError\\(${handler}\\(${value}\\)\\)`));
   }
   assert.match(source, /setGithub\(previous => retainSuccessfulPayload\(previous, g\)\); setGithubRefreshError\(githubRefreshErrorFor\(g\)\)/);
   assert.match(source, /Refresh unavailable \(\{error\}\); showing last available data\./);

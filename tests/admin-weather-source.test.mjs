@@ -38,3 +38,51 @@ test('shipping weather source exposes allowlisted timeout/HTTP/shape/transport c
     fail=false;assert.equal((await source.fetchWeather()).status,'ok','failed/malformed data must not poison cache');
   }
 });
+
+test('FF-001: hourly null row never poisons successful cache; the next valid provider fetch succeeds',async t=>{
+  const source=sources();let providerCalls=0;
+  t.mock.method(globalThis,'fetch',async()=>{
+    providerCalls++;const body=fixture();if(providerCalls===1)body.weather[0].hourly=[null];
+    return Response.json(body);
+  });
+  const first=await source.fetchWeather();assert.equal(first.status,'error');assert.equal(first.category,'provider-shape');
+  const second=await source.fetchWeather();assert.equal(second.status,'ok');assert.equal(providerCalls,2);
+  await source.fetchWeather();assert.equal(providerCalls,2,'only validated result is cached');
+});
+test('FF-001: reject malformed nested precipitation, description and astronomy before caching; recover on the next call',async t=>{
+  const mutations=[
+    body=>{body.weather[0].hourly={};},
+    body=>{body.weather[0].hourly=[{precipMM:'bad'}];},
+    body=>{body.weather[0].hourly=[{precipMM:null}];},
+    body=>{body.weather[0].hourly=[{precipMM:{}}];},
+    body=>{body.weather[0].hourly=[{precipMM:-1}];},
+    body=>{body.current_condition[0].weatherDesc={};},
+    body=>{body.current_condition[0].weatherDesc=[null];},
+    body=>{body.current_condition[0].weatherDesc=[{value:{}}];},
+    body=>{body.weather[0].astronomy={};},
+    body=>{body.weather[0].astronomy=[null];},
+    body=>{body.weather[0].astronomy=[{sunrise:{},sunset:'17:00'}];},
+    body=>{body.weather[0].astronomy=[{sunrise:'08:00',sunset:5}];},
+  ];
+  for(const mutate of mutations) {
+    const source=sources();let providerCalls=0;
+    t.mock.method(globalThis,'fetch',async()=>{const body=fixture();if(++providerCalls===1)mutate(body);return Response.json(body);});
+    const first=await source.fetchWeather();assert.equal(first.status,'error');assert.equal(first.category,'provider-shape');
+    assert.doesNotMatch(JSON.stringify(first),/https?:|Weather shape/);
+    assert.equal((await source.fetchWeather()).status,'ok');assert.equal(providerCalls,2);
+  }
+});
+test('FF-001: normalize valid nested values and absent optional fields before caching',async t=>{
+  const source=sources();let providerCalls=0;const body=fixture();
+  body.weather[0].hourly=[{}, {precipMM:'0'}, {precipMM:'0.3'}, {precipMM:2}];
+  body.weather[0].astronomy=[{sunrise:'08:00 AM',sunset:'05:00 PM'}];
+  t.mock.method(globalThis,'fetch',async()=>{providerCalls++;return Response.json(body);});
+  const value=await source.fetchWeather();assert.equal(value.status,'ok');
+  assert.equal(value.today.precipHours,2);assert.equal(value.current.desc,'Clear');
+  assert.equal(value.today.sunrise,'08:00 AM');assert.equal(value.today.sunset,'05:00 PM');
+  assert.deepEqual((await source.fetchWeather()).today,value.today);assert.equal(providerCalls,1);
+  const optionalSource=sources();const optional=fixture();delete optional.current_condition[0].weatherDesc;delete optional.weather[0].hourly;delete optional.weather[0].astronomy;
+  t.mock.method(globalThis,'fetch',async()=>Response.json(optional));
+  const empty=await optionalSource.fetchWeather();assert.equal(empty.status,'ok');
+  assert.equal(empty.current.desc,'Unknown');assert.equal(empty.today.precipHours,0);assert.equal(empty.today.sunrise,'');assert.equal(empty.today.sunset,'');
+});

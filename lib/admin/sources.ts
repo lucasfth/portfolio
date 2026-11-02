@@ -60,38 +60,41 @@ export async function fetchWeather() {
       const current = body?.current_condition?.[0], today = body?.weather?.[0];
       const numeric = (value: unknown) => (typeof value === "number" || (typeof value === "string" && value.trim() !== "")) && Number.isFinite(Number(value));
       if (!current || !today || ![current.temp_C, current.FeelsLikeC, current.windspeedKmph, current.precipMM ?? 0, today.mintempC, today.maxtempC, today.uvIndex ?? 0].every(numeric)) throw new Error("Weather shape failure");
-      return body;
+      const record = (value: unknown): value is Record<string, any> => value !== null && typeof value === "object" && !Array.isArray(value);
+      const rows = (value: unknown): Record<string, any>[] => {
+        if (value === undefined) return [];
+        if (!Array.isArray(value) || !value.every(record)) throw new Error("Weather shape failure");
+        return value;
+      };
+      const text = (value: unknown, fallback: string) => {
+        if (value === undefined) return fallback;
+        if (typeof value !== "string") throw new Error("Weather shape failure");
+        return value;
+      };
+      const precipHours = rows(today.hourly).filter(hour => {
+        if (hour.precipMM === undefined) return false;
+        if (!numeric(hour.precipMM) || Number(hour.precipMM) < 0) throw new Error("Weather shape failure");
+        return Number(hour.precipMM) > 0;
+      }).length;
+      const descriptions = rows(current.weatherDesc).map(row => text(row.value, "Unknown"));
+      const astronomy = rows(today.astronomy).map(row => ({sunrise:text(row.sunrise, ""), sunset:text(row.sunset, "")}));
+      const temp = Number(current.temp_C), wind = Number(current.windspeedKmph), precip = Number(current.precipMM ?? 0);
+      // Cache only the converted consumer payload, never unvalidated provider data.
+      return {
+        current: {
+          desc: descriptions[0] ?? "Unknown",
+          temp, feels: Number(current.FeelsLikeC), wind, precip,
+          // Ride above 5C, under 25 km/h, when it is not raining right now.
+          bike: temp > 5 && wind < 25 && precip === 0,
+          waterproof: wind > 20 || precip > 0,
+        },
+        today: {
+          mint: Number(today.mintempC), max: Number(today.maxtempC), uv: Number(today.uvIndex ?? 0),
+          sunrise: astronomy[0]?.sunrise ?? "", sunset: astronomy[0]?.sunset ?? "", precipHours,
+        },
+      };
     });
-    const current = data.current_condition[0];
-    const today = data.weather[0];
-    const temp = Number(current.temp_C);
-    const wind = Number(current.windspeedKmph);
-    const precip = Number(current.precipMM ?? 0);
-    const hourly: any[] = Array.isArray(today.hourly) ? today.hourly : [];
-    const precipHours = hourly.filter((h) => Number(h.precipMM ?? 0) > 0).length;
-    return {
-      status: "ok",
-      updated: new Date().toISOString(),
-      current: {
-        desc: current.weatherDesc?.[0]?.value ?? "Unknown",
-        temp,
-        feels: Number(current.FeelsLikeC),
-        wind,
-        precip,
-        // Same rule as the morning briefing: ride above 5C, under 25 km/h,
-        // when it is not raining right now.
-        bike: temp > 5 && wind < 25 && precip === 0,
-        waterproof: wind > 20 || precip > 0,
-      },
-      today: {
-        mint: Number(today.mintempC),
-        max: Number(today.maxtempC),
-        uv: Number(today.uvIndex ?? 0),
-        sunrise: today.astronomy?.[0]?.sunrise ?? "",
-        sunset: today.astronomy?.[0]?.sunset ?? "",
-        precipHours,
-      },
-    };
+    return { status: "ok", updated: new Date().toISOString(), ...data };
   } catch (error) {
     if (error instanceof Error && error.name === "TimeoutError") category = "timeout";
     // Never send provider messages, URLs or response bodies to the client.

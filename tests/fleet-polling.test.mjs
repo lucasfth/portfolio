@@ -306,3 +306,33 @@ test('shipping weather callback uses one real consumer request on HTTP503, no re
   await find(dash.app.render(),n=>n.type==='button'&&n.props['data-primary']!==undefined).props.onClick();await settle();
   assert.equal(calls-before,1);
 });
+
+test('WG-001: persistent weather dialog expires on clock render, retains source on failure, and updates on recovery without reopening',async t=>{
+  let time=Date.parse(at)+3599000;t.mock.method(Date,'now',()=>time);
+  const weather={status:'ok',source:'Open-Meteo',freshness:'Model-based conditions',updated:at,forecastDate:'2026-10-29',current:{desc:'Overcast',temp:8,feels:6,wind:10,precip:0,bike:true,waterproof:true},today:{mint:3,max:9,uv:1,sunrise:'07:00',sunset:'17:00',precipHours:2}};
+  let reply={response:{ok:true,status:200},body:weather};
+  const dash=dashboard({fetchJsonWithRetry:async url=>url==='/api/admin/weather'?reply:{response:{ok:false,status:503},body:null}});t.after(()=>dash.app.unmount());
+  const refresh=async()=>{await find(dash.app.render(),n=>n.type==='button'&&n.props['data-primary']!==undefined).props.onClick();await settle();};
+  dash.app.render();await settle();await refresh();
+  const panel=()=>find(dash.app.render(),n=>n.props?.eyebrow==='Env');
+  const opener={id:'weather-opener'};
+  find(panel(),n=>n.type==='button'&&n.props['data-dialog-focusable']).props.onClick({currentTarget:opener});
+  const dialog=()=>find(dash.app.render(),n=>n.props?.detail?.title==='Copenhagen weather');
+  const advice=label=>dialog().props.detail.sections[0].fields.find(([key])=>key===label)[1];
+  assert.equal(advice('Cycling conditions suitable'),'Yes');assert.equal(advice('Waterproof layer recommended'),'Yes');
+  const initial=dialog(),subtitle=initial.props.detail.subtitle;
+  time+=2000;
+  assert.equal(panel().props.state,'error');
+  assert.equal(advice('Cycling conditions suitable'),'Unknown');assert.equal(advice('Waterproof layer recommended'),'Unknown');
+  assert.match(JSON.stringify(dialog().props.detail),/advice withheld/);
+  assert.equal(dialog().props.detail.subtitle,subtitle,'model time unchanged when clock crosses boundary');
+  assert.equal(dialog().type,initial.type);assert.equal(dialog().props.opener,opener);assert.equal(dialog().props.onClose,initial.props.onClose);
+  reply={response:{ok:true,status:200},body:{status:'error',category:'timeout'}};await refresh();
+  assert.equal(dialog().props.detail.subtitle,subtitle);assert.match(JSON.stringify(dialog().props.detail),/showing last available data/);
+  assert.equal(advice('Cycling conditions suitable'),'Unknown');
+  reply={response:{ok:true,status:200},body:{...weather,updated:new Date(time).toISOString(),current:{...weather.current,bike:false}}};await refresh();
+  assert.equal(advice('Cycling conditions suitable'),'No');assert.equal(advice('Waterproof layer recommended'),'Yes');
+  assert.doesNotMatch(JSON.stringify(dialog().props.detail),/advice withheld|showing last available data/);
+  assert.notEqual(dialog().props.detail.subtitle,subtitle);assert.equal(dialog().props.opener,opener);
+  dialog().props.onClose();assert.equal(dialog(),null);
+});

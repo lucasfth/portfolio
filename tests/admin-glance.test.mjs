@@ -42,7 +42,8 @@ test('status strip wraps headers and bounds two full value lines without losing 
   assert.match(css, /\.admin-board-sub[^}]*-webkit-line-clamp: 2/);
   assert.match(dashboard, /<details[^>]*>[\s\S]*Source health and section shortcuts[\s\S]*<Board/);
   assert.match(dashboard, /Unavailable or partial sources retain their last successful data/);
-  assert.match(dashboard, /openDetail\(weatherDetail\(weather, weatherRefreshError\)/);
+  assert.match(dashboard, /setSelectedDetail\("weather"\)/);
+  assert.match(dashboard, /selectedDetail === "weather" \? weatherDetail\(weather!, weatherRefreshError\)/);
 });
 
 test('finance retained-data refresh faults agree between strip and panel', () => {

@@ -62,8 +62,8 @@ test("failed initial reports stay null and dashboard renders Overnight unavailab
 });
 
 test("Copenhagen summary opens the shared weather detail dialog", () => {
-  assert.match(source, /openDetail\(weatherDetail\(weather, weatherRefreshError\), event\.currentTarget\)/);
-  assert.match(source, /selectedDetail \? <AdminDetailDialog detail=\{selectedDetail\} opener=\{detailOpener\} onClose=\{closeDetail\} \/>/);
+  assert.match(source, /setDetailOpener\(event\.currentTarget\); setSelectedDetail\("weather"\)/);
+  assert.match(source, /detail=\{selectedDetail === "weather" \? weatherDetail\(weather!, weatherRefreshError\) : selectedDetail\} opener=\{detailOpener\} onClose=\{closeDetail\}/);
   assert.match(readFileSync("components/AdminDetailDialog.tsx", "utf8"), /role="dialog" aria-modal="true" aria-labelledby="admin-detail-title"/);
   assert.doesNotMatch(source, /weatherExpanded/);
 });

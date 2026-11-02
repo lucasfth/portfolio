@@ -264,7 +264,7 @@ export default function AdminDashboard() {
   const [clock, setClock] = useState("");
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const [selectedDetail, setSelectedDetail] = useState<AdminDetail | null>(null);
+  const [selectedDetail, setSelectedDetail] = useState<AdminDetail | "weather" | null>(null);
   const [detailOpener, setDetailOpener] = useState<HTMLElement | null>(null);
   const openDetail = useCallback((detail: AdminDetail, opener: HTMLElement) => { setDetailOpener(opener); setSelectedDetail(detail); }, []);
   const closeDetail = useCallback(() => setSelectedDetail(null), []);
@@ -835,7 +835,7 @@ export default function AdminDashboard() {
               {expiredWeather ? <p role="status" className="text-sm text-muted-foreground">Model data over an hour old or timestamp unavailable. Conditions too old for cycling advice; refresh to try again.</p> : null}
               <p className="mb-3 text-xs text-muted-foreground">{weather.freshness ?? "Source freshness unknown"}</p>
               <p className="mb-3 text-xs text-muted-foreground">Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer" className="underline">Open-Meteo</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" className="underline">CC BY 4.0</a>)</p>
-              <button type="button" data-dialog-focusable onClick={event => openDetail(weatherDetail(weather, weatherRefreshError), event.currentTarget)} className="block min-h-[7rem] w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+              <button type="button" data-dialog-focusable onClick={event => { setDetailOpener(event.currentTarget); setSelectedDetail("weather"); }} className="block min-h-[7rem] w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
                 <p className="text-5xl font-light tabular-nums tracking-tight">{weather.current.temp.toFixed(0)}<span className="ml-1 text-2xl text-muted-foreground">°C</span></p>
                 <div className="mt-1 text-sm text-muted-foreground"><AdminField text={weather.current.desc} /></div>{!expiredWeather ? <div className="mt-4 flex flex-wrap gap-2"><Chip label="Bike" on={weather.current.bike} /><Chip label="Waterproof" on={weather.current.waterproof} /></div> : null}
               </button>
@@ -852,7 +852,7 @@ export default function AdminDashboard() {
       >
         Sources: llm-radar · Yahoo Finance · Open-Meteo · github · supabase — refreshed on sign-in and on demand
       </p>
-      {selectedDetail ? <AdminDetailDialog detail={selectedDetail} opener={detailOpener} onClose={closeDetail} /> : null}
+      {selectedDetail && (selectedDetail !== "weather" || weather) ? <AdminDetailDialog detail={selectedDetail === "weather" ? weatherDetail(weather!, weatherRefreshError) : selectedDetail} opener={detailOpener} onClose={closeDetail} /> : null}
     </div>
   );
 }

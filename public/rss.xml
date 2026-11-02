@@ -13,6 +13,13 @@
 
         
         <item>
+          <title>The code they write</title>
+          <description>I sent a draft to four models. Three said fine. One said it reads machine-written. Code review works the same trick, except the code ships to production.</description>
+          <link>https://lucashanson.dk/blog/the-code-they-write</link>
+          <guid isPermaLink="true">https://lucashanson.dk/blog/the-code-they-write</guid>
+          <pubDate>Mon, 02 Nov 2026 00:00:00 GMT</pubDate>
+        </item>
+        <item>
           <title>I made a Nokia 6300 the ears of my company&apos;s AI agent</title>
           <description>A 2021 KaiOS phone becomes a voice terminal for my company&apos;s AI: stock OS, two small apps, one loopback bridge, and a token that can only talk to that bridge.</description>
           <link>https://lucashanson.dk/blog/nokia-klaus-voice-terminal</link>

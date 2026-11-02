@@ -60,3 +60,12 @@ test('finance account cards are native dialog triggers and external Actual link 
   assert.doesNotMatch(panel, /Account breakdown and sources/);
   assert.match(panel, /<a href=\{ACTUAL_URL\}/);
 });
+
+test('weather model detail has true source time, precipitation hours, safe expired advice and no obsolete provider',async()=>{
+  const {weatherDetail}=await import('../lib/admin/detail-content.mjs');
+  const {weatherExpired}=await import('../lib/admin/dashboard-state.mjs');
+  assert.equal(weatherExpired({updated:'2000-01-01T00:00:00Z'}),true);assert.equal(weatherExpired({}),true);assert.equal(weatherExpired({updated:'invalid'}),true);
+  const detail=weatherDetail({source:'Open-Meteo',freshness:'Model-based conditions',updated:'2000-01-01T00:00:00Z',current:{bike:true,waterproof:true},today:{precipHours:2.5}},'timeout');
+  assert.match(detail.subtitle,/Open-Meteo.*model time/);assert.match(JSON.stringify(detail),/Forecast precipitation hours/);assert.doesNotMatch(JSON.stringify(detail),/wttr|Wet forecast intervals/);
+  assert.equal(detail.sections[0].fields.find(([k])=>k==='Cycling conditions suitable')[1],'Unknown');
+});

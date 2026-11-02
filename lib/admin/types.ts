@@ -34,6 +34,9 @@ export type WeatherPayload = {
   message?: string;
   category?: 'timeout' | 'provider-http' | 'provider-shape' | 'transport' | 'access-denied' | 'request-timeout' | 'request-http' | 'unavailable';
   updated?: string;
+  source?: string;
+  freshness?: string;
+  forecastDate?: string;
   current?: WeatherCurrent;
   today?: WeatherToday;
 };
@@ -97,6 +100,7 @@ export type GithubRepository = {
 export type GithubGroup = {
   owner: string;
   personal: boolean;
+  selectionLimited?: boolean;
   repositoriesComplete: boolean;
   repositories: GithubRepository[];
   limitations: string[];
@@ -106,6 +110,7 @@ export type GithubPayload = {
   status: "ok" | "error";
   message?: string;
   coverage: "complete" | "partial" | "unavailable";
+  scope?: 'personal' | 'all';
   limitations?: string[];
   groups: GithubGroup[];
   windowHours: number;

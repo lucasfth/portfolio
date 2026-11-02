@@ -33,6 +33,8 @@ test('rendered component defaults, section-local All PRs, lower bounds and retai
     assert.equal(ssr.querySelectorAll('details').length, 2);
     assert.equal(ssr.querySelectorAll('details[open]').length, 1);
     assert.match(ssr.querySelector('details[open] summary').textContent, /Personal/);
+    const personalHtml=renderToStaticMarkup(React.createElement(Component,{payload:{...payload,scope:'personal',coverage:'partial',groups:[payload.groups[0]]}}));
+    assert.match(personalHtml,/Personal repositories only/);assert.match(personalHtml,/organizations intentionally excluded/);assert.match(personalHtml,/not all personal repositories/);
     const { window, document } = parseHTML('<html><body><div id="root"></div></body></html>');
     globalThis.window = window; globalThis.document = document; globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     const root = createRoot(document.querySelector('#root'));

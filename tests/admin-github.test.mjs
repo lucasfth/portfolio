@@ -236,3 +236,27 @@ test('401 names deployed server credential recovery, 403 distinguishes permissio
     assert.doesNotMatch(result.message,/PRIVATE DETAIL/);
   }
 });
+
+test('personal mode never discovers organizations and cannot claim all-personal repository coverage',async()=>{
+  const f=fixture({organizations:['must-not-query'],override:path=>{if(path.includes('/memberships/')||path.startsWith('/orgs/'))throw new Error('organization request forbidden');}});
+  const result=await collectGithub({...f,scope:'personal'});
+  assert.equal(result.status,'ok');assert.equal(result.scope,'personal');assert.equal(result.coverage,'partial');
+  assert.deepEqual(result.groups.map(g=>g.owner),['lucasfth']);
+  assert.equal(f.calls.filter(c=>c.path.includes('/memberships/')||c.path.startsWith('/orgs/')).length,0);
+  assert.equal(result.groups[0].repositoriesComplete,true);assert.equal(githubScope(result.groups[0]).complete,false);
+  assert.match(result.limitations.join(' '),/Personal repositories only/);assert.match(result.limitations.join(' '),/not all personal/);
+});
+test('personal mode Contents denial preserves independent PR/issues and gives safe permission guidance',async()=>{
+  const f=fixture({override:(path,body)=>path==='/graphql'?{errors:[{type:'FORBIDDEN',message:'PRIVATE raw message'}],data:{nodes:[{id:body.variables.ids[0],pullRequests:connection([]),issues:connection([])}]}}:undefined});
+  const result=await collectGithub({...f,scope:'personal'});
+  assert.equal(result.status,'ok');assert.equal(result.coverage,'partial');
+  assert.equal(result.groups[0].repositories[0].activityComplete,false);
+  assert.match(result.limitations.join(' '),/Contents.*read-only/);assert.doesNotMatch(JSON.stringify(result),/PRIVATE raw message|organization SSO/);
+  const denied=await collectGithub({...fixture({override:path=>{if(path==='/graphql')throw Object.assign(new Error('PRIVATE'),{status:403});}}),scope:'personal'});
+  assert.match(denied.message,/Contents.*read-only/);assert.doesNotMatch(denied.message,/SSO|PRIVATE/);
+});
+
+test('personal selected-access empty inventory is partial empty, not source failure',async()=>{
+  const result=await collectGithub({...fixture({repoCount:0}),scope:'personal'});
+  assert.equal(result.status,'ok');assert.equal(result.coverage,'partial');assert.equal(result.groups.length,1);
+});

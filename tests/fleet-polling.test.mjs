@@ -279,3 +279,30 @@ test('weather refresh callback retains last good data and renders safe categorie
  reply={response:{ok:true,status:200},body:{status:'ok',updated:at,current:{desc:'Synthetic recovered',temp:9,feels:8,wind:10,precip:0,bike:true,waterproof:false},today:{mint:3,max:9,uv:1,sunrise:'08:00',sunset:'17:00',precipHours:0}}};
  await refresh();assert.equal(panel().props.error,undefined);assert.ok(find(panel(),n=>n.props?.text==='Synthetic recovered'));
 });
+
+test('real weather panel retains model source timestamp, attribution, and suppresses expired advice',async t=>{
+  let time=Date.parse(at);t.mock.method(Date,'now',()=>time);
+  const weather={status:'ok',source:'Open-Meteo',freshness:'Model-based conditions · not a station observation',updated:at,forecastDate:'2026-10-29',current:{desc:'Overcast',temp:8,feels:6,wind:10,precip:0,bike:true,waterproof:false},today:{mint:3,max:9,uv:1,sunrise:'07:00',sunset:'17:00',precipHours:2}};
+  const dash=dashboard({fetchJsonWithRetry:async url=>url==='/api/admin/weather'?{response:{ok:true,status:200},body:weather}:{response:{ok:false,status:503},body:null}});t.after(()=>dash.app.unmount());
+  dash.app.render();await settle();await find(dash.app.render(),n=>n.type==='button'&&n.props['data-primary']!==undefined).props.onClick();await settle();
+  const panel=()=>find(dash.app.render(),n=>n.props?.eyebrow==='Env');
+  assert.match(panel().props.meta,/model/);assert.match(renderToStaticMarkup(panel()),/Model-based/);
+  assert.ok(find(panel(),n=>n.type==='a'&&n.props.href==='https://open-meteo.com/'));
+  time+=3600001;const expired=renderToStaticMarkup(panel());
+  assert.match(expired,/over an hour old/);assert.doesNotMatch(expired,/Bike|Waterproof/);
+  assert.match(expired,/Conditions too old/);
+});
+
+test('shipping weather callback uses one real consumer request on HTTP503, no retry fanout',async t=>{
+  const {fetchJsonWithRetry}=await import('../lib/admin/fetch-json-with-retry.mjs');
+  let calls=0;t.mock.method(globalThis,'fetch',async()=>{calls++;return new Response(null,{status:503});});
+  const dash=dashboard({fetchJsonWithRetry:async(url,init,options)=>{
+    if(url!=='/api/admin/weather')return {response:{ok:false,status:503},body:null};
+    return fetchJsonWithRetry(url,init,options);
+  }});t.after(()=>dash.app.unmount());
+  dash.app.render();await settle();
+  await find(dash.app.render(),n=>n.type==='button'&&n.props['data-primary']!==undefined).props.onClick();await settle();
+  const before=calls;
+  await find(dash.app.render(),n=>n.type==='button'&&n.props['data-primary']!==undefined).props.onClick();await settle();
+  assert.equal(calls-before,1);
+});

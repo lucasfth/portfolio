@@ -18,18 +18,24 @@ export default function CommandPalette({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
-    if (!open) return;
+    const dialog = dialogRef.current;
+    if (!open || !dialog) return;
+    const opener = document.activeElement as HTMLElement | null;
     setQuery("");
     setSelectedIndex(0);
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    requestAnimationFrame(() => inputRef.current?.focus());
+    dialog.showModal();
+    inputRef.current?.focus();
     return () => {
+      dialog.close();
       document.body.style.overflow = originalOverflow;
+      if (opener?.isConnected) opener.focus({ preventScroll: true });
     };
   }, [open]);
 
@@ -45,19 +51,15 @@ export default function CommandPalette({
     selectedEl?.scrollIntoView({ block: "nearest" });
   }, [selectedIndex, matches.length]);
 
-  if (!open) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-[100] flex items-start justify-center bg-background/70 px-4 pt-[15vh] backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
+    <dialog
+      ref={dialogRef}
+      className="site-search-dialog"
       aria-label="Search the site"
-      onMouseDown={(event) => {
-        if (event.currentTarget === event.target) onClose();
-      }}
+      onCancel={event => { event.preventDefault(); onClose(); }}
+      onClick={event => { if (event.currentTarget === event.target) onClose(); }}
     >
-      <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
+      {open && <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
         <span className="sr-only" aria-live="polite" aria-atomic="true">
           {query ? `${matches.length} result${matches.length === 1 ? "" : "s"} found` : ""}
         </span>
@@ -68,6 +70,7 @@ export default function CommandPalette({
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             role="combobox"
+            aria-label="Search projects, posts, galleries and links"
             aria-expanded={matches.length > 0}
             aria-controls="search-results-list"
             aria-activedescendant={matches.length > 0 ? `search-result-${selectedIndex}` : undefined}
@@ -143,7 +146,7 @@ export default function CommandPalette({
             <kbd className="rounded border border-border bg-muted/60 px-1 py-0.5 font-mono text-[10px]">Esc</kbd> to close
           </span>
         </p>
-      </div>
-    </div>
+      </div>}
+    </dialog>
   );
 }

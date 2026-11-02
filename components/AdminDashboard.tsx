@@ -21,7 +21,7 @@ import type {
 import AdminField from "@/components/AdminField";
 import AdminGithub from "@/components/AdminGithub";
 import { fetchJsonWithRetry } from "@/lib/admin/fetch-json-with-retry.mjs";
-import { createRequestCoordinator, githubRefreshErrorFor, weatherFailure, weatherRefreshErrorFor, payloadRefreshError, reportReadResult, retainSuccessfulPayload } from "@/lib/admin/dashboard-state.mjs";
+import { createRequestCoordinator, githubRefreshErrorFor, weatherFailure, weatherRefreshErrorFor, weatherExpired, payloadRefreshError, reportReadResult, retainSuccessfulPayload } from "@/lib/admin/dashboard-state.mjs";
 import AdminDetailDialog, { type AdminDetail } from "@/components/AdminDetailDialog";
 import { stockDetail, weatherDetail, financeDetail, scheduledJobDetail, saxoSourceStatus } from "@/lib/admin/detail-content.mjs";
 
@@ -296,7 +296,7 @@ export default function AdminDashboard() {
     async (path: string, signal: AbortSignal): Promise<any | null> => {
       if (!session) return null;
       try {
-        const result = await fetchJsonWithRetry(path, { signal, headers: { Authorization: `Bearer ${session.access_token}` } });
+        const result = await fetchJsonWithRetry(path, { signal, headers: { Authorization: `Bearer ${session.access_token}` } }, path === "/api/admin/weather" ? { attempts: 1 } : undefined);
         const body = result.body as { status?: unknown } | null;
         // Keep GitHub error metadata separate from the retained successful payload.
         if (path === "/api/admin/github" && result.response.ok && body?.status === "error") return result.body;
@@ -579,7 +579,8 @@ export default function AdminDashboard() {
   const latestNight = (reports ?? [])[0]?.night;
   const tonight = (reports ?? []).filter((r) => !latestNight || r.night === latestNight);
 
-  const ws = weatherRefreshError ? "error" : statusState(weather);
+  const expiredWeather = Boolean(weather) && weatherExpired(weather);
+  const ws = weatherRefreshError || expiredWeather ? "error" : statusState(weather);
   const ss = stocksRefreshError ? "error" : statusState(stocks);
   const gs = githubRefreshError || (github && github.coverage !== "complete") ? "error" : statusState(github);
   const rs = radarRefreshError ? "error" : statusState(radar);
@@ -825,15 +826,18 @@ export default function AdminDashboard() {
           title="Copenhagen"
           state={ws}
           error={weatherRefreshError ?? weather?.message}
-          meta={weather?.updated ? `as of ${fmtTime(weather.updated)}` : "wttr.in"}
+          meta={weather?.updated ? `${weather.source ?? "Weather"} · model ${fmtTime(weather.updated)}` : "Open-Meteo"}
           loading={refreshing && Boolean(weather)}
           ready={Boolean(weather)}
         >
           {weather && weather.status === "ok" && weather.current ? (
             <>
+              {expiredWeather ? <p role="status" className="text-sm text-muted-foreground">Model data over an hour old or timestamp unavailable. Conditions too old for cycling advice; refresh to try again.</p> : null}
+              <p className="mb-3 text-xs text-muted-foreground">{weather.freshness ?? "Source freshness unknown"}</p>
+              <p className="mb-3 text-xs text-muted-foreground">Weather data by <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer" className="underline">Open-Meteo</a> (<a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer" className="underline">CC BY 4.0</a>)</p>
               <button type="button" data-dialog-focusable onClick={event => openDetail(weatherDetail(weather, weatherRefreshError), event.currentTarget)} className="block min-h-[7rem] w-full text-left hover:bg-foreground/[0.03] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
                 <p className="text-5xl font-light tabular-nums tracking-tight">{weather.current.temp.toFixed(0)}<span className="ml-1 text-2xl text-muted-foreground">°C</span></p>
-                <div className="mt-1 text-sm text-muted-foreground"><AdminField text={weather.current.desc} /></div><div className="mt-4 flex flex-wrap gap-2"><Chip label="Bike" on={weather.current.bike} /><Chip label="Waterproof" on={weather.current.waterproof} /></div>
+                <div className="mt-1 text-sm text-muted-foreground"><AdminField text={weather.current.desc} /></div>{!expiredWeather ? <div className="mt-4 flex flex-wrap gap-2"><Chip label="Bike" on={weather.current.bike} /><Chip label="Waterproof" on={weather.current.waterproof} /></div> : null}
               </button>
             </>
           ) : null}
@@ -846,7 +850,7 @@ export default function AdminDashboard() {
       <p
         className={`${MONO} mt-16 border-t border-border pt-6 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50`}
       >
-        Sources: llm-radar · Yahoo Finance · wttr.in · github · supabase — refreshed on sign-in and on demand
+        Sources: llm-radar · Yahoo Finance · Open-Meteo · github · supabase — refreshed on sign-in and on demand
       </p>
       {selectedDetail ? <AdminDetailDialog detail={selectedDetail} opener={detailOpener} onClose={closeDetail} /> : null}
     </div>

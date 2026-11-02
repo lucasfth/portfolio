@@ -46,6 +46,7 @@ function Group({ group }: { group: GithubGroup }) {
 
 export default function AdminGithub({ payload }: { payload: GithubPayload }) {
   return <div className="min-w-0">
+    {payload.scope === "personal" ? <p role="status" className="mb-3 text-sm text-muted-foreground">Personal repositories only · organizations intentionally excluded. Counts cover token-selected accessible repositories, not all personal repositories.</p> : null}
     {payload.coverage !== "complete" ? <p role="status" className="mb-3 text-sm text-muted-foreground">Partial GitHub coverage. Counts apply only to loaded accessible sources.</p> : null}
     {payload.limitations?.map((notice, i) => <p role="status" key={i} className="mb-2 text-sm text-muted-foreground">{notice}</p>)}
     {payload.groups.length === 0 ? <p className="text-sm text-muted-foreground">No GitHub groups loaded. Coverage notices above still apply.</p> : null}

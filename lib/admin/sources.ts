@@ -50,51 +50,46 @@ export async function fetchWeather() {
   let category = "transport";
   try {
     const data = await cached("weather", 60_000, async () => {
-      const response = await fetch("https://wttr.in/Copenhagen?format=j1", {
+      const response = await fetch("https://api.open-meteo.com/v1/forecast?latitude=55.6761&longitude=12.5683&current=temperature_2m,apparent_temperature,precipitation,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,precipitation_hours&timezone=Europe%2FCopenhagen&forecast_days=1&wind_speed_unit=kmh&temperature_unit=celsius&precipitation_unit=mm&timeformat=unixtime", {
+        cache: "no-store",
         headers: { "User-Agent": "Mozilla/5.0 (lucashanson.dk admin)" },
         signal: AbortSignal.timeout(6000),
       });
       if (!response.ok) { category = "provider-http"; throw new Error("Weather HTTP failure"); }
       category = "provider-shape";
       const body = await response.json();
-      const current = body?.current_condition?.[0], today = body?.weather?.[0];
-      const numeric = (value: unknown) => (typeof value === "number" || (typeof value === "string" && value.trim() !== "")) && Number.isFinite(Number(value));
-      if (!current || !today || ![current.temp_C, current.FeelsLikeC, current.windspeedKmph, current.precipMM ?? 0, today.mintempC, today.maxtempC, today.uvIndex ?? 0].every(numeric)) throw new Error("Weather shape failure");
-      const record = (value: unknown): value is Record<string, any> => value !== null && typeof value === "object" && !Array.isArray(value);
-      const rows = (value: unknown): Record<string, any>[] => {
-        if (value === undefined) return [];
-        if (!Array.isArray(value) || !value.every(record)) throw new Error("Weather shape failure");
-        return value;
+      const current = body?.current, daily = body?.daily;
+      const numeric = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+      const shapeError = () => { throw new Error("Weather shape failure"); };
+      if (!current || !daily || body.timezone !== "Europe/Copenhagen") shapeError();
+      for (const [field, unit] of Object.entries({time:"unixtime",interval:"seconds",temperature_2m:"°C",apparent_temperature:"°C",precipitation:"mm",weather_code:"wmo code",wind_speed_10m:"km/h"})) {
+        if (body.current_units?.[field] !== unit || !numeric(current[field])) shapeError();
+      }
+      const day = (field: string, unit: string) => {
+        if (body.daily_units?.[field] !== unit || !Array.isArray(daily[field]) || daily[field].length !== 1 || !numeric(daily[field][0])) shapeError();
+        return daily[field][0] as number;
       };
-      const text = (value: unknown, fallback: string) => {
-        if (value === undefined) return fallback;
-        if (typeof value !== "string") throw new Error("Weather shape failure");
-        return value;
-      };
-      const precipHours = rows(today.hourly).filter(hour => {
-        if (hour.precipMM === undefined) return false;
-        if (!numeric(hour.precipMM) || Number(hour.precipMM) < 0) throw new Error("Weather shape failure");
-        return Number(hour.precipMM) > 0;
-      }).length;
-      const descriptions = rows(current.weatherDesc).map(row => text(row.value, "Unknown"));
-      const astronomy = rows(today.astronomy).map(row => ({sunrise:text(row.sunrise, ""), sunset:text(row.sunset, "")}));
-      const temp = Number(current.temp_C), wind = Number(current.windspeedKmph), precip = Number(current.precipMM ?? 0);
-      // Cache only the converted consumer payload, never unvalidated provider data.
+      const localDate = (seconds: number) => new Intl.DateTimeFormat("en-CA", {timeZone:"Europe/Copenhagen",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(seconds*1000));
+      const localTime = (seconds: number) => new Intl.DateTimeFormat("en-GB", {timeZone:"Europe/Copenhagen",hour:"2-digit",minute:"2-digit"}).format(new Date(seconds*1000));
+      const forecastDate = localDate(day("time", "unixtime"));
+      const mint = day("temperature_2m_min", "°C"), max = day("temperature_2m_max", "°C"), uv = day("uv_index_max", "");
+      const sunrise = day("sunrise", "unixtime"), sunset = day("sunset", "unixtime"), precipHours = day("precipitation_hours", "h");
+      if (current.precipitation < 0 || current.wind_speed_10m < 0 || !Number.isInteger(current.weather_code) || current.interval <= 0 || current.interval > 3600 || mint > max || uv < 0 || precipHours < 0 || precipHours > 24 || sunrise >= sunset || localDate(sunrise) !== forecastDate || localDate(sunset) !== forecastDate) shapeError();
+      const descriptions: Record<number,string> = {0:"Clear sky",1:"Mainly clear",2:"Partly cloudy",3:"Overcast",45:"Fog",48:"Rime fog",51:"Light drizzle",53:"Drizzle",55:"Dense drizzle",56:"Light freezing drizzle",57:"Freezing drizzle",61:"Light rain",63:"Rain",65:"Heavy rain",66:"Light freezing rain",67:"Freezing rain",71:"Light snow",73:"Snow",75:"Heavy snow",77:"Snow grains",80:"Light showers",81:"Showers",82:"Heavy showers",85:"Light snow showers",86:"Snow showers",95:"Thunderstorm",96:"Thunderstorm with hail",99:"Thunderstorm with heavy hail"};
+      const temp = current.temperature_2m, wind = current.wind_speed_10m, precip = current.precipitation;
+      // Convert every consumed field before inserting a successful cache entry.
+      const updated = new Date(current.time*1000).toISOString();
+      if (Date.now()-Date.parse(updated) > 3600_000 || Date.parse(updated)-Date.now() > 900_000 || localDate(Date.now()/1000) !== forecastDate) shapeError();
       return {
-        current: {
-          desc: descriptions[0] ?? "Unknown",
-          temp, feels: Number(current.FeelsLikeC), wind, precip,
-          // Ride above 5C, under 25 km/h, when it is not raining right now.
-          bike: temp > 5 && wind < 25 && precip === 0,
-          waterproof: wind > 20 || precip > 0,
-        },
-        today: {
-          mint: Number(today.mintempC), max: Number(today.maxtempC), uv: Number(today.uvIndex ?? 0),
-          sunrise: astronomy[0]?.sunrise ?? "", sunset: astronomy[0]?.sunset ?? "", precipHours,
-        },
+        updated, forecastDate, source: "Open-Meteo", freshness: "Model-based conditions · not a station observation",
+        current: {desc:descriptions[current.weather_code] ?? "Unknown",temp,feels:current.apparent_temperature,wind,precip,bike:temp>5 && wind<25 && precip===0,waterproof:wind>20 || precip>0},
+        today: {mint,max,uv,sunrise:localTime(sunrise),sunset:localTime(sunset),precipHours},
       };
     });
-    return { status: "ok", updated: new Date().toISOString(), ...data };
+    if (Date.now()-Date.parse(data.updated) > 3600_000 || data.forecastDate !== new Intl.DateTimeFormat("en-CA",{timeZone:"Europe/Copenhagen",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date(Date.now()))) {
+      cache.delete("weather"); category = "provider-shape"; throw new Error("Expired model data");
+    }
+    return { status: "ok", ...data };
   } catch (error) {
     if (error instanceof Error && error.name === "TimeoutError") category = "timeout";
     // Never send provider messages, URLs or response bodies to the client.
@@ -140,6 +135,7 @@ export async function fetchStocks() {
 }
 
 export const fetchGithub = createGithubCache(() => collectGithub({
+    scope: process.env.GITHUB_ADMIN_SCOPE === "personal" ? "personal" : "all",
     request: async (path, body, signal) => {
       const response = await fetch(`https://api.github.com${path}`, {
         method: body ? "POST" : "GET",

@@ -17,8 +17,8 @@ test('weather labels units and source dates; missing forecast remains unknown, n
   const model = weatherDetail({ current: { desc: 'Rain', temp: 8, feels: 6, wind: 20, precip: 2, bike: false, waterproof: true }, today: { mint: 5, max: 9, uv: 0, sunrise: '07:00 AM', sunset: '04:30 PM', precipHours: 3 } });
   assert.match(text(model), /20 km\/h/);
   assert.match(text(model), /2 mm/);
-  assert.match(text(model), /forecast intervals/);
-  assert.match(text(model), /wttr.in/);
+  assert.match(text(model), /Forecast precipitation hours/);
+  assert.match(text(model), /Open-Meteo/);
   assert.match(text(weatherDetail({})), /Unknown/);
 });
 

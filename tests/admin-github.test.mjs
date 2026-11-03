@@ -88,12 +88,12 @@ test('repo listing page errors preserve earlier repositories with partial counts
   assert.equal(result.coverage, 'partial');
 });
 
-test('network concurrency is one and the total request budget is enforced', async () => {
+test('request budget is enforced while bounded repository workers run concurrently', async () => {
   let running = 0, peak = 0;
   const f = fixture({ repoCount: 25 });
-  const result = await collectGithub({ maxRequests: 4, request: async (...args) => { running++; peak = Math.max(peak, running); try { return await f.request(...args); } finally { running--; } } });
-  assert.equal(peak, 1);
-  assert.equal(f.calls.length, 4);
+  const result = await collectGithub({ maxRequests: 5, concurrency: 4, request: async (...args) => { running++; peak = Math.max(peak, running); try { return await f.request(...args); } finally { running--; } } });
+  assert.ok(peak > 1 && peak <= 4);
+  assert.equal(f.calls.length, 5);
   assert.equal(result.coverage, 'partial');
   assert.equal(result.groups[0].repositories.length, 25);
 });
@@ -259,4 +259,42 @@ test('personal mode Contents denial preserves independent PR/issues and gives sa
 test('personal selected-access empty inventory is partial empty, not source failure',async()=>{
   const result=await collectGithub({...fixture({repoCount:0}),scope:'personal'});
   assert.equal(result.status,'ok');assert.equal(result.coverage,'partial');assert.equal(result.groups.length,1);
+});
+
+test('GraphQL field errors only mark the affected repository field incomplete', async () => {
+  const f = fixture({ repoCount: 2, override: (path, body) => path === '/graphql' ? {
+    data: { nodes: body.variables.ids.map(id => ({ id, pullRequests: connection([]), issues: connection([]), defaultBranchRef: null })) },
+    errors: [{ message: 'redacted', path: ['nodes', 0, 'pullRequests'] }],
+  } : undefined });
+  const result = await collectGithub(f);
+  assert.equal(result.groups[0].repositories[0].pullsComplete, false);
+  assert.equal(result.groups[0].repositories[1].pullsComplete, true);
+  assert.equal(result.groups[0].repositories[1].activityComplete, true);
+  assert.equal(result.coverage, 'partial');
+});
+
+test('repository GraphQL work is bounded-concurrent and processes recent repositories first', async () => {
+  let running = 0, peak = 0, firstBatch;
+  const f = fixture({ repoCount: 25, override: (path, body) => {
+    if (path !== '/graphql') return;
+    running++; peak = Math.max(peak, running); firstBatch ??= body.variables.ids;
+    const result = { data: { nodes: body.variables.ids.map(id => ({ id, pullRequests: connection([]), issues: connection([]), defaultBranchRef: null })) } };
+    return new Promise(resolve => setImmediate(() => { running--; resolve(result); }));
+  } });
+  const result = await collectGithub({ ...f, concurrency: 3 });
+  assert.ok(peak > 1 && peak <= 3);
+  assert.equal(firstBatch.length, 10);
+  assert.equal(result.observedAt, new Date().toISOString());
+});
+
+test('cached success preserves observation timestamp and errors have no fresh timestamp', async () => {
+  let now = 1_000, calls = 0;
+  const observedAt = new Date(now).toISOString();
+  const cache = createGithubCache(async () => { calls++; return calls === 1 ? { status: 'ok', observedAt } : { status: 'error' }; }, () => now);
+  assert.deepEqual(await cache(), { status: 'ok', observedAt });
+  now += 60_000;
+  assert.deepEqual(await cache(), { status: 'ok', observedAt });
+  now += 120_001;
+  assert.deepEqual(await cache(), { status: 'error' });
+  assert.equal(calls, 2);
 });

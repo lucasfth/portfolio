@@ -39,3 +39,9 @@ test('optional extension array drift cannot crash investment or cohort rendering
  ]) assert.doesNotThrow(()=>render('Investments',{finance:{total:100,nordea:{balance:20},saxo:{total:80,investments:70,cash:10},...finance}}));
  assert.doesNotThrow(()=>render('DanishComparison',{finance:{peers:{...peers,limitations:'invalid'}}}));
 });
+
+test('finance overview shortcut has a rendered section target', async () => {
+ const {parseHTML}=await import('linkedom');
+ const {document}=parseHTML(render('default',{finance:null,overview:React.createElement('p',null,'Overview fixture')}));
+ assert.equal(document.querySelector('#admin-finance')?.getAttribute('aria-label'),'Personal finance');
+});

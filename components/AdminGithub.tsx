@@ -19,11 +19,12 @@ function Group({ group }: { group: GithubGroup }) {
       {group.limitations.map((notice, i) => <p role="status" key={i} className="text-sm text-muted-foreground">{notice}</p>)}
       <p className="font-mono text-xs text-muted-foreground">Commits and issues: last 24 hours, up to 6 recent entries per repository. Open PRs: current, all ages.</p>
       {group.repositories.length === 0 ? <p className="text-sm text-muted-foreground">{group.repositoriesComplete ? "No accessible repositories." : "Repositories unavailable."}</p> : null}
-      {group.repositories.map(repo => {
+      {[...group.repositories].sort((a, b) => Number(b.openPulls.some(p => all || relevantPull(p)) || !b.pullsComplete || !b.activityComplete) - Number(a.openPulls.some(p => all || relevantPull(p)) || !a.pullsComplete || !a.activityComplete) || a.name.localeCompare(b.name)).map(repo => {
         const pulls = repo.openPulls.filter(pull => all || relevantPull(pull));
-        return <section key={repo.name} className="min-w-0 border border-border p-4">
-          <h3 className="break-all font-mono text-xs text-foreground">{repo.name}</h3>
-          <div className="mt-3 grid min-w-0 gap-5 md:grid-cols-3">
+        const signal = pulls.length + repo.commits.length + repo.issues.length;
+        return <details key={repo.name} className="min-w-0 border border-border px-3">
+          <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><span className="break-all font-mono text-xs text-foreground">{repo.name}</span><span className="font-mono text-[11px] text-muted-foreground">{signal ? `${signal} updates` : "No recent activity"}{!repo.pullsComplete || !repo.activityComplete ? " · coverage incomplete" : ""}</span></summary>
+          <div className="grid min-w-0 gap-5 border-t border-border py-3 md:grid-cols-3">
             <div><h4 className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Open pull requests</h4>
               {!repo.pullsComplete ? <p className="text-xs text-muted-foreground">Partial or unavailable PR/review source.</p> : null}
               {!pulls.length ? <p className="text-sm text-muted-foreground">{repo.pullsComplete ? "No matching open PRs." : "No matching PRs loaded; coverage incomplete."}</p> : null}
@@ -38,7 +39,7 @@ function Group({ group }: { group: GithubGroup }) {
               <ul>{repo.issues.map(issue => <li key={issue.number} className="py-2"><a href={issue.url} target="_blank" rel="noopener noreferrer" className="block break-words text-sm hover:underline"><AdminField text={`#${issue.number} ${issue.title}`} /></a><span className="text-xs text-muted-foreground">{issue.state.toLowerCase()}</span></li>)}</ul>
             </div>
           </div>
-        </section>;
+        </details>;
       })}
     </div>
   </details>;

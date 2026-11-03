@@ -9,6 +9,9 @@ function Group({ group }: { group: GithubGroup }) {
   const [all, setAll] = useState(false);
   const scope = githubScope(group, all);
   const prefix = scope.complete ? "" : "at least ";
+  const score = (repo: GithubGroup["repositories"][number]) => Number(repo.openPulls.some(p => all || relevantPull(p))) * 3 + Number(repo.commits.length + repo.issues.length > 0) * 2 + Number(!repo.pullsComplete || !repo.activityComplete);
+  const repositories = [...group.repositories].sort((a, b) => score(b) - score(a) || a.name.localeCompare(b.name));
+  const rows = (items: typeof repositories) => items.map(repo => <Repository key={repo.name} repo={repo} all={all} />);
   return <details open={group.personal || undefined} className="border-b border-border last:border-b-0">
     <summary className="cursor-pointer px-1 py-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
       <span className="font-medium">{group.personal ? "Personal" : group.owner}</span>
@@ -19,31 +22,34 @@ function Group({ group }: { group: GithubGroup }) {
       {group.limitations.map((notice, i) => <p role="status" key={i} className="text-sm text-muted-foreground">{notice}</p>)}
       <p className="font-mono text-xs text-muted-foreground">Commits and issues: last 24 hours, up to 6 recent entries per repository. Open PRs: current, all ages.</p>
       {group.repositories.length === 0 ? <p className="text-sm text-muted-foreground">{group.repositoriesComplete ? "No accessible repositories." : "Repositories unavailable."}</p> : null}
-      {[...group.repositories].sort((a, b) => {
-        const score = (repo: GithubGroup["repositories"][number]) => Number(repo.openPulls.some(p => all || relevantPull(p))) * 3 + Number(repo.commits.length + repo.issues.length > 0) * 2 + Number(!repo.pullsComplete || !repo.activityComplete);
-        return score(b) - score(a) || a.name.localeCompare(b.name);
-      }).map(repo => {
-        const pulls = repo.openPulls.filter(pull => all || relevantPull(pull));
-        const signal = pulls.length + repo.commits.length + repo.issues.length;
-        return <details key={repo.name} className="group/repository min-w-0 border-b border-border last:border-b-0">
-          <summary className="flex list-none cursor-pointer flex-wrap items-center justify-between gap-2 py-2 marker:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><span aria-hidden="true" className="text-muted-foreground group-open/repository:rotate-90">▸</span><span className="min-w-0 flex-1 break-all font-mono text-xs text-foreground">{repo.name}</span><span className="font-mono text-[11px] text-muted-foreground">{signal ? `${signal} updates${!repo.pullsComplete || !repo.activityComplete ? " · partial" : ""}` : !repo.pullsComplete || !repo.activityComplete ? "No loaded activity · partial" : "No recent activity"}</span></summary>
-          <div className="grid min-w-0 gap-5 border-t border-border py-3 md:grid-cols-3">
-            <div><h4 className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Open pull requests</h4>
-              {!repo.pullsComplete ? <p className="text-xs text-muted-foreground">Partial or unavailable PR/review source.</p> : null}
-              {!pulls.length ? <p className="text-sm text-muted-foreground">{repo.pullsComplete ? "No matching open PRs." : "No matching PRs loaded; coverage incomplete."}</p> : null}
-              <ul>{pulls.map(pull => <li key={pull.number} className="py-2"><a href={pull.url} target="_blank" rel="noopener noreferrer" className="block break-words text-sm hover:underline"><AdminField text={`#${pull.number} ${pull.title}`} /></a>{pull.reviewers.some(login => login.toLowerCase() === "lucasfth") ? <span className="text-xs text-muted-foreground">Review requested</span> : null}</li>)}</ul>
-            </div>
-            <div><h4 className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Recent commits</h4>
-              {!repo.activityComplete ? <p className="text-xs text-muted-foreground">Activity source unavailable.</p> : !repo.commits.length ? <p className="text-sm text-muted-foreground">No recent commits.</p> : null}
-              <ul>{repo.commits.map(commit => <li key={commit.sha} className="py-2"><a href={commit.url} target="_blank" rel="noopener noreferrer" className="block break-words text-sm hover:underline"><AdminField text={commit.message} /></a><span className="text-xs text-muted-foreground">{commit.author}</span></li>)}</ul>
-            </div>
-            <div><h4 className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Issues touched</h4>
-              {repo.activityComplete && !repo.issues.length ? <p className="text-sm text-muted-foreground">No recent issues by lucasfth.</p> : null}
-              <ul>{repo.issues.map(issue => <li key={issue.number} className="py-2"><a href={issue.url} target="_blank" rel="noopener noreferrer" className="block break-words text-sm hover:underline"><AdminField text={`#${issue.number} ${issue.title}`} /></a><span className="text-xs text-muted-foreground">{issue.state.toLowerCase()}</span></li>)}</ul>
-            </div>
-          </div>
-        </details>;
-      })}
+      {rows(repositories.slice(0, 5))}
+      {repositories.length > 5 && <details className="border-t border-border pt-3">
+        <summary className="cursor-pointer py-2 font-mono text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">More repositories ({repositories.length - 5}) · includes inactive or incomplete sources</summary>
+        {rows(repositories.slice(5))}
+      </details>}
+    </div>
+  </details>;
+}
+
+function Repository({ repo, all }: { repo: GithubGroup["repositories"][number]; all: boolean }) {
+  const pulls = repo.openPulls.filter(pull => all || relevantPull(pull));
+  const signal = pulls.length + repo.commits.length + repo.issues.length;
+  return <details className="group/repository min-w-0 border-b border-border last:border-b-0">
+    <summary className="flex list-none cursor-pointer flex-wrap items-center justify-between gap-2 py-2 marker:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><span aria-hidden="true" className="text-muted-foreground group-open/repository:rotate-90">▸</span><span className="min-w-0 flex-1 break-all font-mono text-xs text-foreground">{repo.name}</span><span className="font-mono text-[11px] text-muted-foreground">{signal ? `${signal} updates${!repo.pullsComplete || !repo.activityComplete ? " · partial" : ""}` : !repo.pullsComplete || !repo.activityComplete ? "No loaded activity · partial" : "No recent activity"}</span></summary>
+    <div className="grid min-w-0 gap-5 border-t border-border py-3 md:grid-cols-3">
+      <div><h4 className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Open pull requests</h4>
+        {!repo.pullsComplete ? <p className="text-xs text-muted-foreground">Partial or unavailable PR/review source.</p> : null}
+        {!pulls.length ? <p className="text-sm text-muted-foreground">{repo.pullsComplete ? "No matching open PRs." : "No matching PRs loaded; coverage incomplete."}</p> : null}
+        <ul>{pulls.map(pull => <li key={pull.number} className="py-2"><a href={pull.url} target="_blank" rel="noopener noreferrer" className="block break-words text-sm hover:underline"><AdminField text={`#${pull.number} ${pull.title}`} /></a>{pull.reviewers.some(login => login.toLowerCase() === "lucasfth") ? <span className="text-xs text-muted-foreground">Review requested</span> : null}</li>)}</ul>
+      </div>
+      <div><h4 className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Recent commits</h4>
+        {!repo.activityComplete ? <p className="text-xs text-muted-foreground">Activity source unavailable.</p> : !repo.commits.length ? <p className="text-sm text-muted-foreground">No recent commits.</p> : null}
+        <ul>{repo.commits.map(commit => <li key={commit.sha} className="py-2"><a href={commit.url} target="_blank" rel="noopener noreferrer" className="block break-words text-sm hover:underline"><AdminField text={commit.message} /></a><span className="text-xs text-muted-foreground">{commit.author}</span></li>)}</ul>
+      </div>
+      <div><h4 className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Issues touched</h4>
+        {repo.activityComplete && !repo.issues.length ? <p className="text-sm text-muted-foreground">No recent issues by lucasfth.</p> : null}
+        <ul>{repo.issues.map(issue => <li key={issue.number} className="py-2"><a href={issue.url} target="_blank" rel="noopener noreferrer" className="block break-words text-sm hover:underline"><AdminField text={`#${issue.number} ${issue.title}`} /></a><span className="text-xs text-muted-foreground">{issue.state.toLowerCase()}</span></li>)}</ul>
+      </div>
     </div>
   </details>;
 }

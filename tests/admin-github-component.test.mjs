@@ -37,6 +37,14 @@ test('rendered component defaults, section-local All PRs, lower bounds and retai
     assert.match(ssr.querySelector('details[open] summary').textContent, /Personal/);
     const personalHtml=renderToStaticMarkup(React.createElement(Component,{payload:{...payload,scope:'personal',coverage:'partial',groups:[payload.groups[0]]}}));
     assert.match(personalHtml,/Personal repositories only/);assert.match(personalHtml,/organizations intentionally excluded/);assert.match(personalHtml,/not all personal repositories/);
+    const many = {...payload.groups[0], repositories: Array.from({length:12},(_,i)=>({...payload.groups[0].repositories[0],id:String(i),name:`lucasfth/repo-${i}`,openPulls:i===0?[pull(1,'lucasfth')]:[],activityComplete:i!==9}))};
+    const compact=parseHTML(renderToStaticMarkup(React.createElement(Component,{payload:{...payload,groups:[many]}}))).document;
+    const overflow=[...compact.querySelectorAll('summary')].find(node=>node.textContent.includes('More repositories (7)'))?.parentElement;
+    assert.ok(overflow,'long lists have one counted overflow disclosure'); assert.equal(overflow.hasAttribute('open'),false);
+    assert.equal(overflow.querySelectorAll('details').length,7);
+    assert.equal(compact.querySelectorAll('.group\\/repository').length,12,'all repositories remain available');
+    const topRows=[...compact.querySelectorAll('details')].filter(node=>node.classList.contains('group/repository')&&!overflow.contains(node));
+    assert.equal(topRows.length,5); assert.match(topRows[0].textContent,/repo-0/);
     const { window, document } = parseHTML('<html><body><div id="root"></div></body></html>');
     globalThis.window = window; globalThis.document = document; globalThis.IS_REACT_ACT_ENVIRONMENT = true;
     const root = createRoot(document.querySelector('#root'));

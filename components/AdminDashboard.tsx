@@ -24,6 +24,7 @@ import { fetchJsonWithRetry } from "@/lib/admin/fetch-json-with-retry.mjs";
 import { createRequestCoordinator, githubRefreshErrorFor, weatherFailure, weatherRefreshErrorFor, weatherExpired, payloadRefreshError, reportReadResult, retainSuccessfulPayload } from "@/lib/admin/dashboard-state.mjs";
 import AdminDetailDialog, { type AdminDetail } from "@/components/AdminDetailDialog";
 import { stockDetail, weatherDetail, financeDetail, scheduledJobDetail, saxoSourceStatus } from "@/lib/admin/detail-content.mjs";
+import { radarEditionStale } from "@/lib/radar/publication";
 
 type SessionShape = {
   access_token: string;
@@ -608,7 +609,9 @@ export default function AdminDashboard() {
   const ws = weatherRefreshError || expiredWeather ? "error" : statusState(weather);
   const ss = stocksRefreshError ? "error" : statusState(stocks);
   const gs = githubRefreshError || (github && github.coverage !== "complete") ? "error" : statusState(github);
-  const rs = radarRefreshError ? "error" : statusState(radar);
+  const staleRadar = radar?.generated ? radarEditionStale(radar.generated) : Boolean(radar);
+  const radarWarning = radarRefreshError ?? (staleRadar ? "Daily edition is older than expected" : radar?.message);
+  const rs = radarWarning ? "error" : statusState(radar);
   const os: ModuleState = reportsError ? "error" : reports === null ? "loading" : "ok";
 
   const stocksList = stocks?.stocks ?? [];
@@ -625,7 +628,7 @@ export default function AdminDashboard() {
       code: "Radar", href: "#admin-radar",
       state: rs,
       value: radar ? `${radar.items.length} items` : rs === "error" ? "feed fault" : "syncing",
-      sub: "llm-radar, daily",
+      sub: staleRadar ? "stale edition · daily" : "llm-radar, daily",
     },
     {
       code: "Market", href: "#admin-market",
@@ -763,8 +766,8 @@ export default function AdminDashboard() {
           loadingFields={["Loading daily signal titles","Waiting for source and update time"]}
           title="Signal feed"
           state={rs}
-          error={radarRefreshError ?? radar?.message}
-          meta={radar?.generated ? `updated ${fmtTime(radar.generated)}` : "compiled daily"}
+          error={radarWarning}
+          meta={radar?.generated ? `updated ${new Date(radar.generated).toLocaleString("en-GB", { timeZone: "Europe/Copenhagen", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} Copenhagen time` : "compiled daily"}
           loading={refreshing && Boolean(radar)}
           ready={Boolean(radar)}
         >
@@ -875,7 +878,7 @@ export default function AdminDashboard() {
       <p
         className={`${MONO} mt-16 border-t border-border pt-6 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/50`}
       >
-        Sources: llm-radar · Yahoo Finance · Open-Meteo · github · supabase — refreshed on sign-in and on demand
+        Sources: llm-radar · Yahoo Finance · Open-Meteo · github · supabase — read-only refresh every minute while visible; finance sync is manual
       </p>
       {selectedDetail && (selectedDetail !== "weather" || weather) ? <AdminDetailDialog detail={selectedDetail === "weather" ? weatherDetail(weather!, weatherRefreshError) : selectedDetail} opener={detailOpener} onClose={closeDetail} /> : null}
     </div>

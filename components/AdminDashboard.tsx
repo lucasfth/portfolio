@@ -406,11 +406,25 @@ export default function AdminDashboard() {
     return () => clearInterval(id);
   }, []);
 
-  // Panel fetches, once per sign-in.
+  // Bounded read-only refresh; finance sync remains an explicit operator action.
   useEffect(() => {
-    if (!hasSession || hydrated.current) return;
-    hydrated.current = true;
-    void loadAll().then(current => { if (current) setLastSync(cphNow()); }).catch(() => undefined);
+    if (!hasSession) return;
+    let alive = true;
+    let busy = false;
+    const refreshReadOnly = async () => {
+      if (busy || document.visibilityState === "hidden") return;
+      busy = true;
+      const request = requests.current.begin();
+      try { const current = await loadAll(request); if (alive && current) setLastSync(cphNow()); }
+      catch { /* loadAll retains last-good values and reports per-source failures. */ }
+      finally { busy = false; }
+    };
+    if (!hydrated.current) { hydrated.current = true; void refreshReadOnly(); }
+    const interval = window.setInterval(() => void refreshReadOnly(), 60_000);
+    const recover = () => { if (document.visibilityState === "visible") void refreshReadOnly(); };
+    window.addEventListener("focus", recover);
+    document.addEventListener("visibilitychange", recover);
+    return () => { alive = false; window.clearInterval(interval); window.removeEventListener("focus", recover); document.removeEventListener("visibilitychange", recover); requests.current.cancel(); };
   }, [hasSession, loadAll]);
 
   const refresh = async () => {
@@ -671,7 +685,7 @@ export default function AdminDashboard() {
       </div>
 
       <AdminFinanceWorkspace finance={finance} overview={<><FinancePanel finance={finance} error={financeRefreshError ?? financeError} refreshing={refreshing} openDetail={openDetail} /><div className="mt-3 flex flex-wrap items-center gap-4"><button type="button" disabled={syncingFinance} onClick={() => void syncFinance()} className="admin-toolbar-button">{syncingFinance ? "Syncing accounts…" : "Sync accounts"}</button><p className="text-xs text-muted-foreground">Refresh reads saved sources. Sync accounts runs the existing bank/broker pipeline; it can take four minutes.</p></div></>} />
-      <details className="mb-5"><summary className="cursor-pointer py-3 text-sm text-muted-foreground">Source health and section shortcuts</summary><Board cells={cells} /><p className="mt-3 text-xs text-muted-foreground">Unavailable or partial sources retain their last successful data. Sync is the last read attempt, not proof every source succeeded.</p></details>
+      <div className="mb-5"><p className="mb-2 font-mono text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Sections · source health and shortcuts</p><Board cells={cells} /><p className="mt-3 text-xs text-muted-foreground">Unavailable or partial sources retain their last successful data. Sync is the last read attempt, not proof every source succeeded.</p></div>
       <div className="admin-columns">
         <div className="admin-main">
           {session?.access_token ? <AdminFleetPanel key={session.user.id} token={session.access_token} /> : null}
@@ -681,7 +695,7 @@ export default function AdminDashboard() {
           title="Repositories and activity"
           state={gs}
           error={githubRefreshError ?? (github?.status === "error" ? github.message : undefined)}
-          meta={github ? `${github.coverage === "complete" ? "" : "at least "}${github.openPulls.length} PRs for lucasfth` : "-- PRs"}
+          meta={github ? `${github.coverage === "complete" ? "" : "at least "}${github.openPulls.length} PRs for lucasfth${(github as GithubPayload & { observedAt?: string }).observedAt ? ` · observed ${new Date((github as GithubPayload & { observedAt?: string }).observedAt!).toLocaleString("en-GB", { timeZone: "Europe/Copenhagen", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", hour12: false })} (${Math.max(0, Math.floor((Date.now() - Date.parse((github as GithubPayload & { observedAt?: string }).observedAt!)) / 60_000))}m ago)` : " · observation time unavailable"}` : "-- PRs"}
           loading={refreshing && Boolean(github)}
           ready={github?.status === "ok"}
         >

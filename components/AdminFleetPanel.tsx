@@ -47,14 +47,16 @@ export function FleetView({ data, error, now }: { data: FleetSnapshot | null; er
         <div className="grid gap-3">{data.hosts.map(host => {
           const age = host.lastReceivedAt ? now - Date.parse(host.lastReceivedAt) : null;
           const status = age === null ? "Never seen" : age < -30_000 ? "Clock skew" : age > 120_000 ? "Stale" : "Recent receipt";
-          const active = host.sessions.filter(s => ["working", "blocked", "error", "unknown"].includes(s.state)).sort((a, b) => Number(b.state === "working") - Number(a.state === "working"));
+          const active = host.sessions.filter(s => ["working", "blocked", "error", "unknown"].includes(s.state) && sessionFreshness(s, now) === "fresh").sort((a, b) => Number(b.state === "working") - Number(a.state === "working"));
+          const stale = host.sessions.filter(s => ["working", "blocked", "error", "unknown"].includes(s.state) && sessionFreshness(s, now) !== "fresh");
           const quiet = host.sessions.filter(s => ["idle", "done"].includes(s.state));
           const ended = host.sessions.filter(s => s.state === "ended");
           return <article key={host.id} className="min-w-0 border border-border p-4">
             <div className="flex flex-wrap items-baseline justify-between gap-2"><h3 className="text-sm font-medium">{host.id === "gimle" ? "Gimle" : "Personal MacBook Pro"}</h3><span className="font-mono text-xs uppercase">{status}</span></div>
-            <p className="mt-2 text-xs text-muted-foreground">{active.length} active / needs attention · {quiet.length} quiet · last receipt {timestamp(host.lastReceivedAt)}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{active.length} current active / needs attention · {stale.length} stale · {quiet.length} quiet · last receipt {timestamp(host.lastReceivedAt)}</p>
             {!host.sessions.length ? <p className="mt-3 text-sm text-muted-foreground">{host.lastReceivedAt ? "No sessions within retention. The host was previously seen." : "No report received. Setup or host availability is not established."}</p> : null}
             <SessionRows sessions={active} now={now} />
+            {stale.length ? <details className="mt-3 border-t border-border pt-3"><summary className="cursor-pointer font-mono text-xs text-muted-foreground">Stale / clock-skew sessions ({stale.length})</summary><SessionRows sessions={stale} now={now} /></details> : null}
             {quiet.length ? <details className="mt-3 border-t border-border pt-3"><summary className="cursor-pointer font-mono text-xs text-muted-foreground">Quiet sessions ({quiet.length})</summary><SessionRows sessions={quiet} now={now} /></details> : null}
             {ended.length ? <details className="mt-3 border-t border-border pt-3"><summary className="cursor-pointer font-mono text-xs text-muted-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4">Ended sessions ({ended.length})</summary><SessionRows sessions={ended} now={now} /></details> : null}
           </article>;

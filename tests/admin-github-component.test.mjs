@@ -30,8 +30,10 @@ test('rendered component defaults, section-local All PRs, lower bounds and retai
     const payload = { status: 'ok', coverage: 'complete', groups: [group('lucasfth', true), group('example-org', false)] };
     const html = renderToStaticMarkup(React.createElement(Component, { payload }));
     const ssr = parseHTML(html).document;
-    assert.equal(ssr.querySelectorAll('details').length, 2);
+    assert.equal(ssr.querySelectorAll('details').length, 4); // two groups and two compact repository rows
     assert.equal(ssr.querySelectorAll('details[open]').length, 1);
+    assert.equal(ssr.querySelectorAll('details:not([open]) summary').length, 3);
+    assert.match(ssr.querySelectorAll('details:not([open]) summary')[0].textContent, /lucasfth\/repo/);
     assert.match(ssr.querySelector('details[open] summary').textContent, /Personal/);
     const personalHtml=renderToStaticMarkup(React.createElement(Component,{payload:{...payload,scope:'personal',coverage:'partial',groups:[payload.groups[0]]}}));
     assert.match(personalHtml,/Personal repositories only/);assert.match(personalHtml,/organizations intentionally excluded/);assert.match(personalHtml,/not all personal repositories/);
@@ -40,16 +42,17 @@ test('rendered component defaults, section-local All PRs, lower bounds and retai
     const root = createRoot(document.querySelector('#root'));
     await act(() => root.render(React.createElement(Component, { payload })));
     const summaries = () => [...document.querySelectorAll('summary')].map(node => node.textContent);
-    assert.ok(summaries().every(text => text.includes('1 open PRs')));
+    const groupSummaries = () => [...document.querySelectorAll('#root > div > details > summary')].map(node => node.textContent);
+    assert.ok(groupSummaries().every(text => text.includes('1 open PRs')));
     const checkbox = document.querySelector('input');
     checkbox.checked = true;
     await act(() => checkbox.dispatchEvent(new window.Event('click', { bubbles: true })));
-    assert.match(summaries()[0], /2 open PRs.*all PRs/);
-    assert.match(summaries()[1], /1 open PRs.*for lucasfth/);
+    assert.match(groupSummaries()[0], /2 open PRs.*all PRs/);
+    assert.match(groupSummaries()[1], /1 open PRs.*for lucasfth/);
     assert.equal(document.querySelectorAll('a').length, 3);
     const partial = { ...payload, coverage: 'partial', limitations: ['Membership discovery incomplete.'], groups: [{ ...payload.groups[0], repositoriesComplete: false, limitations: ['Repository discovery incomplete.'] }] };
     await act(() => root.render(React.createElement(Component, { payload: partial })));
-    assert.match(summaries()[0], /at least 2 open PRs/);
+    assert.match(groupSummaries()[0], /at least 2 open PRs/);
     assert.match(document.body.textContent, /Membership discovery incomplete/);
     assert.match(document.body.textContent, /Repository discovery incomplete/);
     await act(() => root.unmount());

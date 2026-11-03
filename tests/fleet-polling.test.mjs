@@ -100,6 +100,7 @@ function dashboard(io = {}) {
     '@/lib/admin/dashboard-state.mjs': createRequire(import.meta.url)('../lib/admin/dashboard-state.mjs'),
     '@/components/AdminDetailDialog': () => null,
     '@/lib/admin/detail-content.mjs': createRequire(import.meta.url)('../lib/admin/detail-content.mjs'),
+    '@/lib/radar/publication': createRequire(import.meta.url)('../lib/radar/publication.ts'),
   });
   return { app, render: () => find(app.render(), element => element.type === Fleet), auth(token, id = 'operator-a') { onAuth(token ? 'TOKEN_REFRESHED' : 'SIGNED_OUT', token ? { access_token: token, user: { id, email: initial.user.email } } : null); } };
 }
@@ -383,4 +384,20 @@ test('token rotation cancels old reads, immediately uses new token and rejects l
   assert.ok(find(panel, n => n.props?.text === 'Current weather'));
   assert.equal(find(panel, n => n.props?.text === 'Obsolete weather'), null);
   dash.auth(null); dash.app.render(); assert.equal([...env.intervals.values()].filter(x => x.ms === 60_000).length, 0);
+});
+
+test('stale successful Radar read stays visible but panel and board cannot claim OK', async t => {
+  environment(t);
+  const radar = {status:'ok',generated:'2026-10-24T10:00:00Z',items:[{title:'Retained Radar pick',url:'https://example.com',source:'Example',tag:'agents'}]};
+  const dash = dashboard({fetchJsonWithRetry:async url => url === '/api/admin/radar' ? {response:{ok:true},body:radar} : {response:{ok:false,status:503},body:null}});
+  t.after(() => dash.app.unmount());
+  dash.app.render(); await settle(); dash.app.render(); await settle();
+  const element = dash.app.render(), panel = find(element, n => n.props?.eyebrow === 'Radar');
+  assert.equal(panel.props.state, 'error'); assert.match(panel.props.error, /older than expected/);
+  assert.match(panel.props.meta, /24 Oct.*Copenhagen time/);
+  assert.ok(find(panel, n => n.props?.text === 'Retained Radar pick'));
+  assert.match(renderToStaticMarkup(panel), /showing last available data/);
+  const board = find(element, n => Array.isArray(n.props?.cells));
+  assert.equal(board.props.cells.find(c => c.code === 'Radar').state, 'error');
+  assert.match(board.props.cells.find(c => c.code === 'Radar').sub, /stale/);
 });

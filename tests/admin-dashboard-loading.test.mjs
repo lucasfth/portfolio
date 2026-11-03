@@ -50,6 +50,6 @@ test("FinancePanel provides stable distinct loading fields and keeps its externa
 });
 
 test("radar cadence is described as daily", () => {
-  assert.match(source, /sub: "llm-radar, daily"/);
+  assert.match(source, /sub: staleRadar \? "stale edition · daily" : "llm-radar, daily"/);
   assert.match(source, /compiled daily/);
 });

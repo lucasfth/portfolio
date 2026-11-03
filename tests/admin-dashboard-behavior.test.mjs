@@ -13,7 +13,8 @@ const deferred = () => {
 test("dashboard refresh wiring uses one generation and aborts on refresh, signout, and unmount", () => {
   assert.match(source, /const loadAll = useCallback\(async \(request = requests\.current\.begin\(\)\)/);
   assert.match(source, /const \{ id, signal \} = requests\.current\.begin\(\);[\s\S]*?const current = await loadAll\(\{ id, signal \}\)/);
-  assert.match(source, /finally \{\s*setRefreshing\(false\);/);
+  // Generation-guarded cleanup must not clear a newer refresh indicator.
+  assert.match(source, /if \(readOnlyBusy\.current === id\) \{ readOnlyBusy\.current = null; setRefreshing\(false\); \}/);
   assert.match(source, /requests\.current\.cancel\(\);\s*sub\.subscription\.unsubscribe\(\)/);
   const requests = createRequestCoordinator();
   const first = requests.begin();

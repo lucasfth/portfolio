@@ -19,11 +19,14 @@ function Group({ group }: { group: GithubGroup }) {
       {group.limitations.map((notice, i) => <p role="status" key={i} className="text-sm text-muted-foreground">{notice}</p>)}
       <p className="font-mono text-xs text-muted-foreground">Commits and issues: last 24 hours, up to 6 recent entries per repository. Open PRs: current, all ages.</p>
       {group.repositories.length === 0 ? <p className="text-sm text-muted-foreground">{group.repositoriesComplete ? "No accessible repositories." : "Repositories unavailable."}</p> : null}
-      {[...group.repositories].sort((a, b) => Number(b.openPulls.some(p => all || relevantPull(p)) || !b.pullsComplete || !b.activityComplete) - Number(a.openPulls.some(p => all || relevantPull(p)) || !a.pullsComplete || !a.activityComplete) || a.name.localeCompare(b.name)).map(repo => {
+      {[...group.repositories].sort((a, b) => {
+        const score = (repo: GithubGroup["repositories"][number]) => Number(repo.openPulls.some(p => all || relevantPull(p))) * 3 + Number(repo.commits.length + repo.issues.length > 0) * 2 + Number(!repo.pullsComplete || !repo.activityComplete);
+        return score(b) - score(a) || a.name.localeCompare(b.name);
+      }).map(repo => {
         const pulls = repo.openPulls.filter(pull => all || relevantPull(pull));
         const signal = pulls.length + repo.commits.length + repo.issues.length;
-        return <details key={repo.name} className="min-w-0 border border-border px-3">
-          <summary className="flex cursor-pointer flex-wrap items-center justify-between gap-2 py-3 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><span className="break-all font-mono text-xs text-foreground">{repo.name}</span><span className="font-mono text-[11px] text-muted-foreground">{signal ? `${signal} updates` : "No recent activity"}{!repo.pullsComplete || !repo.activityComplete ? " · coverage incomplete" : ""}</span></summary>
+        return <details key={repo.name} className="group/repository min-w-0 border-b border-border last:border-b-0">
+          <summary className="flex list-none cursor-pointer flex-wrap items-center justify-between gap-2 py-2 marker:content-[''] focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"><span aria-hidden="true" className="text-muted-foreground group-open/repository:rotate-90">▸</span><span className="min-w-0 flex-1 break-all font-mono text-xs text-foreground">{repo.name}</span><span className="font-mono text-[11px] text-muted-foreground">{signal ? `${signal} updates${!repo.pullsComplete || !repo.activityComplete ? " · partial" : ""}` : !repo.pullsComplete || !repo.activityComplete ? "No loaded activity · partial" : "No recent activity"}</span></summary>
           <div className="grid min-w-0 gap-5 border-t border-border py-3 md:grid-cols-3">
             <div><h4 className="mb-2 text-xs uppercase tracking-wider text-muted-foreground">Open pull requests</h4>
               {!repo.pullsComplete ? <p className="text-xs text-muted-foreground">Partial or unavailable PR/review source.</p> : null}

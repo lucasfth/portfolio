@@ -8,6 +8,12 @@ import swc from 'next/dist/build/swc/index.js';
 
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const at = '2026-10-29T10:00:00.000Z';
+const originalWindow = globalThis.window, originalDocument = globalThis.document;
+test.beforeEach(() => {
+  globalThis.window = Object.assign(new EventTarget(), { setInterval: (...args) => globalThis.setInterval(...args), clearInterval: id => globalThis.clearInterval(id) });
+  globalThis.document = Object.assign(new EventTarget(), { visibilityState: 'visible' });
+});
+test.after(() => { globalThis.window = originalWindow; globalThis.document = originalDocument; });
 function snapshot(label = 'Retained session', time = at) {
   return { schemaVersion: 1, readAt: time, hosts: [
     { id: 'gimle', lastReceivedAt: time, sessions: [{ schemaVersion: 1, hostId: 'gimle', sessionId: 'a'.repeat(32), label, state: 'idle', observedAt: time, receivedAt: time, startedAt: at, lastToolCompletedAt: at, sequence: 1 }] },
@@ -55,6 +61,7 @@ function component(name, overrides = {}) {
   };
 }
 function environment(t) {
+  const windowTarget = globalThis.window, documentTarget = globalThis.document;
   const intervals = new Map(), timeouts = new Map(), requests = []; let id = 0;
   t.mock.method(Date, 'now', () => Date.parse(at));
   t.mock.method(globalThis, 'setInterval', (fn, ms) => { const key = ++id; intervals.set(key, { fn, ms }); return key; });
@@ -65,7 +72,7 @@ function environment(t) {
     assert.equal(url, '/api/admin/fleet'); assert.equal(options.cache, 'no-store');
     return new Promise((resolve, reject) => requests.push({ options, resolve, reject }));
   });
-  return { intervals, timeouts, requests, poll() { [...intervals.values()].find(timer => timer.ms === 30_000).fn(); } };
+  return { intervals, timeouts, requests, windowEvents: windowTarget, documentEvents: documentTarget, setVisibility(value) { documentTarget.visibilityState = value; documentTarget.dispatchEvent(new Event('visibilitychange')); }, focus() { windowTarget.dispatchEvent(new Event('focus')); }, poll(ms = 30_000) { [...intervals.values()].find(timer => timer.ms === ms)?.fn(); } };
 }
 function find(element, predicate) {
   if (!element || typeof element !== 'object') return null;
@@ -335,4 +342,45 @@ test('WG-001: persistent weather dialog expires on clock render, retains source 
   assert.doesNotMatch(JSON.stringify(dialog().props.detail),/advice withheld|showing last available data/);
   assert.notEqual(dialog().props.detail.subtitle,subtitle);assert.equal(dialog().props.opener,opener);
   dialog().props.onClose();assert.equal(dialog(),null);
+});
+
+test('read-only scheduler survives report updates, skips hidden/overlapping reads and cleans up', async t => {
+  const env = environment(t), reads = [];
+  const dash = dashboard({fetchJsonWithRetry: (url, options) => new Promise(resolve => reads.push({url, options, resolve}))});
+  t.after(() => dash.app.unmount());
+  dash.app.render(); await settle(); dash.app.render();
+  assert.equal(reads.length, 6, 'one GET per source on initial load');
+  assert.ok(reads.every(r => !r.options.method || r.options.method === 'GET'));
+  const timer = [...env.intervals.entries()].find(([, value]) => value.ms === 60_000)[0];
+  env.poll(60_000); env.focus(); assert.equal(reads.length, 6, 'no overlap while initial reads are pending');
+  for (const read of reads) read.resolve({response:{ok:false,status:503},body:null});
+  await settle(); dash.app.render();
+  assert.equal([...env.intervals.entries()].find(([, value]) => value.ms === 60_000)[0], timer, 'reports state updates do not restart scheduler');
+  env.setVisibility('hidden'); env.poll(60_000); env.focus(); assert.equal(reads.length, 6);
+  env.setVisibility('visible'); assert.equal(reads.length, 12, 'visibility recovery reads immediately');
+  for (const read of reads.slice(6)) read.resolve({response:{ok:false,status:503},body:null});
+  await settle(); env.poll(60_000); assert.equal(reads.length, 18, 'periodic read still runs');
+  const pending = reads.slice(12); dash.app.unmount();
+  assert.ok(pending.every(r => r.options.signal.aborted));
+  assert.equal(env.intervals.size, 0); env.focus(); assert.equal(reads.length, 18);
+  for (const read of pending) read.resolve({response:{ok:false,status:503},body:null}); await settle();
+});
+
+test('token rotation cancels old reads, immediately uses new token and rejects late old data', async t => {
+  const env = environment(t), reads = [];
+  const dash = dashboard({fetchJsonWithRetry: (url, options) => new Promise(resolve => reads.push({url, options, resolve}))});
+  t.after(() => dash.app.unmount());
+  dash.app.render(); await settle(); dash.app.render();
+  assert.equal(reads.length, 6); dash.auth('ROTATED'); dash.app.render();
+  assert.equal(reads.length, 12);
+  assert.ok(reads.slice(0, 6).every(r => r.options.signal.aborted));
+  assert.ok(reads.slice(6).every(r => r.options.headers.Authorization === 'Bearer ROTATED'));
+  const weather = desc => ({status:'ok',updated:at,current:{desc,temp:8,feels:6,wind:10,precip:0,bike:true,waterproof:false},today:{mint:3,max:9,uv:1,sunrise:'08:00',sunset:'17:00',precipHours:0}});
+  for (const read of reads.slice(6)) read.resolve(read.url === '/api/admin/weather' ? {response:{ok:true,status:200},body:weather('Current weather')} : {response:{ok:false,status:503},body:null});
+  await settle();
+  for (const read of reads.slice(0, 6)) read.resolve(read.url === '/api/admin/weather' ? {response:{ok:true,status:200},body:weather('Obsolete weather')} : {response:{ok:false,status:503},body:null});
+  await settle(); const panel = find(dash.app.render(), n => n.props?.eyebrow === 'Env');
+  assert.ok(find(panel, n => n.props?.text === 'Current weather'));
+  assert.equal(find(panel, n => n.props?.text === 'Obsolete weather'), null);
+  dash.auth(null); dash.app.render(); assert.equal([...env.intervals.values()].filter(x => x.ms === 60_000).length, 0);
 });

@@ -112,6 +112,7 @@ export type GithubPayload = {
   coverage: "complete" | "partial" | "unavailable";
   scope?: 'personal' | 'all';
   limitations?: string[];
+  observedAt?: string;
   groups: GithubGroup[];
   windowHours: number;
   commits: GithubCommit[];

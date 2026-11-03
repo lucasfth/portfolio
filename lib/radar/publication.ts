@@ -41,8 +41,14 @@ export function isRadarEdition(value: unknown): value is RadarEdition {
   });
 }
 
+// Daily editions get a bounded grace period; receipt time is not publication freshness.
+export function radarEditionStale(generated: string, now = Date.now()): boolean {
+  const timestamp = Date.parse(generated);
+  return !Number.isFinite(timestamp) || now - timestamp > 36 * 3600_000 || timestamp - now > 900_000;
+}
+
 export async function getRadarEdition(): Promise<RadarEdition> {
-  const source = process.env.RADAR_PUBLICATION_SOURCE ?? "github";
+  const source = process.env.RADAR_PUBLICATION_SOURCE ?? "supabase";
   if (source === "github") {
     const response = await fetch("https://raw.githubusercontent.com/lucasfth/loki-radar/main/public.json?v=2", {
       next: { revalidate: 1800 },

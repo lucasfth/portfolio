@@ -1,7 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import PageHero from "@/components/PageHero";
 import { SITE_URL } from "@/lib/content";
-import { getRadarEdition, type RadarEdition } from "@/lib/radar/publication";
+import { getRadarEdition, radarEditionStale, type RadarEdition } from "@/lib/radar/publication";
 
 type RadarItem = RadarEdition["items"][number];
 
@@ -76,6 +76,8 @@ export default async function Radar() {
       })
     : null;
 
+  const stale = data ? radarEditionStale(data.generated) : false;
+
   return (
     <>
       <PageHero eyebrow="Daily" title="Radar" description={DESCRIPTION} />
@@ -85,6 +87,11 @@ export default async function Radar() {
             ? `Updated ${updated} Copenhagen time. ${items.length} picks from ${data?.count_scanned ?? 0} items scanned.`
             : "The radar is temporarily unavailable."}
         </p>
+        {stale && (
+          <p role="status" className="mb-8 text-sm text-muted-foreground">
+            This edition is older than expected. Showing the last available picks while updates recover.
+          </p>
+        )}
         {order.map((tag) => (
           <div key={tag} className="mb-14">
             <h2 className="mb-2 text-[11px] font-medium uppercase tracking-[0.28em] text-muted-foreground">

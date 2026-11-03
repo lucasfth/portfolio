@@ -130,8 +130,19 @@ test('idle and done sessions collapse, working/problems remain visible, and tele
     const row=[...document.querySelectorAll('li')].find(x=>x.textContent.includes(name));
     assert.ok(row.closest('details')); assert.match(row.closest('details').querySelector('summary').textContent,/Quiet sessions/);assert.equal(row.closest('details').hasAttribute('open'),false);
   }
-  for(const name of ['working fixture','blocked fixture','error fixture','unknown fixture']) {
+  for(const [index,name] of ['working fixture','blocked fixture','error fixture','unknown fixture'].entries()) {
     const row=[...document.querySelectorAll('li')].find(x=>x.textContent.includes(name));
-    assert.equal(row.closest('details'),null);
+    if(index<3)assert.equal(row.closest('details'),null);
+    else {assert.match(row.closest('details').querySelector('summary').textContent,/More current sessions \(1\)/);assert.equal(row.closest('details').hasAttribute('open'),false);}
   }
+});
+
+test('stale working sessions are excluded from current active count and collapsed separately', async()=>{
+  const {parseHTML}=await import('linkedom');
+  const stale={...session,label:'Stale worker',state:'working',observedAt:'2026-10-29T08:00:00.000Z',receivedAt:'2026-10-29T08:00:00.000Z',workingSince:at,toolsInFlight:1};
+  const fresh={...session,sessionId:'b'.repeat(32),label:'Fresh worker',state:'working',workingSince:at,toolsInFlight:1};
+  const {document}=parseHTML('<html><body>'+renderFleet({...data,hosts:[{...data.hosts[0],sessions:[stale,fresh]},data.hosts[1]]},false,Date.parse(at))+'</body></html>');
+  assert.match(document.body.textContent,/1 current active \/ needs attention · 1 stale/);
+  const disclosure=[...document.querySelectorAll('details')].find(node=>/Stale \/ clock-skew sessions/.test(node.querySelector('summary').textContent));
+  assert.ok(disclosure);assert.equal(disclosure.hasAttribute('open'),false);assert.match(disclosure.textContent,/Stale worker/);
 });

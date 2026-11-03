@@ -273,6 +273,8 @@ export default function AdminDashboard() {
   const financeSync = useRef<AbortController | null>(null);
   const operatorId = useRef<string | null>(null);
   const financeReadGeneration = useRef(0);
+  const readOnlyBusy = useRef<number | null>(null);
+  const loadAllRef = useRef<((request?: { id: number; signal: AbortSignal }) => Promise<boolean>) | null>(null);
 
   const [weather, setWeather] = useState<WeatherPayload | null>(null);
   const [stocks, setStocks] = useState<StockPayload | null>(null);
@@ -353,6 +355,7 @@ export default function AdminDashboard() {
     }
     return requests.current.isCurrent(id);
   }, [api, session?.access_token, reports]);
+  loadAllRef.current = loadAll;
 
   // Session lifecycle.
   useEffect(() => {
@@ -410,32 +413,40 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (!hasSession) return;
     let alive = true;
-    let busy = false;
     const refreshReadOnly = async () => {
-      if (busy || document.visibilityState === "hidden") return;
-      busy = true;
+      if (readOnlyBusy.current !== null || financeSync.current || document.visibilityState === "hidden") return;
       const request = requests.current.begin();
-      try { const current = await loadAll(request); if (alive && current) setLastSync(cphNow()); }
+      readOnlyBusy.current = request.id;
+      try { const current = await loadAllRef.current?.(request); if (alive && current) setLastSync(cphNow()); }
       catch { /* loadAll retains last-good values and reports per-source failures. */ }
-      finally { busy = false; }
+      finally { if (readOnlyBusy.current === request.id) readOnlyBusy.current = null; }
     };
-    if (!hydrated.current) { hydrated.current = true; void refreshReadOnly(); }
+    hydrated.current = true;
+    void refreshReadOnly();
     const interval = window.setInterval(() => void refreshReadOnly(), 60_000);
     const recover = () => { if (document.visibilityState === "visible") void refreshReadOnly(); };
     window.addEventListener("focus", recover);
     document.addEventListener("visibilitychange", recover);
-    return () => { alive = false; window.clearInterval(interval); window.removeEventListener("focus", recover); document.removeEventListener("visibilitychange", recover); requests.current.cancel(); };
-  }, [hasSession, loadAll]);
+    return () => {
+      alive = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", recover);
+      document.removeEventListener("visibilitychange", recover);
+      requests.current.cancel();
+      readOnlyBusy.current = null;
+    };
+  }, [hasSession, session?.access_token]);
 
   const refresh = async () => {
-    if (refreshing || financeSync.current) return;
+    if (refreshing || financeSync.current || readOnlyBusy.current !== null) return;
     const { id, signal } = requests.current.begin();
+    readOnlyBusy.current = id;
     setRefreshing(true);
     try {
       const current = await loadAll({ id, signal });
       if (current) setLastSync(cphNow());
     } finally {
-      setRefreshing(false);
+      if (readOnlyBusy.current === id) { readOnlyBusy.current = null; setRefreshing(false); }
     }
   };
 

@@ -5,15 +5,34 @@ import { TitleReveals } from "@/components/TerminalReveal";
 import ScrollToTop from "@/components/ScrollToTop";
 import Header from "@/components/Header";
 import StatsBeacon from "@/components/StatsBeacon";
-import { Space_Mono } from "next/font/google";
+import localFont from "next/font/local";
 
-// Self-hosted at build time: no render-blocking request to Google Fonts.
-const spaceMono = Space_Mono({
-  weight: ["400", "700"],
-  style: ["normal", "italic"],
-  subsets: ["latin"],
+// Ordinary unmasked Obel Mono, self-hosted with its OFL license.
+const obelMono = localFont({
+  src: [
+    { path: "../public/fonts/obel-mono/ObelMono-VF.woff2", weight: "100 900", style: "normal" },
+    { path: "../public/fonts/obel-mono/ObelMono-Italic-VF.woff2", weight: "100 900", style: "italic" },
+  ],
   display: "swap",
-  variable: "--font-space-mono",
+  variable: "--font-obel-mono",
+});
+
+const sourceSerif = localFont({
+  src: [
+    { path: "../public/fonts/source-serif-4/SourceSerif4Variable-Roman.ttf.woff2", weight: "200 900", style: "normal" },
+    { path: "../public/fonts/source-serif-4/SourceSerif4Variable-Italic.ttf.woff2", weight: "200 900", style: "italic" },
+  ],
+  display: "swap",
+  variable: "--font-source-serif",
+});
+
+const sourceSans = localFont({
+  src: [
+    { path: "../public/fonts/source-sans-3/SourceSans3VF-Upright.ttf.woff2", weight: "200 900", style: "normal" },
+    { path: "../public/fonts/source-sans-3/SourceSans3VF-Italic.ttf.woff2", weight: "200 900", style: "italic" },
+  ],
+  display: "swap",
+  variable: "--font-source-sans",
 });
 
 const SITE_URL = "https://lucashanson.dk";
@@ -97,7 +116,7 @@ export default function RootLayout({
 }) {
 
   return (
-    <html lang="en" className={spaceMono.variable}>
+    <html lang="en" className={`${obelMono.variable} ${sourceSerif.variable} ${sourceSans.variable}`}>
       <head>
         <Script id="extension-cleanup" strategy="beforeInteractive">
           {EXTENSION_CLEANUP}

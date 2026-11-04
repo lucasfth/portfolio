@@ -106,3 +106,19 @@ test('year ticks use real whole-year observations and include both endpoints',()
   assert.equal(ticks[0],'Yr 0');assert.equal(ticks.at(-1),'Yr 20');assert.equal(ticks.length,4);
   for(const tick of ticks)assert.match(tick,/^Yr \d+$/,'do not label invented fractional scenario-year observations');
 });
+
+test('near-zero and flat y-axis labels stay separated at a 332px plot without shrinking fonts',()=>{
+  for(const values of [[-0.1,10],[-10,0.1],[0.1,10],[-10,-0.1],[0,0],[10,10],[-10,-10]]) {
+    const doc=documentOf(workspace().render('ComparisonChart',{...props,series:[{label:'Spacing fixture',points:values.map((value,x)=>({x,value}))}]}));
+    const labels=[...doc.querySelectorAll('[data-axis="y"] text')];
+    const ys=labels.map(label=>Number(label.getAttribute('y'))).sort((a,b)=>a-b);
+    assert.ok(labels.length>=4,'keep useful intermediate ticks');
+    for(let i=1;i<ys.length;i++)assert.ok((ys[i]-ys[i-1])*332/720>=12,`${values}: adjacent y labels only ${(ys[i]-ys[i-1])*332/720}px apart`);
+    for(const label of labels)assert.ok(Number(label.getAttribute('font-size'))>=13,'do not shrink label fonts');
+    const zero=labels.find(label=>label.textContent==='0.0%');assert.ok(zero,'keep zero label');
+    const min=Math.min(0,...values),span=Math.max(0,...values)-min||1;
+    assert.equal(doc.querySelector('[data-zero-reference]').getAttribute('d'),`M112 ${190-(0-min)/span*150}H680`,'reference remains at exact zero');
+    assert.equal(Number(zero.getAttribute('y')),190-(0-min)/span*150+4);
+  }
+  assert.match(readFileSync(new URL('../app/globals.css',import.meta.url),'utf8'),/\.finance-chart-plot text \{ font-size: 22px; \}/,'narrow-card font unchanged');
+});

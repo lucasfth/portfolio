@@ -56,11 +56,14 @@ function ComparisonChart({label,series,first,last,unit,xAxis='date'}:{label:stri
   const ticks=xAxis==='year'?[...new Set(Array.from({length:Math.min(4,xs.length)},(_,i,)=>xs[Math.round((xs.length-1)*i/(Math.min(4,xs.length)-1||1))]))]:Array.from({length:4},(_,i)=>from+(through-from)*i/3);
   const xPos=(x:number)=>112+(x-from)/duration*568;
   const yPos=(value:number)=>190-(value-min)/span*150;
+  // Reserve 22 viewBox units for narrow-card text plus a 6-unit gutter.
+  // Zero takes priority over a nearby regular tick; never move its reference.
+  const yTicks=[...new Set([0,...Array.from({length:5},(_,i)=>min+span*i/4).filter(value=>Math.abs(yPos(value)-yPos(0))>=28)])].sort((a,b)=>a-b);
   const lookup=series.map(s=>`${s.label}: ${s.points.find(p=>p.x===active) ? format(s.points.find(p=>p.x===active)!.value,true) : 'No observation'}`).join(' · ');
   return <figure className="finance-chart space-y-4"><figcaption className="text-sm font-medium">{label}</figcaption>
     <ul className="flex flex-wrap gap-x-5 gap-y-3 text-sm">{series.map((s,i)=><li key={s.label} className="flex items-center gap-2"><span aria-hidden="true" className="inline-block w-6 border-t-2" style={{borderColor:strokes[i],borderStyle:i?'dashed':'solid'}} />{s.label}<strong className="font-medium tabular-nums">{format(s.points.at(-1)!.value,true)}</strong><span className="sr-only">at {xLabel(s.points.at(-1)!.x)}</span></li>)}</ul>
     <div className="finance-chart-plot"><svg viewBox="0 0 720 250" className="block w-full" role="img" aria-label={`${label}; ${unit}. ${first} to ${last}. Use the observation slider or tables for exact values.`} onPointerMove={event=>{const bounds=event.currentTarget.getBoundingClientRect(); const x=(event.clientX-bounds.left)/bounds.width*720;setSelected(from+(x-112)/568*duration);}}>
-      <g data-axis="y">{[...new Set([...Array.from({length:5},(_,i)=>min+span*i/4),0])].sort((a,b)=>a-b).map(value=><g key={value}><path d={`M112 ${yPos(value)}H680`} stroke="currentColor" opacity=".12" /><text x="104" y={yPos(value)+4} textAnchor="end" fill="currentColor" fontSize="13">{tickValue(value)}</text></g>)}</g>
+      <g data-axis="y">{yTicks.map(value=><g key={value}><path d={`M112 ${yPos(value)}H680`} stroke="currentColor" opacity=".12" /><text x="104" y={yPos(value)+4} textAnchor="end" fill="currentColor" fontSize="13">{tickValue(value)}</text></g>)}</g>
       <path data-zero-reference d={`M112 ${yPos(0)}H680`} stroke="currentColor" opacity=".45" />
       {series.map((s,i)=><polyline key={s.label} aria-label={s.label} points={s.points.map(p=>`${xPos(p.x)},${yPos(p.value)}`).join(' ')} fill="none" stroke={strokes[i]} strokeWidth="2.5" strokeDasharray={dashes[i]} />)}
       <path d={`M${xPos(active)} 35V195`} stroke="currentColor" strokeDasharray="3 4" opacity=".4" />

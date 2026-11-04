@@ -635,3 +635,13 @@
 .site-search-dialog { margin: 6rem auto auto; padding: 0; width: min(36rem, calc(100vw - 2rem)); max-height: calc(100dvh - 8rem); overflow: visible; border: 0; background: transparent; color: var(--color-foreground); }
 .site-search-dialog::backdrop { background: color-mix(in srgb, var(--color-overlay) 50%, transparent); backdrop-filter: blur(4px); }
 @media (max-width: 480px) { .keyboard-help-bindings > div { gap: 8px; flex-wrap: wrap; } }
+
+/* Finance plots fit narrow cards; exact values remain in the keyboard lookup
+   and supporting tables. Compact tick labels avoid shrinking long currency strings. */
+.finance-chart { min-width: 0; container-type: inline-size; }
+.finance-chart-plot > svg { width: 100%; max-width: 100%; }
+@container (max-width: 640px) { .finance-chart-plot text { font-size: 22px; } }
+.finance-workspace-panel { container-type: inline-size; }
+@container (max-width: 480px) {
+.finance-inputs, .finance-scenarios, .finance-balances { grid-template-columns: minmax(0, 1fr); }
+}

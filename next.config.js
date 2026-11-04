@@ -12,6 +12,9 @@ const nextConfig = {
   // manifest replaces runtime folder reads, and the game needs only one onnxruntime WASM build.
   outputFileTracingExcludes: {
     "*": ["./public/images/**", "./public/fonts/**"],
+    // Sitemap's filesystem discovery traces these unrelated assets. It never runs
+    // game validation; regression tests keep model assets out of all non-game traces.
+    "/sitemap.xml": ["./lib/game/sentence-model/**"],
     "/api/game/*": [
       "./node_modules/onnxruntime-web/dist/*.map",
       "./node_modules/onnxruntime-web/dist/ort.{all,jspi,webgl,webgpu,wasm,bundle}*",

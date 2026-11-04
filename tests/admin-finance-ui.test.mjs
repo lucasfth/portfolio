@@ -19,9 +19,10 @@ test('available peers with missing arrays render safe unavailable state, never t
   assert.match(render('DanishComparison',{finance:{peers:invalid}}),/cohort observations are not loaded/);
  }
 });
-test('cohorts require explicit age/sex and default wealth falls back to a real published option',()=>{
+test('cohorts without official profile options require explicit selection, not an arbitrary wealth fallback',()=>{
  const html=render('DanishComparison',{finance:{peers}});
- assert.match(html,/<option value="FGB1" selected="">Bank deposits/);
+ assert.match(html,/Financial-assets default unavailable/);
+ assert.doesNotMatch(html,/<option value="FGB1" selected="">/);
  assert.match(html,/Choose both age and sex/);
  assert.doesNotMatch(html,/\b100\b/);
 });

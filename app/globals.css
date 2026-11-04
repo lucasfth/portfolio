@@ -5,7 +5,7 @@
 .hero-copy { min-width: 0; }
 .hero-location { display: flex; flex-wrap: wrap; gap: 12px 28px; font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--color-muted-foreground); }
 .hero-location span { opacity: .75; }
-.portfolio-hero h1 { font-family: var(--font-heading); font-weight: 600; font-size: clamp(4rem, 8.4vw, 9rem); letter-spacing: -.075em; line-height: .94; margin: 40px 0 28px; max-width: 8ch; }
+.portfolio-hero h1 { font-family: var(--font-heading); font-weight: 600; font-size: clamp(4rem, 8.4vw, 9rem); letter-spacing: -.045em; line-height: 1; margin: 40px 0 28px; max-width: 8ch; }
 .hero-intro { font-size: clamp(.9rem, 1.3vw, 1.1rem); max-width: 38ch; line-height: 1.8; color: var(--color-muted-foreground); }
 .hero-actions { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 32px; font-size: 12px; }
 .hero-actions a { display: inline-flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--color-border-strong); }
@@ -106,8 +106,9 @@
 /* Theme: exact Catppuccin Mocha by default, exact Latte in light appearance. */
 @theme {
   /* Typography */
-  --font-heading: Arial, Helvetica, sans-serif;
-  --font-mono: var(--font-space-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-heading: var(--font-source-serif), Georgia, serif;
+  --font-sans: var(--font-source-sans), Arial, Helvetica, sans-serif;
+  --font-mono: var(--font-obel-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* Catppuccin Mocha */
   --color-background: #1e1e2e;
@@ -169,7 +170,7 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overflow-x: hidden;
@@ -341,7 +342,7 @@
 /* ---------- Markdown body (rendered content) ---------- */
 .md-body {
   color: var(--color-foreground);
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 0.95rem;
   line-height: 1.75;
   overflow-wrap: break-word;
@@ -645,3 +646,8 @@
 @container (max-width: 480px) {
 .finance-inputs, .finance-scenarios, .finance-balances { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Editorial typography: serif titles, sans reading, mono interface details. */
+:is(header nav, footer, .hero-location, .hero-actions, .hero-footnote, .hero-image-label, .work-tags, .work-caption, .work-stage-note, .work-preview-button, .admin-dashboard) { font-family: var(--font-mono); }
+:is(pre, code, kbd, samp) { font-family: var(--font-mono); }
+h1, h2, h3, h4, h5, h6, .font-heading { font-optical-sizing: auto; }

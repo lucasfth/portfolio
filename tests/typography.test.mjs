@@ -23,3 +23,16 @@ test('editorial headings, readable sans body and mono UI use the shared local fo
   assert.doesNotMatch(layout, /next\/font\/google|Space_Mono/);
   assert.doesNotMatch(css, /ss01[^;]*on|Masked/);
 });
+
+test('portfolio reading copy and compact labels have readable minimum sizes', () => {
+  const css = readFileSync('app/globals.css', 'utf8');
+  assert.match(css, /\.hero-intro\s*\{[^}]*font-size: clamp\(1\.0625rem, 1\.4vw, 1\.1875rem\)/);
+  assert.match(css, /\.work-entry p\s*\{[^}]*font-size: 16px/);
+  assert.match(css, /\.hero-location\s*\{[^}]*font-size: 14px/);
+  assert.match(css, /\.hero-actions\s*\{[^}]*font-size: 14px/);
+  assert.match(css, /\.work-tags\s*\{[^}]*font-size: 14px/);
+  assert.match(css, /\.md-body\s*\{[^}]*font-size: 1\.0625rem/);
+  assert.match(readFileSync('components/Header.tsx', 'utf8'), /text-sm font-medium uppercase tracking-\[0\.14em\]/);
+  // Keep the approved hero scale unchanged rather than zooming the entire page.
+  assert.match(css, /\.portfolio-hero h1\s*\{[^}]*font-size: clamp\(4rem, 8\.4vw, 9rem\)/);
+});

@@ -147,7 +147,7 @@ export default function Header() {
             <Link key={item.href} href={item.href} aria-current={isActive(item.href) ? "page" : undefined} className="relative px-2.5 py-2">
               <span
                 className={cn(
-                  "text-xs font-medium uppercase tracking-[0.14em] transition-colors duration-300",
+                  "text-sm font-medium uppercase tracking-[0.14em] transition-colors duration-300",
                   isActive(item.href) ? "text-accent" : "text-muted-foreground hover:text-foreground"
                 )}
               >

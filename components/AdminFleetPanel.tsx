@@ -82,7 +82,7 @@ export default function AdminFleetPanel({ token }: { token: string }) {
     // Same operator: token renewal restarts I/O, not the retained observation/error.
     setNow(Date.now());
     const load = async () => {
-      if (inFlight) return; inFlight = true;
+      if (!alive || inFlight || document.visibilityState === "hidden") return; inFlight = true;
       controller = new AbortController(); timeout = setTimeout(() => controller?.abort(), 10_000);
       try {
         const response = await fetch("/api/admin/fleet", { headers: { Authorization: `Bearer ${token}` }, cache: "no-store", signal: controller.signal });
@@ -92,8 +92,15 @@ export default function AdminFleetPanel({ token }: { token: string }) {
       } catch { if (alive) setError(true); }
       finally { clearTimeout(timeout); inFlight = false; }
     };
+    const recover = () => { setNow(Date.now()); void load(); };
     void load(); const poll = setInterval(() => void load(), 30_000); const tick = setInterval(() => setNow(Date.now()), 1_000);
-    return () => { alive = false; controller?.abort(); clearTimeout(timeout); clearInterval(poll); clearInterval(tick); };
+    window.addEventListener("focus", recover);
+    document.addEventListener("visibilitychange", recover);
+    return () => {
+      alive = false; controller?.abort(); clearTimeout(timeout); clearInterval(poll); clearInterval(tick);
+      window.removeEventListener("focus", recover);
+      document.removeEventListener("visibilitychange", recover);
+    };
   }, [token]);
   return <FleetView data={data} error={error} now={now} />;
 }

@@ -401,3 +401,56 @@ test('stale successful Radar read stays visible but panel and board cannot claim
   assert.equal(board.props.cells.find(c => c.code === 'Radar').state, 'error');
   assert.match(board.props.cells.find(c => c.code === 'Radar').sub, /stale/);
 });
+
+test('fleet polling skips hidden tabs, ages retained observations immediately on return and removes recovery listeners', async t => {
+  const env = environment(t), panel = component('AdminFleetPanel');
+  let now = Date.parse(at);
+  t.mock.method(Date, 'now', () => now);
+  t.after(() => panel.unmount());
+  env.setVisibility('hidden');
+  panel.render({ token: 'TEST' });
+  env.poll(); env.focus();
+  assert.equal(env.requests.length, 0, 'hidden mount, interval and focus cannot start reads');
+  env.setVisibility('visible');
+  assert.equal(env.requests.length, 1, 'return refreshes immediately');
+  env.focus(); env.poll();
+  assert.equal(env.requests.length, 1, 'return and focus cannot overlap I/O');
+  const received = snapshot();
+  env.requests[0].resolve(Response.json(received)); await settle();
+  assert.match(renderToStaticMarkup(panel.render({ token: 'TEST' })), />fresh<\/span>/);
+  env.setVisibility('hidden');
+  // Simulate an hour hidden/suspended without firing the one-second freshness timer.
+  for (let i = 0; i < 120; i++) { now += 30_000; env.poll(); }
+  assert.equal(env.requests.length, 1, 'an hour of hidden polling produces no reads');
+  const hidden = panel.render({ token: 'TEST' });
+  assert.deepEqual(hidden.props.data, received);
+  assert.equal(hidden.props.now, Date.parse(at), 'freshness timer has not advanced the rendered clock');
+  env.setVisibility('visible');
+  assert.equal(env.requests.length, 2);
+  const pending = panel.render({ token: 'TEST' });
+  assert.deepEqual(pending.props.data, received);
+  assert.equal(pending.props.error, false);
+  const pendingHtml = renderToStaticMarkup(pending);
+  assert.match(pendingHtml, /Retained session/);
+  assert.match(pendingHtml, />stale<\/span>/, 'return immediately ages the retained observation while refresh is pending');
+  assert.match(pendingHtml, /Last reported: .*Idle/);
+  assert.doesNotMatch(pendingHtml, /Fleet source unavailable|>fresh<\/span>/);
+  env.requests[1].reject(new Error('unavailable')); await settle();
+  const failed = panel.render({ token: 'TEST' });
+  assert.equal(failed.props.error, true);
+  assert.deepEqual(failed.props.data, received, 'return failure retains last good snapshot');
+  const failedHtml = renderToStaticMarkup(failed);
+  assert.match(failedHtml, /Fleet source unavailable/);
+  assert.match(failedHtml, /Showing last received values/);
+  assert.match(failedHtml, /Retained session/);
+  assert.match(failedHtml, />stale<\/span>/);
+  assert.match(failedHtml, /Last reported: .*Idle/);
+  assert.doesNotMatch(failedHtml, />fresh<\/span>/);
+  env.focus();
+  assert.equal(env.requests.length, 3);
+  panel.unmount();
+  assert.equal(env.requests[2].options.signal.aborted, true);
+  env.setVisibility('hidden'); env.setVisibility('visible'); env.focus();
+  assert.equal(env.requests.length, 3, 'listeners removed on unmount');
+  assert.equal(env.intervals.size, 0); assert.equal(env.timeouts.size, 0);
+});

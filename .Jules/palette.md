@@ -65,3 +65,7 @@
 ## 2026-09-19 - [Robust Clipboard Copying and Error Feedback]
 **Learning:** Relying solely on `navigator.clipboard.writeText` can silently fail in non-secure contexts (HTTP) or when permission is denied. Providing a legacy fallback (`execCommand`), a visual error indicator ("✕ Error"), tooltips, and screen reader live region announcements ensures copy buttons remain resilient and accessible across all browser environments.
 **Action:** Always provide fallback copy execution and clear error states with `aria-live` announcements when building clipboard interaction components.
+
+## 2026-11-07 - [Command Palette Clear Button and Status Feedback]
+**Learning:** Search overlays and comboboxes benefit from an explicit clear action when a query is present. Resetting the query, maintaining focus on the search input, and providing an assertive/polite screen reader announcement ("Search query cleared") prevents keyboard and assistive tech users from getting disoriented when clearing queries.
+**Action:** Always complement text search inputs in modal dialogs with a clear query button that maintains input focus and updates live region announcements.

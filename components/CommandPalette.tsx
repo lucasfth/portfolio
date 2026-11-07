@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpRight, Search, X } from "lucide-react";
+import { ArrowUpRight, CircleX, Search, X } from "lucide-react";
 import { searchItems, type SearchItem } from "@/lib/search";
 export type { SearchItem } from "@/lib/search";
 
@@ -21,12 +21,14 @@ export default function CommandPalette({
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [cleared, setCleared] = useState(false);
 
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!open || !dialog) return;
     const opener = document.activeElement as HTMLElement | null;
     setQuery("");
+    setCleared(false);
     setSelectedIndex(0);
     const originalOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -61,14 +63,14 @@ export default function CommandPalette({
     >
       {open && <div className="w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-background shadow-2xl">
         <span className="sr-only" aria-live="polite" aria-atomic="true">
-          {query ? `${matches.length} result${matches.length === 1 ? "" : "s"} found` : ""}
+          {query ? `${matches.length} result${matches.length === 1 ? "" : "s"} found` : cleared ? "Search query cleared" : ""}
         </span>
         <div className="flex items-center gap-3 border-b border-border px-4">
           <Search size={18} className="shrink-0 text-muted-foreground" aria-hidden="true" />
           <input
             ref={inputRef}
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => { setQuery(event.target.value); setCleared(false); }}
             role="combobox"
             aria-label="Search projects, posts, galleries and links"
             aria-expanded={matches.length > 0}
@@ -94,6 +96,21 @@ export default function CommandPalette({
             className="h-14 min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             placeholder="Search projects, posts, galleries and links"
           />
+          {query && (
+            <button
+              type="button"
+              onClick={() => {
+                setQuery("");
+                setCleared(true);
+                setSelectedIndex(0);
+                inputRef.current?.focus();
+              }}
+              className="grid size-9 place-items-center text-muted-foreground hover:text-foreground"
+              aria-label="Clear query"
+            >
+              <CircleX size={16} aria-hidden="true" />
+            </button>
+          )}
           <button
             type="button"
             onClick={onClose}

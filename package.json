@@ -34,7 +34,7 @@
     "gray-matter": "^4.0.3",
     "harper.js": "^3.2.0",
     "lucide-react": "^1.61.0",
-    "mermaid": "^12.2.0",
+    "mermaid": "^12.3.0",
     "motion": "^14.4.0",
     "next": "^16.4.6",
     "onnxruntime-web": "1.31.1",

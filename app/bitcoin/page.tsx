@@ -30,8 +30,9 @@ export default function BitcoinPage() {
         </p>
         <p>
           The displayed address is fetched live from <code>/api/bitcoin</code>, so fetch a fresh
-          value when you are ready to send rather than reusing a cached one. The address advances
-          after a confirmed payment, and previously issued addresses stay valid. If the endpoint
+          value when you are ready to send rather than reusing a cached one. A new address is
+          issued only once a confirmed payment is visible on the public Bitcoin blockchain, and
+          previously issued addresses stay valid. If the endpoint
           answers HTTP 503, donations are temporarily unavailable; it is worth trying again
           later. Bitcoin transactions and amounts are public.
         </p>

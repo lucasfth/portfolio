@@ -21,6 +21,21 @@ export default function BitcoinPage() {
         </div>
         <BitcoinDonation />
       </section>
+      <section className="md-body mx-auto w-full max-w-3xl px-6 pb-16" aria-label="How donations work">
+        <h2>How donations work</h2>
+        <p>
+          Donations are optional and support the work published on this site. Use Bitcoin
+          mainnet only, and choose your own amount. Before sending, review the destination
+          address and the network fee in your own wallet.
+        </p>
+        <p>
+          The displayed address is fetched live from <code>/api/bitcoin</code>, so fetch a fresh
+          value when you are ready to send rather than reusing a cached one. The address advances
+          after a confirmed payment, and previously issued addresses stay valid. If the endpoint
+          answers HTTP 503, donations are temporarily unavailable; it is worth trying again
+          later. Bitcoin transactions and amounts are public.
+        </p>
+      </section>
     </div>
   );
 }

@@ -64,7 +64,7 @@ Questions? Email [contact@lucashanson.dk](mailto:contact@lucashanson.dk).`,
     description: "Source code, Markdown downloads and public content interfaces for Lucas Hanson's website.",
     body: `This site is built with Next.js. Its [source code](https://github.com/lucasfth/portfolio) is on GitHub, and the articles and project descriptions are written in Markdown.
 
-If you want to read the content in a script or connect an assistant, the options below are available. They provide public website content, not services from the projects featured here. Every interface below is free and open: no API key, account or authentication is required, and there is no separate sandbox environment — the public endpoints are the live service. The only paid action on the site is the optional x402 leaderboard entry made by a non-browser agent, as documented in the game guide.
+If you want to read the content in a script or connect an assistant, the options below are available. They provide public website content, not services from the projects featured here. Every interface below is open and requires no API key, account or authentication, and there is no separate sandbox environment — the public endpoints are the live service. Reading, search, the Markdown downloads, MCP and playing the game are free. The only paid action on the site is the optional x402 leaderboard entry made by a non-browser agent who clears the game and does not pass the site's browser bot check, as documented in the game guide.
 
 ## Markdown and discovery
 

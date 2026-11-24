@@ -10,7 +10,7 @@ const spec = {
     description: [
       "Public, read-only interfaces for the portfolio site.",
       "",
-      "Access: every operation below is free and requires no API key, account, or authentication; there is no separate sandbox or test environment — the public endpoints are the live service and all read operations work as-is. The only paid action on the site is the optional x402 leaderboard entry made by a non-browser agent (HTTP 402), documented on the `post` of `/api/game/scores`.",
+      "Access: every read operation and playing the game are free and require no API key, account, or authentication; there is no separate sandbox or test environment — the public endpoints are the live service. The only paid action on the site is submitting a finished run to `/api/game/scores` as a non-browser agent (HTTP 402, x402 v2); browser sessions that pass the site's bot check submit free.",
       "",
       "Errors: REST endpoints answer `{ \"error\": { \"code\", \"message\" } }` (see `ApiError`). The Damage Control game endpoints answer the flat shape `{ \"error\": \"<code>\", \"message\": ..., ...details }` (see `GameError`). Every 4xx and 5xx response carries a machine-readable code.",
     ].join("\n"),
@@ -27,7 +27,7 @@ const spec = {
         tags: ["search"],
         operationId: "searchContent",
         summary: "Search public pages",
-        description: "Full-text search over public pages. Returns up to 30 results, each with a title, description and URL.",
+        description: "Full-text search over public pages, projects, galleries and external links. Returns all matching items, each with a title and href, and usually a description.",
         responses: {
           "200": {
             description: "Matching pages.",
@@ -129,7 +129,7 @@ const spec = {
           "200": {
             description: "The current challenge.",
             headers: { "Cache-Control": { description: "no-store", schema: { type: "string" } } },
-            content: { "application/json": { schema: { $ref: "#/components/schemas/ChallengeResponse" } } },
+            content: { "application/json": { schema: { $ref: "#/components/schemas/Challenge" } } },
           },
         },
       },
@@ -154,7 +154,7 @@ const spec = {
             content: { "application/json": { schema: { $ref: "#/components/schemas/RunState" } } },
           },
           "400": {
-            description: "Malformed JSON body, or a run token that is invalid or expired.",
+            description: "`invalid_payload` (bad JSON body) or `invalid_run` (a run token that is invalid or expired).",
             content: { "application/json": { schema: { $ref: "#/components/schemas/GameError" } } },
           },
           "409": {
@@ -167,7 +167,7 @@ const spec = {
           },
           "422": {
             description:
-              "The sentence failed a rule (`failedRuleIds`), contains made-up words (`misspelled_words` with a `misspelled` list), or is not grammatical English (`not_a_sentence`).",
+              "The sentence failed: `invalid_sentence` (empty or not a sentence), `gibberish_detected`, or `rules_failed` (with `failedRuleIds` and `rules` up to the failed level); or `misspelled_words` (with a `misspelled` list); or `not_a_sentence`. All carry the checked `level` and the still-valid `token`.",
             content: { "application/json": { schema: { $ref: "#/components/schemas/GameError" } } },
           },
           "429": {
@@ -233,11 +233,11 @@ const spec = {
             content: { "application/json": { schema: { $ref: "#/components/schemas/ScoreEntry" } } },
           },
           "400": {
-            description: "Malformed JSON, invalid or incomplete run, or an invalid nickname.",
+            description: "`invalid_payload` (bad JSON), `invalid_run` (bad or expired token), `run_incomplete` (the run did not clear all 20 rules; includes `cleared`), or `invalid_nickname` (not 1 to 24 valid characters).",
             content: { "application/json": { schema: { $ref: "#/components/schemas/GameError" } } },
           },
           "402": {
-            description: "Agent leaderboard entry: x402 v2 payment required.",
+            description: "Agent leaderboard entry: x402 v2 payment required. `accepts` may be empty when agent entries are closed, and `error` carries the plain reason (for example a missing `PAYMENT-SIGNATURE` or failed settlement).",
             headers: {
               "PAYMENT-REQUIRED": {
                 description: "The same payment body, base64-encoded.",
@@ -259,7 +259,7 @@ const spec = {
             content: { "application/json": { schema: { $ref: "#/components/schemas/GameError" } } },
           },
           "422": {
-            description: "The final sentence failed the rule, spelling or grammar checks.",
+            description: "The final sentence failed a check: `rules_failed` (with `failedRuleIds`), `invalid_sentence`, `gibberish_detected`, `misspelled_words` (with `misspelled`) or `not_a_sentence`.",
             content: { "application/json": { schema: { $ref: "#/components/schemas/GameError" } } },
           },
           "502": {
@@ -278,11 +278,13 @@ const spec = {
     schemas: {
       SearchItem: {
         type: "object",
-        required: ["title", "description", "url"],
+        required: ["title", "href"],
         properties: {
-          title: { type: "string", description: "Page title." },
-          description: { type: "string", description: "One-line description." },
-          url: { type: "string", format: "uri", description: "Absolute page URL." },
+          title: { type: "string", description: "Page title or link name." },
+          href: { type: "string", description: "Site path (e.g. \"/projects/nocturne\") or external link target." },
+          description: { type: "string", description: "One-line description; not present on every item (e.g. external links)." },
+          external: { type: "boolean", description: "True for links that leave lucashanson.dk." },
+          searchText: { type: "string", description: "Extra keywords used for matching; not present on every item." },
         },
         additionalProperties: false,
       },
@@ -328,15 +330,15 @@ const spec = {
           error: {
             type: "string",
             description:
-              "Machine-readable error code, for example invalid_payload, invalid_run, run_incomplete, run_complete, run_already_submitted, invalid_date, invalid_nickname, payload_too_large, not_a_sentence, misspelled_words, too_fast, payment_unavailable, human_check_unavailable, game_unavailable, leaderboard_unavailable, or a specific failed rule code on 422.",
+              "Machine-readable error code, for example invalid_payload, invalid_run, run_incomplete, run_complete, run_already_submitted, invalid_date, invalid_nickname, payload_too_large, invalid_sentence, gibberish_detected, rules_failed, not_a_sentence, misspelled_words, too_fast, payment_unavailable, human_check_unavailable, game_unavailable, leaderboard_unavailable.",
           },
           message: { type: "string", description: "Human-readable message (present on most codes)." },
           retryAfterMs: { type: "integer", description: "Milliseconds to wait; present on `too_fast`." },
-          level: { type: "integer", description: "Rule level the sentence was checked against; present on sentence 422s." },
-          failedRuleIds: { type: "array", items: { type: "string" }, description: "Which rules the sentence failed; present on rule 422s." },
+          level: { type: "integer", description: "Rule level the sentence was checked against; present on play sentence 422s." },
+          failedRuleIds: { type: "array", items: { type: "string" }, description: "The rule ids that failed (for example [\"R05\"]); present when `error` is `rules_failed`." },
           misspelled: { type: "array", items: { type: "string" }, description: "Words not found in a real English dictionary; present on `misspelled_words`." },
-          token: { type: "string", description: "The still-valid run token; present on sentence 422s." },
-          rules: { type: "array", items: { type: "string" }, description: "The satisfied rules so far; present on rule 422s." },
+          token: { type: "string", description: "The still-valid run token; present on play sentence 422s." },
+          rules: { type: "array", items: { $ref: "#/components/schemas/RuleDescription" }, description: "The rules up to the failed level; present on play rule failures." },
           cleared: { type: "integer", description: "Rules cleared before the failed step; present on `run_incomplete`." },
         },
         additionalProperties: true,
@@ -345,7 +347,8 @@ const spec = {
       },
       Challenge: {
         type: "object",
-        required: ["date", "weekday", "timeBucket", "rules"],
+        description: "The day's sentence-game challenge: 20 escalating rules, metadata and when the rules change.",
+        required: ["date", "weekday", "timeBucket", "rules", "changesAt", "howToPlay"],
         properties: {
           date: { type: "string", format: "date", description: "Current UTC date." },
           weekday: { type: "string", description: "Current UTC weekday in words." },
@@ -359,29 +362,26 @@ const spec = {
             type: "array",
             minItems: 20,
             maxItems: 20,
-            items: { type: "string" },
-            description: "All 20 rule descriptions in order.",
+            items: { $ref: "#/components/schemas/RuleDescription" },
+            description: "All 20 rules in order.",
           },
+          changesAt: { type: "string", format: "date-time", description: "When the 5-minute bucket (and rules 1 to 4) changes." },
+          howToPlay: { type: "string", format: "uri", description: "The agent guide, https://lucashanson.dk/game.md." },
         },
         additionalProperties: false,
       },
-      ChallengeResponse: {
-        allOf: [
-          { $ref: "#/components/schemas/Challenge" },
-          {
-            type: "object",
-            required: ["changesAt", "howToPlay"],
-            properties: {
-              changesAt: { type: "string", format: "date-time", description: "When the time bucket changes." },
-              howToPlay: { type: "string", format: "uri", description: "The agent guide." },
-            },
-            additionalProperties: false,
-          },
-        ],
-        description: "The current challenge plus when it changes.",
+      RuleDescription: {
+        type: "object",
+        required: ["id", "description"],
+        properties: {
+          id: { type: "string", description: "Stable rule id, R01 to R20." },
+          description: { type: "string", description: "The rule text for the current bucket/day." },
+        },
+        additionalProperties: false,
       },
       RunStep: {
         type: "object",
+        description: "A play step. Send no body or an empty object to start a run; with a `token`, the `sentence` tries to clear the next rule. Unknown keys are ignored by the API.",
         properties: {
           token: { type: "string", description: "Signed run token from a previous step. Omit it to start a new run." },
           sentence: {
@@ -389,7 +389,7 @@ const spec = {
             description: "The sentence to try clearing the next rule with (real, grammatical English).",
           },
         },
-        additionalProperties: false,
+        additionalProperties: true,
       },
       RunState: {
         type: "object",
@@ -398,7 +398,7 @@ const spec = {
           token: { type: "string", description: "Fresh signed run token; keep the newest one." },
           cleared: { type: "integer", minimum: 0, maximum: 20, description: "Rules cleared so far." },
           nextRule: {
-            oneOf: [{ type: "string" }, { type: "null" }],
+            oneOf: [{ $ref: "#/components/schemas/RuleDescription" }, { type: "null" }],
             description: "The next rule to satisfy, or null after the final level.",
           },
           challenge: {
@@ -407,8 +407,8 @@ const spec = {
           },
           rules: {
             type: "array",
-            items: { type: "string" },
-            description: "The satisfied rules so far; present after the first step.",
+            items: { $ref: "#/components/schemas/RuleDescription" },
+            description: "The rules up to the last cleared level; present after the first step.",
           },
           elapsedMs: { type: "integer", description: "Milliseconds since the run started; present after the first step." },
         },

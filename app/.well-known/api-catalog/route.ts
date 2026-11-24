@@ -35,11 +35,23 @@ const API_CATALOG = {
 };
 
 export function GET() {
-  return new Response(JSON.stringify(API_CATALOG, null, 2), {
-    headers: {
-      "Content-Type": 'application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"',
-      "Access-Control-Allow-Origin": "*",
-      "Cache-Control": "public, max-age=3600",
-    },
-  });
+  const headers: Record<string, string> = {
+    "Content-Type": 'application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"',
+    "Access-Control-Allow-Origin": "*",
+    "Cache-Control": "public, max-age=3600",
+    // RFC 9727 section 2: the response advertises the api-catalog relation.
+    "Link": '</.well-known/api-catalog>; rel="api-catalog"',
+  };
+  return new Response(JSON.stringify(API_CATALOG, null, 2), { headers });
+}
+
+/** RFC 9727 also requires HEAD on the well-known URI, with the Link header. */
+export function HEAD() {
+  const headers: Record<string, string> = {
+    "Content-Type": 'application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"',
+    "Access-Control-Allow-Origin": "*",
+    "Cache-Control": "public, max-age=3600",
+    "Link": '</.well-known/api-catalog>; rel="api-catalog"',
+  };
+  return new Response(null, { status: 200, headers });
 }

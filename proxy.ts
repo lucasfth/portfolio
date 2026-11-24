@@ -17,6 +17,6 @@ export function proxy(request: NextRequest) {
     response = NextResponse.next();
   }
   response.headers.set("Vary", "Accept");
-  response.headers.set("Link", '</llms.txt>; rel="describedby"');
+  response.headers.set("Link", '</llms.txt>; rel="describedby", </.well-known/api-catalog>; rel="api-catalog"');
   return response;
 }

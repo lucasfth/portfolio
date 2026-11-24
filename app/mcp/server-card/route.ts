@@ -21,13 +21,27 @@ const SERVER_CARD = {
 };
 
 const BODY = JSON.stringify(SERVER_CARD, null, 2);
-const ETAG = `"${createHash("sha1").update(BODY).digest("hex")}"`;
+const TAG = createHash("sha1").update(BODY).digest("hex");
+const ETAG = `"${TAG}"`;
 
-export function GET() {
+function etagMatches(ifNoneMatch: string | null): boolean {
+  if (!ifNoneMatch || ifNoneMatch === "*") return ifNoneMatch === "*";
+  return ifNoneMatch.split(",").some((p) => {
+    const part = p.trim();
+    return part === ETAG || part === `W/${TAG}` || part === `"${TAG}"`;
+  });
+}
+
+export function GET(request: Request) {
+  // The Septet caching contract: honour If-None-Match with an empty 304.
+  if (etagMatches(request.headers.get("if-none-match"))) {
+    return new Response(null, { status: 304, headers: { ETag: ETAG, "Access-Control-Allow-Origin": "*", "Access-Control-Expose-Headers": "ETag" } });
+  }
   return new Response(BODY, {
     headers: {
       "Content-Type": "application/mcp-server-card+json; charset=utf-8",
       "Access-Control-Allow-Origin": "*",
+      "Access-Control-Expose-Headers": "ETag",
       "Cache-Control": "public, max-age=3600",
       ETag: ETAG,
     },

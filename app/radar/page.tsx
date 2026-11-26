@@ -106,7 +106,7 @@ export default async function Radar() {
                     rel="noopener noreferrer"
                     className="group flex items-start justify-between gap-6 py-5 transition-colors duration-300 hover:bg-foreground/[0.03]"
                   >
-                    <div className="min-w-0">
+                    <div className="min-w-0 wrap-anywhere">
                       <h3 className="text-lg font-medium tracking-tight">{item.title}</h3>
                       <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{item.summary}</p>
                       <p className="mt-2 font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground/70">

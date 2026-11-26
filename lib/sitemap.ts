@@ -1,11 +1,16 @@
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
 
+// URL subtrees that must stay out of the sitemap even though they have pages.
+const NON_INDEXABLE_ROUTES = ["/admin"];
+
 /** Discover public static App Router pages; dynamic content is expanded separately. */
 export function getStaticPagePaths(appDirectory = join(process.cwd(), "app")): string[] {
   const paths = new Set<string>();
 
   function visit(directory: string, route: string) {
+    if (NON_INDEXABLE_ROUTES.some((path) => route === path || route.startsWith(`${path}/`))) return;
+
     for (const entry of readdirSync(directory, { withFileTypes: true })) {
       if (entry.isFile()) {
         if (/^page\.(tsx?|jsx?)$/.test(entry.name)) paths.add(route || "/");

@@ -55,6 +55,8 @@ Deploy by connecting the repository to Vercel; its production build command is `
 
 Next.js generates `/sitemap.xml` during a production build. Static public pages are discovered from `app/**/page.{ts,tsx,js,jsx}` rather than a maintained URL list, so new pages such as `/bitcoin` are included automatically. Route groups do not become URL segments; API handlers, dynamic templates, private folders, parallel slots, and intercepted routes are excluded.
 
+Non-indexable URL subtrees such as `/admin` are explicitly excluded in `lib/sitemap.ts`. When adding a private or `noindex` page, update that list; file discovery does not evaluate page metadata.
+
 Blog posts, projects, and photography galleries are expanded from their content collections. `public/robots.txt` advertises the sitemap. Rebuild and deploy after adding a page or changing content.
 
 ## Public API

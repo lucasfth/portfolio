@@ -35,6 +35,14 @@ test("excludes API, dynamic, private, parallel-slot, and intercepted routes", (t
   assert.deepEqual(getStaticPagePaths(root), ["/"]);
 });
 
+test("excludes the noindex admin subtree without excluding similar public URLs", (t) => {
+  const root = fixture(t, [
+    "(internal)/admin/page.tsx", "(internal)/admin/reports/page.tsx",
+    "admin-guide/page.tsx", "docs/admin/page.tsx",
+  ]);
+  assert.deepEqual(getStaticPagePaths(root), ["/admin-guide", "/docs/admin"]);
+});
+
 test("finds supported page extensions but excludes layouts, route handlers, and components", (t) => {
   const root = fixture(t, ["typescript/page.ts", "javascript/page.jsx", "layout.tsx", "feed/route.ts", "components/Card.tsx"]);
   assert.deepEqual(new Set(getStaticPagePaths(root)), new Set(["/typescript", "/javascript"]));
